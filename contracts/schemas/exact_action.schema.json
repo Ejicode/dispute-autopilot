@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dispute-autopilot.dev/schemas/exact_action.schema.json",
+  "title": "ExactActionSnapshot",
+  "description": "Deterministic action payload snapshot presented to human seller for approval",
+  "type": "object",
+  "required": [
+    "action_type",
+    "dispute_id",
+    "paypal_dispute_id",
+    "amount_cents",
+    "currency",
+    "evidence_ids",
+    "notes",
+    "timestamp"
+  ],
+  "properties": {
+    "action_type": {
+      "type": "string",
+      "enum": ["PROVIDE_EVIDENCE", "ACCEPT_CLAIM"]
+    },
+    "dispute_id": { "type": "string" },
+    "paypal_dispute_id": { "type": "string" },
+    "amount_cents": {
+      "type": "integer",
+      "description": "Exact amount in integer minor units (cents)"
+    },
+    "currency": { "type": "string", "default": "USD" },
+    "evidence_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notes": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

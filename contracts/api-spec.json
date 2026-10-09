@@ -1,0 +1,129 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Dispute Autopilot REST API",
+    "version": "1.0.0",
+    "description": "API Specification for Dispute Autopilot - AI agent that handles PayPal disputes for sellers safely"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/api/disputes": {
+      "get": {
+        "summary": "List disputes with triage scores, risk metrics and deadlines",
+        "responses": {
+          "200": {
+            "description": "Array of disputes sorted by money at risk and deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "./schemas/dispute.schema.json" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/disputes/{id}": {
+      "get": {
+        "summary": "Get single dispute detail with evidence items, draft, and audit timeline",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Dispute packet detail" },
+          "404": { "description": "Dispute not found" }
+        }
+      }
+    },
+    "/api/disputes/{id}/verify-draft": {
+      "post": {
+        "summary": "Execute deterministic code verification on an AI draft against vault evidence",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "./schemas/cited_draft.schema.json" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Draft verified successfully" },
+          "422": { "description": "Unverified claims found - approval blocked" }
+        }
+      }
+    },
+    "/api/disputes/{id}/approve": {
+      "post": {
+        "summary": "Human approval gate executing exact action via PayPal Disputes API with idempotency",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "./schemas/exact_action.schema.json" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Action executed and logged to audit trail" },
+          "400": { "description": "Invalid action or expired dispute" },
+          "409": { "description": "Concurrent duplicate submission blocked" },
+          "422": { "description": "Tampered action snapshot blocked" }
+        }
+      }
+    },
+    "/api/disputes/{id}/packet": {
+      "get": {
+        "summary": "Download generated PDF evidence packet compiled from cryptographic vault",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binary PDF document with evidence hashes and delivery proof",
+            "content": {
+              "application/pdf": { "schema": { "type": "string", "format": "binary" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhooks/paypal": {
+      "post": {
+        "summary": "PayPal Webhook receiver with signature verification and deduplication",
+        "responses": {
+          "200": { "description": "Webhook event processed or idempotent duplicate ignored" },
+          "401": { "description": "Invalid webhook signature" }
+        }
+      }
+    },
+    "/api/trust-lab/run": {
+      "post": {
+        "summary": "Run 6 penetration test vectors against the live defense pipeline",
+        "responses": {
+          "200": { "description": "All 6 attacks executed and confirmed blocked" }
+        }
+      }
+    },
+    "/api/bench/run": {
+      "post": {
+        "summary": "Execute 40-scenario dispute benchmark harness and record results",
+        "responses": {
+          "200": { "description": "Benchmark metrics summary" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# TypeScript build info cache
+*.tsbuildinfo
+
+# SQLite databases & runtime data
+data/*.db
+data/*.db-shm
+data/*.db-wal
+!data/.gitkeep
+
+# Environment files
+.env
+.env*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scratch and log files
+*.log
+pdf_text.txt
+scratch/

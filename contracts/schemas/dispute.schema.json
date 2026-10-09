@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dispute-autopilot.dev/schemas/dispute.schema.json",
+  "title": "Dispute",
+  "description": "PayPal dispute normalized representation with triage and risk metrics",
+  "type": "object",
+  "required": [
+    "id",
+    "paypal_dispute_id",
+    "transaction_id",
+    "reason",
+    "amount_cents",
+    "currency",
+    "status",
+    "response_deadline",
+    "strength_score",
+    "recommendation",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "paypal_dispute_id": { "type": "string" },
+    "transaction_id": { "type": "string" },
+    "order_id": { "type": ["string", "null"] },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+        "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "UNAUTHORISED",
+        "INCORRECT_AMOUNT",
+        "DUPLICATE_TRANSACTION",
+        "BUYER_CANCELLED_SERVICE",
+        "OTHER"
+      ]
+    },
+    "amount_cents": {
+      "type": "integer",
+      "description": "Amount in integer minor units (cents)"
+    },
+    "currency": { "type": "string", "default": "USD" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "REQUIRED_ACTION",
+        "UNDER_REVIEW",
+        "RESOLVED",
+        "CLOSED",
+        "APPEALED"
+      ]
+    },
+    "response_deadline": { "type": "string", "format": "date-time" },
+    "outcome": { "type": ["string", "null"] },
+    "strength_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Deterministic Evidence Strength Score (coverage, not probability)"
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": ["FIGHT", "ACCEPT", "ASK A HUMAN"]
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

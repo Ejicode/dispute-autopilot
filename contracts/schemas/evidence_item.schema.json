@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dispute-autopilot.dev/schemas/evidence_item.schema.json",
+  "title": "EvidenceItem",
+  "description": "Evidence Vault item captured at payment with SHA-256 integrity hash",
+  "type": "object",
+  "required": [
+    "id",
+    "evidence_type",
+    "source",
+    "title",
+    "content",
+    "sha256_hash",
+    "captured_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "dispute_id": { "type": ["string", "null"] },
+    "order_id": { "type": ["string", "null"] },
+    "evidence_type": {
+      "type": "string",
+      "enum": [
+        "PROOF_OF_DELIVERY",
+        "TRACKING_HISTORY",
+        "ORDER_CONFIRMATION",
+        "CUSTOMER_COMMUNICATION",
+        "REFUND_POLICY",
+        "DEVICE_FINGERPRINT"
+      ]
+    },
+    "source": { "type": "string" },
+    "title": { "type": "string" },
+    "content": { "type": "string" },
+    "file_path": { "type": ["string", "null"] },
+    "sha256_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 cryptographic digest of content"
+    },
+    "captured_at": { "type": "string", "format": "date-time" }
+  }
+}

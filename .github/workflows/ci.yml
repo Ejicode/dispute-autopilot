@@ -1,0 +1,46 @@
+name: CI & Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build, Test & Security Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify no uncommitted secrets or hardcoded private keys
+        run: |
+          echo "Scanning codebase for accidentally committed credentials..."
+          ! grep -rn "sk_live_" src/ scripts/
+          ! grep -rn "ghp_" src/ scripts/
+          ! grep -rn "AIzaSy" src/ scripts/
+          ! grep -rn "BEGIN RSA PRIVATE KEY" .
+          echo "Secret scan clean: No secrets found."
+
+      - name: Run automated test suite
+        run: npm run test
+
+      - name: Run Trust Lab attack suite
+        run: npm run test:attacks
+
+      - name: Run Dispute Bench (40 scenarios)
+        run: npm run bench
+
+      - name: Typecheck and Build Next.js
+        run: npm run build

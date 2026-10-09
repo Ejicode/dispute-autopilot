@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dispute-autopilot.dev/schemas/cited_draft.schema.json",
+  "title": "AIDraftWithCitations",
+  "description": "Structured AI draft with citation links to vault evidence verified by code",
+  "type": "object",
+  "required": [
+    "id",
+    "dispute_id",
+    "classification",
+    "draft_text",
+    "claims",
+    "schema_valid",
+    "model_name",
+    "verified",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "dispute_id": { "type": "string" },
+    "classification": { "type": "string" },
+    "draft_text": { "type": "string" },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "claim_id",
+          "text",
+          "claim_type",
+          "expected_value",
+          "evidence_id"
+        ],
+        "properties": {
+          "claim_id": { "type": "string" },
+          "text": { "type": "string" },
+          "claim_type": {
+            "type": "string",
+            "enum": [
+              "TRACKING_NUMBER",
+              "SHIPPING_DATE",
+              "DELIVERY_DATE",
+              "DELIVERY_ADDRESS",
+              "TRANSACTION_AMOUNT",
+              "BUYER_NAME"
+            ]
+          },
+          "expected_value": { "type": "string" },
+          "evidence_id": { "type": "string" },
+          "verified": { "type": "boolean" },
+          "mismatch_reason": { "type": "string" }
+        }
+      }
+    },
+    "schema_valid": { "type": "boolean" },
+    "model_name": { "type": "string" },
+    "verified": { "type": "boolean" },
+    "verification_errors": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}
