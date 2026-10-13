@@ -1,3 +1,4 @@
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { Dispute, EvidenceItem } from '@/lib/types';
@@ -5,7 +6,7 @@ import { generateDisputePdfPacket } from '@/lib/vault/packet';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+async function handleGET(req: NextRequest, { params }: { params: { id: string } }) {
   const db = getDb();
   const disputeId = params.id;
 
@@ -35,3 +36,5 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Failed to generate PDF packet: ' + err.message }, { status: 500 });
   }
 }
+
+export const GET = withMerchant(handleGET);

@@ -1,3 +1,4 @@
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getDb, recordAuditLog } from '@/lib/db';
@@ -9,7 +10,7 @@ import { realtimeHub } from '@/lib/realtime/hub';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+async function handleGET() {
   const db = getDb();
   const rows = db.prepare(`
     SELECT * FROM disputes
@@ -53,7 +54,7 @@ export async function GET() {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const db = getDb();
   const body = await req.json().catch(() => ({}));
 
@@ -61,6 +62,9 @@ export async function POST(req: NextRequest) {
   const paypalDisputeId = body.paypal_dispute_id || ('PP-D-' + Math.floor(10000 + Math.random() * 90000));
   const transactionId = body.transaction_id || ('TXN-' + Math.floor(100000 + Math.random() * 900000));
   const orderId = body.order_id || null;
+  if (orderId && !db.prepare('SELECT id FROM demo_orders WHERE id = ?').get(orderId)) {
+    return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+  }
   const reason = body.reason || 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED';
   const amountCents = body.amount_cents || 12000;
   const currency = body.currency || 'USD';
@@ -135,3 +139,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ dispute: updated, draft, evidenceCount: evidenceItems.length });
 }
+
+export const GET = withMerchant(handleGET);
+
+export const POST = withMerchant(handlePOST);

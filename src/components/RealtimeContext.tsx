@@ -1,7 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { SystemEvent } from '@/lib/realtime/hub';
+import type { SystemEvent } from '@/lib/realtime/hub';
+
+import { useUser } from './UserContext';
 
 interface RealtimeContextValue {
   isConnected: boolean;
@@ -18,6 +20,7 @@ const RealtimeContext = createContext<RealtimeContextValue>({
 });
 
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
+  const { activeUser } = useUser();
   const [isConnected, setIsConnected] = useState(false);
   const [lastEvent, setLastEvent] = useState<SystemEvent | null>(null);
   const [notifications, setNotifications] = useState<Array<{ id: string; message: string; type: string; timestamp: string }>>([]);
@@ -27,6 +30,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    if (!activeUser) return;
     let eventSource: EventSource | null = null;
     let reconnectTimeout: NodeJS.Timeout;
 
@@ -92,7 +96,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       eventSource?.close();
       clearTimeout(reconnectTimeout);
     };
-  }, []);
+  }, [activeUser?.id]);
 
   return (
     <RealtimeContext.Provider value={{ isConnected, lastEvent, notifications, dismissNotification }}>

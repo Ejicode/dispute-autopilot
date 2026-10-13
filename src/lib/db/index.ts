@@ -2,26 +2,31 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import { merchantScope } from '../auth/context';
+import { dataDirectory } from './storage';
 
-// Ensure data folder exists
-const DB_DIR = path.join(process.cwd(), 'data');
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
-}
-
-const DB_PATH = path.join(DB_DIR, 'dispute_autopilot.db');
-
-// Singleton connection
-let dbInstance: Database.Database | null = null;
+const runtime = globalThis as typeof globalThis & { disputeDatabases?: Map<string, Database.Database> };
+const databases = runtime.disputeDatabases ??= new Map<string, Database.Database>();
 
 export function getDb(): Database.Database {
-  if (!dbInstance) {
-    dbInstance = new Database(DB_PATH);
-    dbInstance.pragma('journal_mode = WAL');
-    dbInstance.pragma('foreign_keys = ON');
-    initSchema(dbInstance);
+  const { merchantId, user } = merchantScope();
+  const directory = path.join(dataDirectory(), 'merchants');
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  const filename = path.join(directory, `${merchantId}.db`);
+  let db = databases.get(filename);
+  if (!db) {
+    db = new Database(filename);
+    fs.chmodSync(filename, 0o600);
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
+    initSchema(db);
+    databases.set(filename, db);
   }
-  return dbInstance;
+  // Business queries receive only this merchant's public profile, never credentials.
+  if (user) db.prepare(`INSERT OR IGNORE INTO users
+    (id,name,email,store_name,role,avatar_url,created_at) VALUES(?,?,?,?,?,?,?)`)
+    .run(user.id,user.name,user.email,user.store_name,user.role,user.avatar_url || null,user.created_at);
+  return db;
 }
 
 function initSchema(db: Database.Database) {

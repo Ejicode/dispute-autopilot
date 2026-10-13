@@ -1,3 +1,4 @@
+import { withMerchantScope } from '../src/lib/auth/context';
 import crypto from 'crypto';
 import { getDb, recordAuditLog } from '../src/lib/db';
 import { addToVault } from '../src/lib/vault/vault';
@@ -259,7 +260,7 @@ async function seed() {
   console.log('✓ Seeding complete: 2 active disputes, 2 orders, 6 vault items created.');
 }
 
-seed().catch((err) => {
+withMerchantScope('demo', seed).catch((err) => {
   console.error('Seed failed:', err);
   process.exit(1);
 });

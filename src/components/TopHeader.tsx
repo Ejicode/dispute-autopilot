@@ -31,7 +31,7 @@ export default function TopHeader({ onSearch, onToggleSidebar, metrics }: TopHea
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { notifications } = useRealtime();
-  const { users, activeUser, setActiveUser, openCreateModal, logout } = useUser();
+  const { activeUser, openCreateModal, logout } = useUser();
 
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,44 +158,6 @@ export default function TopHeader({ onSearch, onToggleSidebar, metrics }: TopHea
                 </div>
                 <ExternalLink className="w-3.5 h-3.5 opacity-70" />
               </Link>
-
-              {/* Registered Accounts List */}
-              <div className="py-1 max-h-48 overflow-y-auto space-y-1">
-                <span className="px-2 text-[10px] font-bold uppercase text-slate-400 block mb-1">
-                  Switch Merchant Profile ({users.length})
-                </span>
-                {users.map((u) => {
-                  const isCurrent = activeUser?.id === u.id;
-                  const uAvatar = u.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80';
-                  return (
-                    <button
-                      key={u.id}
-                      onClick={() => {
-                        setActiveUser(u);
-                        setDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-colors ${
-                        isCurrent
-                          ? 'bg-blue-50 text-[#0070BA] font-bold'
-                          : 'hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <img
-                          src={uAvatar}
-                          alt={u.name}
-                          className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
-                        />
-                        <div className="min-w-0">
-                          <span className="block font-semibold truncate">{u.name}</span>
-                          <span className="text-[10px] text-slate-400 block truncate">{u.store_name}</span>
-                        </div>
-                      </div>
-                      {isCurrent && <Check className="w-4 h-4 text-[#0070BA] shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
 
               {/* Create Account & Logout Action Buttons */}
               <div className="pt-2 border-t border-slate-100 mt-1 flex items-center gap-2">

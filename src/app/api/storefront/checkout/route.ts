@@ -1,3 +1,4 @@
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getDb, recordAuditLog } from '@/lib/db';
@@ -8,7 +9,7 @@ import { DemoOrder } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+async function handleGET() {
   const db = getDb();
   const orders = db.prepare('SELECT * FROM demo_orders ORDER BY created_at DESC LIMIT 20').all() as any[];
   const formatted: DemoOrder[] = orders.map((o) => ({
@@ -19,7 +20,7 @@ export async function GET() {
   return NextResponse.json({ orders: formatted });
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const db = getDb();
   const body = await req.json().catch(() => ({}));
 
@@ -175,3 +176,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ order: createdOrder, success: true });
 }
+
+export const GET = withMerchant(handleGET);
+
+export const POST = withMerchant(handlePOST);

@@ -11,6 +11,7 @@
     "seed": "tsx scripts/seed.ts",
     "bench": "tsx scripts/bench.ts",
     "test": "tsx scripts/test-runner.ts",
+    "test:auth": "tsx scripts/test-auth.ts",
     "test:attacks": "tsx scripts/test-attacks.ts"
   },
   "dependencies": {

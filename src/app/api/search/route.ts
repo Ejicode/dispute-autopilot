@@ -1,10 +1,11 @@
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { PRODUCTS } from '@/lib/storefront/catalog';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q')?.trim() || '';
 
   if (!q || q.length < 2) {
@@ -147,3 +148,5 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ results: results.slice(0, 12), query: q, total: results.length });
 }
+
+export const GET = withMerchant(handleGET);

@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import { Dispute, ExactActionSnapshot } from '../types';
 import { recordAuditLog } from '../db';
+import { merchantScope } from '../auth/context';
+import { HttpError } from '../auth/session';
 
 export interface PayPalCredentials {
   clientId?: string;
@@ -25,10 +27,17 @@ export class PayPalClient {
     return Boolean(this.clientId && this.clientSecret);
   }
 
+  public assertMerchantAccess(): void {
+    if (this.isConfigured() && merchantScope().merchantId !== process.env.PAYPAL_MERCHANT_USER_ID) {
+      throw new HttpError(403, 'PayPal is not connected to this merchant workspace.');
+    }
+  }
+
   /**
    * Obtain OAuth 2.0 access token with in-memory caching
    */
   public async getAccessToken(): Promise<string> {
+    this.assertMerchantAccess();
     if (!this.isConfigured()) {
       return 'SANDBOX_MOCK_ACCESS_TOKEN_' + Date.now();
     }

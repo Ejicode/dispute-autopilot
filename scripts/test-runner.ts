@@ -1,3 +1,4 @@
+import { withMerchantScope } from '../src/lib/auth/context';
 import crypto from 'crypto';
 import { calculateEvidenceStrength } from '../src/lib/ai/triage';
 import { verifyDraftClaims } from '../src/lib/ai/verifier';
@@ -157,7 +158,7 @@ async function runTests() {
   }
 }
 
-runTests().catch((err) => {
+withMerchantScope('demo', runTests).catch((err) => {
   console.error('Test runner failed:', err);
   process.exit(1);
 });

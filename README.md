@@ -143,20 +143,22 @@ Copy `.env.example` to `.env.local` and configure your PayPal Sandbox credential
 cp .env.example .env.local
 ```
 
-### 4. Seed Database & Run
+### 4. Register & Run
 ```bash
-# Seed demo store orders, evidence vault, and initial disputes
-npm run seed
-
 # Start development server
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to view the AG Grid dispute dashboard.
+Open [http://localhost:3000](http://localhost:3000), register a merchant account with a password of at least 15 characters, and sign in. Each account starts with an empty, isolated workspace. Use the demo storefront and dispute simulator to create that account's sample data.
+
+`npm run seed` prepares a separate CLI-only demo workspace; it does not populate signed-in accounts. Existing legacy data is preserved but is not automatically assigned to new accounts. See [authentication and workspace setup](docs/authentication.md) for API contracts, PayPal ownership, deployment requirements, and migration guidance.
 
 ### 5. Run Verification & Benchmarks
 ```bash
 # Run unit & integration tests
 make test           # or: npm run test
+
+# Check sessions, authorization, merchant isolation, and realtime isolation
+npm run test:auth
 
 # Run Trust Lab penetration test vectors
 make test-attacks   # or: npm run test:attacks

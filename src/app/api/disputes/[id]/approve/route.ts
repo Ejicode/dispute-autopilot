@@ -1,3 +1,5 @@
+import { merchantScope } from '@/lib/auth/context';
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getDb, recordAuditLog } from '@/lib/db';
@@ -7,7 +9,7 @@ import { realtimeHub } from '@/lib/realtime/hub';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+async function handlePOST(req: NextRequest, { params }: { params: { id: string } }) {
   const db = getDb();
   const disputeId = params.id;
   const body = await req.json().catch(() => ({}));
@@ -16,6 +18,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!dispute) {
     return NextResponse.json({ error: 'Dispute not found' }, { status: 404 });
   }
+
+  paypalClient.assertMerchantAccess();
 
   // 1. Policy Gate: Check Response Deadline
   const nowMs = Date.now();
@@ -85,7 +89,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   };
 
   const approvalId = 'app_' + crypto.randomBytes(8).toString('hex');
-  const approver = body.approver || 'Merchant Admin (Owner)';
+  const approver = merchantScope().user!.id;
 
   try {
     // Record Approval in Database
@@ -159,3 +163,5 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export const POST = withMerchant(handlePOST);

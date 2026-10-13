@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { merchantScope } from '../auth/context';
 
 export interface SystemEvent {
   type:
@@ -39,8 +40,9 @@ class RealtimeHub extends EventEmitter {
       payload,
       timestamp: new Date().toISOString(),
     };
-    this.emit('system_event', event);
+    this.emit(`system_event:${merchantScope().merchantId}`, event);
   }
 }
 
-export const realtimeHub = RealtimeHub.getInstance();
+const runtime = globalThis as typeof globalThis & { disputeRealtimeHub?: RealtimeHub };
+export const realtimeHub = runtime.disputeRealtimeHub ??= RealtimeHub.getInstance();

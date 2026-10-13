@@ -1,10 +1,11 @@
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { Dispute, EvidenceItem, AIDraft, Approval, AuditLogEntry } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+async function handleGET(req: NextRequest, { params }: { params: { id: string } }) {
   const db = getDb();
   const disputeId = params.id;
 
@@ -88,3 +89,5 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     order,
   });
 }
+
+export const GET = withMerchant(handleGET);

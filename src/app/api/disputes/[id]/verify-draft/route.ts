@@ -1,3 +1,4 @@
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, recordAuditLog } from '@/lib/db';
 import { Dispute, EvidenceItem, Claim } from '@/lib/types';
@@ -6,7 +7,7 @@ import { realtimeHub } from '@/lib/realtime/hub';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+async function handlePOST(req: NextRequest, { params }: { params: { id: string } }) {
   const db = getDb();
   const disputeId = params.id;
   const body = await req.json().catch(() => ({}));
@@ -64,3 +65,5 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     errors: verification.errors,
   });
 }
+
+export const POST = withMerchant(handlePOST);

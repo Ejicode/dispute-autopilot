@@ -1,10 +1,11 @@
+import { withMerchant } from '@/lib/auth/session';
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { Dispute, DemoOrder } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+async function handleGET() {
   const db = getDb();
 
   // 1. Fetch all disputes & orders from SQLite
@@ -224,3 +225,5 @@ export async function GET() {
     merchantCount: users.length,
   });
 }
+
+export const GET = withMerchant(handleGET);
