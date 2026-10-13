@@ -160,6 +160,9 @@ make test           # or: npm run test
 # Check sessions, authorization, merchant isolation, and realtime isolation
 npm run test:auth
 
+# Check reviewed actions, stale snapshots, concurrent execution, and provider failures
+npm run test:approvals
+
 # Run Trust Lab penetration test vectors
 make test-attacks   # or: npm run test:attacks
 
@@ -170,6 +173,8 @@ make bench          # or: npm run bench
 ---
 
 ## Team Roles (Team of 6)
+
+The approval API uses an explicit review-and-submit flow. See [approval safety](docs/approval-safety.md) for the request contract, execution states, and reconciliation limits.
 
 - **Role A (Tech Lead + PayPal)**: Disputes API, OAuth, State Machine, Policy Checks, Submit & Accept Claim.
 - **Role B (Backend + Data)**: Webhooks (verify & dedupe), Evidence Vault (SHA-256), Schemas, PDF Packet Generator, Audit Log.

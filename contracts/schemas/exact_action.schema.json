@@ -12,25 +12,60 @@
     "currency",
     "evidence_ids",
     "notes",
-    "timestamp"
+    "timestamp",
+    "draft_id",
+    "response_deadline",
+    "provider_payload"
   ],
   "properties": {
     "action_type": {
       "type": "string",
-      "enum": ["PROVIDE_EVIDENCE", "ACCEPT_CLAIM"]
+      "enum": [
+        "PROVIDE_EVIDENCE",
+        "ACCEPT_CLAIM"
+      ]
     },
-    "dispute_id": { "type": "string" },
-    "paypal_dispute_id": { "type": "string" },
+    "dispute_id": {
+      "type": "string"
+    },
+    "paypal_dispute_id": {
+      "type": "string"
+    },
     "amount_cents": {
       "type": "integer",
       "description": "Exact amount in integer minor units (cents)"
     },
-    "currency": { "type": "string", "default": "USD" },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
     "evidence_ids": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
-    "notes": { "type": "string" },
-    "timestamp": { "type": "string", "format": "date-time" }
+    "notes": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Dispute update timestamp captured by this review"
+    },
+    "draft_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "response_deadline": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provider_payload": {
+      "type": "object",
+      "description": "Frozen provider request body shown for review and serialized for execution"
+    }
   }
 }

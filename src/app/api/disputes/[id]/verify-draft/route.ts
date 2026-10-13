@@ -1,4 +1,5 @@
-import { withMerchant } from '@/lib/auth/session';
+import { HttpError, withMerchant } from '@/lib/auth/session';
+import { readAuthBody } from '@/lib/auth/validation';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, recordAuditLog } from '@/lib/db';
 import { Dispute, EvidenceItem, Claim } from '@/lib/types';
@@ -10,12 +11,13 @@ export const dynamic = 'force-dynamic';
 async function handlePOST(req: NextRequest, { params }: { params: { id: string } }) {
   const db = getDb();
   const disputeId = params.id;
-  const body = await req.json().catch(() => ({}));
 
   const dispute = db.prepare('SELECT * FROM disputes WHERE id = ? OR paypal_dispute_id = ?').get(disputeId, disputeId) as Dispute | undefined;
   if (!dispute) {
     return NextResponse.json({ error: 'Dispute not found' }, { status: 404 });
   }
+  const body = await readAuthBody(req);
+  if (Object.keys(body).length) throw new HttpError(400, 'Verification accepts an empty object and rechecks the stored draft. Claims cannot be replaced independently of the narrative.');
 
   const evidenceItems = db.prepare(`
     SELECT * FROM evidence_items
@@ -23,12 +25,12 @@ async function handlePOST(req: NextRequest, { params }: { params: { id: string }
     ORDER BY captured_at ASC
   `).all(dispute.id, dispute.order_id || '') as EvidenceItem[];
 
-  const draftRow = db.prepare('SELECT * FROM ai_drafts WHERE dispute_id = ? ORDER BY created_at DESC LIMIT 1').get(dispute.id) as any;
+  const draftRow = db.prepare('SELECT * FROM ai_drafts WHERE dispute_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1').get(dispute.id) as any;
   if (!draftRow) {
     return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
   }
 
-  const claims: Claim[] = body.claims || JSON.parse(draftRow.claims || '[]');
+  const claims: Claim[] = JSON.parse(draftRow.claims || '[]');
   const verification = verifyDraftClaims(claims, evidenceItems, dispute);
 
   // Update draft row with new verification state

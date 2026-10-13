@@ -12,6 +12,7 @@ async function seed() {
 
   // Clear existing demo tables
   db.exec(`
+    DELETE FROM approval_operations;
     DELETE FROM approvals;
     DELETE FROM ai_drafts;
     DELETE FROM evidence_items;

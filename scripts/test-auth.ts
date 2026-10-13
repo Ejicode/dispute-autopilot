@@ -115,12 +115,14 @@ async function main() {
   const sourceIsConfigured = paypalClient.isConfigured;
   paypalClient.isConfigured = () => true;
   process.env.PAYPAL_MERCHANT_USER_ID = userB.id;
-  check((await routes.approval.POST(request('POST',cookieA,{action_type:'ACCEPT_CLAIM'}),context(disputeA.id))).status === 403, 'merchant cannot use another workspace PayPal credentials');
+  check((await routes.approval.POST(request('POST',cookieA,{action_type:'ACCEPT_CLAIM',snapshot_digest:'0'.repeat(64)}),context(disputeA.id))).status === 403, 'merchant cannot use another workspace PayPal credentials');
   paypalClient.isConfigured = sourceIsConfigured;
   delete process.env.PAYPAL_MERCHANT_USER_ID;
-  const approval = await routes.approval.POST(request('POST',cookieA,{action_type:'ACCEPT_CLAIM',approver:userB.id}),context(disputeA.id));
+  const review = await (await routes.approval.GET(request('GET',cookieA,undefined,'/api/approve?action_type=ACCEPT_CLAIM'),context(disputeA.id))).json();
+  check((await routes.approval.POST(request('POST',cookieA,{action_type:'ACCEPT_CLAIM',snapshot_digest:review.snapshot_digest,approver:userB.id}),context(disputeA.id))).status === 400, 'client cannot override approval actor');
+  const approval = await routes.approval.POST(request('POST',cookieA,{action_type:'ACCEPT_CLAIM',snapshot_digest:review.snapshot_digest}),context(disputeA.id));
   check(approval.status === 200, 'authenticated owner can execute a mocked action');
-  const approved = withMerchantScope(userA.id,()=>getDb().prepare('SELECT approver FROM approvals WHERE dispute_id=?').get(disputeA.id)) as any;
+  const approved = withMerchantScope(userA.id,()=>getDb().prepare('SELECT approver FROM approval_operations WHERE dispute_id=?').get(disputeA.id)) as any;
   check(approved.approver === userA.id, 'audit approver comes from session, not request body');
 
   withMerchantScope(userB.id,()=>getDb().prepare("INSERT INTO ai_chat_messages VALUES('private-b',?,'user','Private B conversation',?)").run(userB.id,new Date().toISOString()));

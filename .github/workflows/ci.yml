@@ -39,6 +39,9 @@ jobs:
       - name: Verify authentication and merchant isolation
         run: npm run test:auth
 
+      - name: Verify approval safety and concurrent execution
+        run: npm run test:approvals
+
       - name: Run Trust Lab attack suite
         run: npm run test:attacks
 

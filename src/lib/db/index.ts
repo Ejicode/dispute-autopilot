@@ -206,6 +206,27 @@ function initSchema(db: Database.Database) {
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_chat_user ON ai_chat_messages(user_id, created_at);
+
+    -- One operation per dispute until reconciliation supports further response rounds.
+    CREATE TABLE IF NOT EXISTS approval_operations (
+      id TEXT PRIMARY KEY,
+      dispute_id TEXT NOT NULL UNIQUE REFERENCES disputes(id),
+      action_type TEXT NOT NULL CHECK(action_type IN ('PROVIDE_EVIDENCE','ACCEPT_CLAIM')),
+      snapshot_digest TEXT NOT NULL,
+      snapshot TEXT NOT NULL,
+      approver TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL UNIQUE,
+      state TEXT NOT NULL CHECK(state IN ('SUBMITTING','SUCCEEDED','UNCERTAIN')),
+      response TEXT,
+      executed_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TRIGGER IF NOT EXISTS approval_operation_snapshot_immutable
+    BEFORE UPDATE OF dispute_id, action_type, snapshot_digest, snapshot, approver, idempotency_key
+    ON approval_operations BEGIN
+      SELECT RAISE(ABORT, 'Approval snapshot is immutable');
+    END;
   `);
 
   // Migrate avatar_url if column does not exist (safe migration for existing DBs)

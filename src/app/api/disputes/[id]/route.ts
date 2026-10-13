@@ -26,7 +26,7 @@ async function handleGET(req: NextRequest, { params }: { params: { id: string } 
   const draftRow = db.prepare(`
     SELECT * FROM ai_drafts
     WHERE dispute_id = ?
-    ORDER BY created_at DESC
+    ORDER BY created_at DESC, rowid DESC
     LIMIT 1
   `).get(dispute.id) as any;
 
@@ -87,6 +87,7 @@ async function handleGET(req: NextRequest, { params }: { params: { id: string } 
     } : null,
     auditLogs: formattedAudit,
     order,
+    operation: db.prepare('SELECT id,state,action_type,created_at,executed_at FROM approval_operations WHERE dispute_id=?').get(dispute.id) || null,
   });
 }
 

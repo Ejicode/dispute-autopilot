@@ -54,6 +54,7 @@ export class PayPalClient {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) {
@@ -78,20 +79,10 @@ export class PayPalClient {
     action: ExactActionSnapshot,
     idempotencyKey: string
   ): Promise<{ success: boolean; result: any }> {
+    if (action.action_type !== 'PROVIDE_EVIDENCE' || !action.provider_payload) throw new Error('A reviewed evidence request is required.');
+    const payload = action.provider_payload;
+    const requestBody = JSON.stringify(payload);
     const token = await this.getAccessToken();
-
-    const payload = {
-      evidence_type: 'PROOF_OF_DELIVERY',
-      evidence_info: {
-        tracking_info: [
-          {
-            carrier_name: 'USPS',
-            tracking_number: action.notes.match(/TRK-[A-Za-z0-9]+/)?.[0] || 'TRK-98214-USPS',
-          },
-        ],
-      },
-      notes: action.notes,
-    };
 
     if (!this.isConfigured()) {
       // High fidelity sandbox simulation
@@ -126,7 +117,8 @@ export class PayPalClient {
         'Content-Type': 'application/json',
         'PayPal-Request-Id': idempotencyKey,
       },
-      body: JSON.stringify(payload),
+      body: requestBody,
+      signal: AbortSignal.timeout(30000),
     });
 
     const resText = await res.text();
@@ -164,6 +156,8 @@ export class PayPalClient {
     action: ExactActionSnapshot,
     idempotencyKey: string
   ): Promise<{ success: boolean; result: any }> {
+    if (action.action_type !== 'ACCEPT_CLAIM' || !action.provider_payload) throw new Error('A reviewed acceptance request is required.');
+    const requestBody = JSON.stringify(action.provider_payload);
     const token = await this.getAccessToken();
 
     if (!this.isConfigured()) {
@@ -196,10 +190,8 @@ export class PayPalClient {
         'Content-Type': 'application/json',
         'PayPal-Request-Id': idempotencyKey,
       },
-      body: JSON.stringify({
-        note: action.notes || 'Seller accepted buyer claim.',
-        accept_claim_reason: 'DID_NOT_SHIP_ITEM',
-      }),
+      body: requestBody,
+      signal: AbortSignal.timeout(30000),
     });
 
     const resText = await res.text();

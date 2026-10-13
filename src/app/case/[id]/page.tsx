@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -42,7 +42,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { Dispute, EvidenceItem, AIDraft, AuditLogEntry } from '@/lib/types';
+import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, ApprovalReview } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { useUser } from '@/components/UserContext';
 import EvidenceCard from '@/components/EvidenceCard';
@@ -62,6 +62,12 @@ export default function CaseDetailPage() {
   const [approvalResult, setApprovalResult] = useState<any | null>(null);
   const [highlightedEvidenceId, setHighlightedEvidenceId] = useState<string | null>(null);
   const [tampering, setTampering] = useState(false);
+  const [actionType, setActionType] = useState<ApprovalAction>('PROVIDE_EVIDENCE');
+  const [review, setReview] = useState<ApprovalReview | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [approvalError, setApprovalError] = useState('');
+  const [operation, setOperation] = useState<ApprovalReview['operation']>();
+  const reviewRequest = useRef(0);
   const [evidenceFilter, setEvidenceFilter] = useState<'ALL' | 'ORDER_CONFIRMATION' | 'TRACKING_HISTORY' | 'PROOF_OF_DELIVERY'>('ALL');
 
   const fetchCase = async () => {
@@ -73,6 +79,7 @@ export default function CaseDetailPage() {
         setEvidenceItems(data.evidenceItems || []);
         setDraft(data.draft);
         setAuditLogs(data.auditLogs || []);
+        setOperation(data.operation || undefined);
       }
     } catch (err) {
       console.error('Failed to load dispute:', err);
@@ -143,75 +150,64 @@ export default function CaseDetailPage() {
     return { carrierName: name, trackingNumber: trackNum, transitVelocityData: data };
   }, [evidenceItems]);
 
-  // Handle Approving Exact Action
-  const handleApproveAction = async () => {
-    if (!dispute || !draft || !draft.verified) return;
-    setApproving(true);
+  useEffect(() => {
+    ++reviewRequest.current;
+    setReview(null);
+    setApprovalResult(null);
+    setApprovalError('');
+    setReviewLoading(false);
+  }, [disputeId, actionType]);
+
+  const handleReview = async () => {
+    if (!dispute) return;
+    const requestId = ++reviewRequest.current;
+    setReviewLoading(true);
+    setReview(null);
+    setApprovalError('');
     try {
-      const res = await fetch(`/api/disputes/${dispute.id}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action_type: dispute.recommendation === 'ACCEPT' ? 'ACCEPT_CLAIM' : 'PROVIDE_EVIDENCE',
-          amount_cents: dispute.amount_cents,
-          notes: draft.draft_text,
-          evidence_ids: evidenceItems.map((e) => e.id),
-        }),
-      });
+      const res = await fetch(`/api/disputes/${dispute.id}/approve?action_type=${actionType}`);
       const data = await res.json();
-      if (res.ok) {
-        setApprovalResult(data);
-        await fetchCase();
-      } else {
-        alert(`Approval Failed: ${data.error || 'Server error'}`);
-      }
-    } catch (err: any) {
-      alert(`Approval error: ${err.message}`);
+      if (requestId !== reviewRequest.current) return;
+      if (!res.ok) throw new Error(data.error || 'Unable to review action.');
+      setReview(data);
+      setOperation(data.operation);
+    } catch (error: any) {
+      if (requestId === reviewRequest.current) setApprovalError(error.message);
     } finally {
-      setApproving(false);
+      if (requestId === reviewRequest.current) setReviewLoading(false);
     }
   };
 
-  // Live Demo Feature: Tamper with a fact in the draft to demonstrate code verifier blocking approval!
+  const handleApproveAction = async () => {
+    if (!dispute || !review || review.operation || approving) return;
+    setApproving(true);
+    setApprovalError('');
+    try {
+      const res = await fetch(`/api/disputes/${dispute.id}/approve`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action_type: review.snapshot.action_type, snapshot_digest: review.snapshot_digest }),
+      });
+      const data = await res.json();
+      if (data.success && data.state === 'SUCCEEDED') setApprovalResult(data);
+      else setApprovalError(data.message || data.error || 'Submission was not acknowledged.');
+      if (res.status === 409 || res.status === 422) setReview(null);
+      await fetchCase();
+    } catch {
+      setApprovalError('Connection interrupted. Check submission status before trying again. Repeating this reviewed action will not create a second operation.');
+    } finally { setApproving(false); }
+  };
+
   const handleToggleFactTamper = async () => {
     if (!draft || !dispute) return;
     setTampering(true);
+    setReview(null);
     try {
-      const updatedClaims = draft.claims.map((c) => {
-        if (c.claim_type === 'TRACKING_NUMBER') {
-          return {
-            ...c,
-            expected_value:
-              c.expected_value === 'TRK-TAMPERED-999-FAIL'
-                ? trackingNumber
-                : 'TRK-TAMPERED-999-FAIL',
-          };
-        }
-        return c;
-      });
-
       const res = await fetch(`/api/disputes/${dispute.id}/verify-draft`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ claims: updatedClaims }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
       });
-
-      if (res.ok) {
-        const result = await res.json();
-        setDraft((prev) =>
-          prev
-            ? {
-                ...prev,
-                verified: result.verified,
-                claims: result.claims,
-                verification_errors: result.errors,
-              }
-            : null
-        );
-      }
-    } finally {
-      setTampering(false);
-    }
+      if (!res.ok) setApprovalError((await res.json()).error || 'Verification failed.');
+      await fetchCase();
+    } finally { setTampering(false); }
   };
 
   if (loading) {
@@ -545,15 +541,15 @@ export default function CaseDetailPage() {
                 </span>
               </div>
 
-              {/* Demo Tamper Fact Button */}
+              {/* Recheck the stored draft against current evidence. */}
               <button
                 onClick={handleToggleFactTamper}
                 disabled={tampering}
                 className="text-[11px] font-bold px-3 py-1.5 rounded-full border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors flex items-center gap-1 shadow-sm"
-                title="Simulate fact mismatch to verify code-level gate blocks approval"
+                title="Recheck the stored claims against current vault evidence"
               >
                 {tampering ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5" />}
-                <span>Demo: Tamper Fact</span>
+                <span>Recheck Draft</span>
               </button>
             </div>
 
@@ -658,59 +654,41 @@ export default function CaseDetailPage() {
               </span>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-xs space-y-2">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Action Type:</span>
-                <strong className="text-slate-800">
-                  {dispute.recommendation === 'ACCEPT' ? 'Accept Claim & Refund Buyer' : 'Submit Evidence & Contest (provide-evidence)'}
-                </strong>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">PayPal Endpoint:</span>
-                <span className="font-mono text-slate-700 text-[11px]">/v1/customer/disputes/{dispute.paypal_dispute_id}/provide-evidence</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Amount:</span>
-                <span className="font-bold text-slate-900">${(dispute.amount_cents / 100).toFixed(2)} {dispute.currency}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Evidence Attachments:</span>
-                <span className="text-slate-800 font-semibold">{evidenceItems.length} Vault Items (PDF Packet)</span>
-              </div>
-            </div>
-
-            {/* Approval Result Toast */}
-            {approvalResult && (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                <div>
-                  <strong>Approved and Submitted!</strong> PayPal acknowledged receipt (Status: {approvalResult.dispute?.status}). Audit log updated.
-                </div>
-              </div>
-            )}
-
-            {/* Approve Button */}
-            <button
-              onClick={handleApproveAction}
-              disabled={!draft?.verified || approving || isResolved}
-              className={`w-full py-4 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg ${
-                !draft?.verified || isResolved
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                  : 'bg-[#0070BA] hover:bg-[#003087] text-white shadow-blue-700/30 hover:shadow-blue-700/50 hover:scale-[1.01] active:scale-[0.99]'
-              }`}
-            >
-              {approving ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4 text-[#FFC439]" />
-              )}
-              <span>
-                {isResolved
-                  ? 'Dispute Already Resolved'
-                  : !draft?.verified
-                  ? 'Approval Disabled: Unverified Claims Must Be Resolved'
-                  : 'Approve & Transmit Exact Action to PayPal Sandbox'}
-              </span>
+            <label className="block text-xs font-semibold text-slate-700">
+              Choose the action to review
+              <select value={actionType} disabled={approving || Boolean(operation)}
+                onChange={e => { ++reviewRequest.current; setReview(null); setActionType(e.target.value as ApprovalAction); }}
+                className="mt-2 w-full border border-slate-300 rounded-xl p-3 bg-white">
+                <option value="PROVIDE_EVIDENCE">Submit evidence</option>
+                <option value="ACCEPT_CLAIM">Accept claim and refund buyer</option>
+              </select>
+            </label>
+            <button onClick={handleReview} disabled={reviewLoading || approving}
+              className="w-full rounded-xl border border-blue-300 p-3 text-sm font-semibold text-blue-800 disabled:opacity-50">
+              {reviewLoading ? 'Loading review…' : operation ? 'Check submission status' : 'Review action'}
+            </button>
+            {review && <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs space-y-3">
+              <p><strong>Action:</strong> {review.snapshot.action_type === 'ACCEPT_CLAIM' ? 'Accept claim and refund buyer' : 'Submit evidence'}</p>
+              <p><strong>Dispute:</strong> {review.snapshot.paypal_dispute_id}</p>
+              <p><strong>Amount:</strong> {(review.snapshot.amount_cents / 100).toFixed(2)} {review.snapshot.currency}</p>
+              <p><strong>Response deadline:</strong> {review.snapshot.response_deadline}</p>
+              <p><strong>Reviewed notes:</strong> {review.snapshot.notes}</p>
+              <p>{review.snapshot.evidence_ids.length} supporting vault records. This request does not upload PDF attachments.</p>
+              <details><summary className="cursor-pointer font-semibold">View request details</summary>
+                <pre className="whitespace-pre-wrap break-all mt-2">{JSON.stringify(review.snapshot.provider_payload, null, 2)}</pre>
+              </details>
+            </div>}
+            {operation && <p role="status" className="text-sm text-slate-700">
+              {operation.state === 'SUCCEEDED' ? 'Provider acknowledged this operation. Final outcome is confirmed separately.' :
+               operation.state === 'UNCERTAIN' ? 'Provider outcome is uncertain. Reconciliation is required before further action.' :
+               'Submission is in progress. If it remains pending after a server restart, reconcile with PayPal before further action.'}
+            </p>}
+            {approvalError && <p role="alert" className="text-sm text-rose-700">{approvalError}</p>}
+            {approvalResult && <p role="status" className="text-sm text-emerald-700">Action acknowledged. Await the final dispute outcome.</p>}
+            <button onClick={handleApproveAction}
+              disabled={!review || Boolean(operation) || approving || dispute.status !== 'REQUIRED_ACTION'}
+              className="w-full py-4 rounded-full text-xs font-bold bg-[#0070BA] text-white disabled:bg-slate-200 disabled:text-slate-500">
+              {approving ? 'Submitting…' : 'Approve reviewed action'}
             </button>
           </div>
 
