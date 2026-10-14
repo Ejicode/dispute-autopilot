@@ -163,6 +163,9 @@ npm run test:auth
 # Check reviewed actions, stale snapshots, concurrent execution, and provider failures
 npm run test:approvals
 
+# Check durable webhook retries, duplicates, and out-of-order events
+npm run test:webhooks
+
 # Run Trust Lab penetration test vectors
 make test-attacks   # or: npm run test:attacks
 
@@ -174,7 +177,7 @@ make bench          # or: npm run bench
 
 ## Team Roles (Team of 6)
 
-The approval API uses an explicit review-and-submit flow. See [approval safety](docs/approval-safety.md) for the request contract, execution states, and reconciliation limits.
+The approval API uses an explicit review-and-submit flow. See [approval safety](docs/approval-safety.md) for the request contract, execution states, and reconciliation limits. See [webhook reliability](docs/webhook-reliability.md) to configure the retry scheduler and inspect failed provider events.
 
 - **Role A (Tech Lead + PayPal)**: Disputes API, OAuth, State Machine, Policy Checks, Submit & Accept Claim.
 - **Role B (Backend + Data)**: Webhooks (verify & dedupe), Evidence Vault (SHA-256), Schemas, PDF Packet Generator, Audit Log.

@@ -246,13 +246,31 @@
     },
     "/api/webhooks/paypal": {
       "post": {
-        "summary": "PayPal Webhook receiver with signature verification and deduplication",
+        "summary": "Verify and durably receive PayPal events, then atomically project business state",
         "responses": {
           "200": {
-            "description": "Webhook event processed or idempotent duplicate ignored"
+            "description": "Event committed, explicitly ignored, or already completed"
           },
           "401": {
-            "description": "Invalid webhook signature"
+            "description": "Invalid signature or missing verification headers"
+          },
+          "400": {
+            "description": "Malformed JSON or invalid event envelope"
+          },
+          "409": {
+            "description": "Event ID was already received with different content"
+          },
+          "413": {
+            "description": "Webhook body exceeds 256 KiB"
+          },
+          "415": {
+            "description": "JSON content type required"
+          },
+          "422": {
+            "description": "Verified event requires dead-letter review"
+          },
+          "503": {
+            "description": "Integration unavailable, verification outage, or durable event awaiting retry/dependency"
           }
         }
       }

@@ -327,7 +327,7 @@ export default function CaseDetailPage() {
               </span>
               <div className="text-sm font-bold text-amber-950 mt-1 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <span>{isResolved ? 'Resolved' : `${hoursLeft} hours left`}</span>
+                <span>{isResolved ? 'Resolved' : Number.isFinite(hoursLeft) ? `${hoursLeft} hours left` : 'Deadline unavailable'}</span>
               </div>
             </div>
 

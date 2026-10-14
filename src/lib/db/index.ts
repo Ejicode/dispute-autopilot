@@ -227,6 +227,39 @@ function initSchema(db: Database.Database) {
     ON approval_operations BEGIN
       SELECT RAISE(ABORT, 'Approval snapshot is immutable');
     END;
+
+    -- Verified receipts are durable before projection; completion commits with business changes.
+    CREATE TABLE IF NOT EXISTS webhook_inbox (
+      event_id TEXT PRIMARY KEY,
+      event_type TEXT NOT NULL,
+      resource_id TEXT,
+      payload TEXT NOT NULL,
+      payload_hash TEXT NOT NULL,
+      state TEXT NOT NULL CHECK(state IN ('RECEIVED','PROCESSED','IGNORED','FAILED','DEFERRED','DEAD_LETTER')),
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_attempt_at INTEGER NOT NULL DEFAULT 0,
+      last_error TEXT,
+      received_at TEXT NOT NULL,
+      completed_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_webhook_retry ON webhook_inbox(state,next_attempt_at);
+    CREATE INDEX IF NOT EXISTS idx_webhook_resource ON webhook_inbox(resource_id,state);
+    CREATE TRIGGER IF NOT EXISTS webhook_receipt_immutable
+    BEFORE UPDATE OF event_id,event_type,resource_id,payload,payload_hash ON webhook_inbox BEGIN
+      SELECT RAISE(ABORT, 'Verified webhook receipt is immutable');
+    END;
+    CREATE TABLE IF NOT EXISTS paypal_dispute_versions (
+      paypal_dispute_id TEXT PRIMARY KEY,
+      provider_updated_ms INTEGER NOT NULL,
+      last_event_id TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS paypal_captures (
+      capture_id TEXT PRIMARY KEY,
+      paypal_order_id TEXT,
+      order_id TEXT,
+      evidence_id TEXT NOT NULL REFERENCES evidence_items(id),
+      content_hash TEXT NOT NULL
+    );
   `);
 
   // Migrate avatar_url if column does not exist (safe migration for existing DBs)

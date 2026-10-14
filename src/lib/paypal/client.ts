@@ -234,13 +234,10 @@ export class PayPalClient {
     webhookEvent: Record<string, any>;
   }): Promise<boolean> {
     if (!this.isConfigured()) {
-      // Deterministic validation for sandbox testing:
-      // If transmissionSig starts with 'FORGED_INVALID', explicitly reject
-      if (params.transmissionSig.includes('FORGED_INVALID') || !params.transmissionId) {
-        return false;
-      }
-      return true;
+      return false;
     }
+
+    if (!params.webhookId) return false;
 
     const token = await this.getAccessToken();
     const res = await fetch(`${this.baseUrl}/v1/notifications/verify-webhook-signature`, {
@@ -255,13 +252,14 @@ export class PayPalClient {
         transmission_id: params.transmissionId,
         transmission_sig: params.transmissionSig,
         transmission_time: params.transmissionTime,
-        webhook_id: params.webhookId || process.env.PAYPAL_WEBHOOK_ID || 'TEST_WEBHOOK_ID',
+        webhook_id: params.webhookId,
         webhook_event: params.webhookEvent,
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) {
-      return false;
+      throw new Error(`PayPal webhook verification unavailable (${res.status}).`);
     }
 
     const data = await res.json();

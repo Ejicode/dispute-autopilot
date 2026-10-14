@@ -34,7 +34,7 @@ async function main() {
   };
   const context = (id = 'unknown') => ({ params: { id } });
   const request = (method = 'GET', cookie = '', body?: unknown, url = '/api/test', origin = 'http://localhost:3000') => new NextRequest(`http://localhost:3000${url}`, {
-    method, headers: { origin, cookie, 'content-type': 'application/json' },
+    method, headers: { origin, cookie, 'content-type': 'application/json', 'paypal-auth-algo':'SHA256withRSA', 'paypal-cert-url':'https://example.test/cert', 'paypal-transmission-id':'test-id', 'paypal-transmission-sig':'test-signature', 'paypal-transmission-time':new Date().toISOString() },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
   let checks = 0;
@@ -145,7 +145,7 @@ async function main() {
   paypalClient.isConfigured = () => true;
   process.env.PAYPAL_WEBHOOK_ID = 'test-webhook';
   process.env.PAYPAL_MERCHANT_USER_ID = userA.id;
-  const providerEvent = {id:'owned-event',event_type:'PAYMENT.CAPTURE.COMPLETED',resource_type:'capture',resource:{id:'private-capture',amount:{value:'12.00',currency_code:'USD'}}};
+  const providerEvent = {id:'owned-event',create_time:new Date().toISOString(),event_type:'PAYMENT.CAPTURE.COMPLETED',resource_type:'capture',resource:{id:'private-capture',amount:{value:'12.00',currency_code:'USD'}}};
   paypalClient.verifyWebhookSignature = async () => false;
   check((await webhook.POST(request('POST','',providerEvent))).status === 401, 'configured webhook rejects failed signature verification');
   paypalClient.verifyWebhookSignature = async () => true;

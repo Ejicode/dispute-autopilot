@@ -18,6 +18,7 @@ export function addToVault(params: {
   title: string;
   content: string;
   filePath?: string | null;
+  publish?: boolean;
 }): EvidenceItem {
   const db = getDb();
   const id = 'ev_' + crypto.randomBytes(8).toString('hex');
@@ -69,7 +70,7 @@ export function addToVault(params: {
     params.disputeId || null
   );
 
-  realtimeHub.publish('VAULT_ITEM_ADDED', item);
+  if (params.publish !== false) realtimeHub.publish('VAULT_ITEM_ADDED', item);
 
   return item;
 }

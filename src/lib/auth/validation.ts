@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { authDb } from './store';
 import { HttpError, tokenHash } from './session';
 
-export async function readAuthBody(req: NextRequest): Promise<Record<string, unknown>> {
+export async function readAuthBody(req: NextRequest, maxBytes = 8192): Promise<Record<string, unknown>> {
   if (!req.headers.get('content-type')?.startsWith('application/json')) throw new HttpError(415, 'JSON is required.');
   const reader = req.body?.getReader();
   if (!reader) throw new HttpError(400, 'A request body is required.');
@@ -12,7 +12,7 @@ export async function readAuthBody(req: NextRequest): Promise<Record<string, unk
     const { value, done } = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > 8192) { await reader.cancel(); throw new HttpError(413, 'Request is too large.'); }
+    if (size > maxBytes) { await reader.cancel(); throw new HttpError(413, 'Request is too large.'); }
     chunks.push(value);
   }
   try {

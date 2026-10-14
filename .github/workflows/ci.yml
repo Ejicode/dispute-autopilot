@@ -42,6 +42,9 @@ jobs:
       - name: Verify approval safety and concurrent execution
         run: npm run test:approvals
 
+      - name: Verify durable webhook processing and recovery
+        run: npm run test:webhooks
+
       - name: Run Trust Lab attack suite
         run: npm run test:attacks
 

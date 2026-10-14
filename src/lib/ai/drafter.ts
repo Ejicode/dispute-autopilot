@@ -46,6 +46,14 @@ export async function generateCitedDraft(
     draftOutput = generateDeterministicDraft(dispute, evidenceItems, buyerMessage);
   }
 
+  return persistCitedDraft(dispute, evidenceItems, draftOutput);
+}
+
+/** Synchronous persistence allows webhook projection and drafting to commit atomically. */
+export function persistCitedDraft(
+  dispute: Dispute, evidenceItems: EvidenceItem[], draftOutput: DraftOutput, publish = true
+): AIDraft {
+  const db = getDb();
   // Pure code verification of all claims against vault
   const verification = verifyDraftClaims(draftOutput.claims, evidenceItems, dispute);
 
@@ -98,7 +106,7 @@ export async function generateCitedDraft(
     dispute.id
   );
 
-  realtimeHub.publish('DRAFT_GENERATED', aiDraft);
+  if (publish) realtimeHub.publish('DRAFT_GENERATED', aiDraft);
 
   return aiDraft;
 }

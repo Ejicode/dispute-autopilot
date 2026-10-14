@@ -60,7 +60,7 @@ export async function generateDisputePdfPacket(
     { label: 'Transaction ID:', val: dispute.transaction_id },
     { label: 'Dispute Reason:', val: dispute.reason },
     { label: 'Disputed Amount:', val: `$${(dispute.amount_cents / 100).toFixed(2)} ${dispute.currency}` },
-    { label: 'Response Deadline:', val: new Date(dispute.response_deadline).toLocaleString() },
+    { label: 'Response Deadline:', val: Number.isFinite(Date.parse(dispute.response_deadline)) ? new Date(dispute.response_deadline).toLocaleString() : 'Unknown' },
     { label: 'Evidence Score:', val: `${dispute.strength_score}/100 (${dispute.recommendation})` },
   ];
 

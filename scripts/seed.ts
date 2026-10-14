@@ -13,6 +13,9 @@ async function seed() {
   // Clear existing demo tables
   db.exec(`
     DELETE FROM approval_operations;
+    DELETE FROM paypal_captures;
+    DELETE FROM paypal_dispute_versions;
+    DELETE FROM webhook_inbox;
     DELETE FROM approvals;
     DELETE FROM ai_drafts;
     DELETE FROM evidence_items;

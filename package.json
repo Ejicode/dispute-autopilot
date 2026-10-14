@@ -13,6 +13,8 @@
     "test": "tsx scripts/test-runner.ts",
     "test:auth": "tsx scripts/test-auth.ts",
     "test:approvals": "tsx scripts/test-approvals.ts",
+    "test:webhooks": "tsx scripts/test-webhooks.ts",
+    "webhooks:retry": "tsx scripts/retry-webhooks.ts",
     "test:attacks": "tsx scripts/test-attacks.ts"
   },
   "dependencies": {

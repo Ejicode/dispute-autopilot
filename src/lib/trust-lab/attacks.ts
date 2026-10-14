@@ -77,11 +77,12 @@ export async function runAttackReplayedEvent(): Promise<AttackResult> {
     links: [],
   };
 
-  // First valid send
-  await processPayPalWebhook({ transmissionId: 'TX-1', transmissionSig: 'VALID_MOCK' }, replayEvent as any);
+  // Explicit synthetic verifier: this exercises replay handling, not PayPal cryptography.
+  const headers={authAlgo:'SHA256withRSA',certUrl:'https://example.test/cert',transmissionId:'TX-1',transmissionSig:'TEST_SIGNATURE',transmissionTime:new Date().toISOString()};
+  await processPayPalWebhook(headers,replayEvent,async()=>true);
 
   // Second replayed send
-  const replayRes = await processPayPalWebhook({ transmissionId: 'TX-2', transmissionSig: 'VALID_MOCK' }, replayEvent as any);
+  const replayRes = await processPayPalWebhook({...headers,transmissionId:'TX-2'},replayEvent,async()=>true);
 
   const blocked = replayRes.status === 'DUPLICATE';
   const auditRef = recordAuditLog('system', 'ATTACK_2_REPLAY_BLOCKED', {
@@ -98,7 +99,7 @@ export async function runAttackReplayedEvent(): Promise<AttackResult> {
     blocked,
     http_status: replayRes.statusCode,
     audit_ref: auditRef,
-    reason: 'Unique constraint on paypal_events event_id prevented duplicate state change',
+    reason: 'Verified inbox prevented duplicate projection using an explicitly synthetic verifier',
     run_date: new Date().toISOString(),
   };
 }

@@ -88,6 +88,10 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
           );
         }
 
+        if (!Number.isFinite(deadline)) {
+          return <span className="text-xs text-slate-500">Deadline unavailable</span>;
+        }
+
         if (diffMs <= 0) {
           return (
             <div className="flex items-center gap-1 text-xs font-bold text-rose-600 h-full">
