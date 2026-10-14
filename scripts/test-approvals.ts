@@ -12,9 +12,12 @@ async function main() {
   const { authDb } = await import('../src/lib/auth/store');
   const { tokenHash } = await import('../src/lib/auth/session');
   const { getDb } = await import('../src/lib/db');
+  const { renderClaimText, renderCitedNarrative } = await import('../src/lib/ai/evidence-facts');
   const { calculateSha256 } = await import('../src/lib/vault/vault');
   const { paypalClient } = await import('../src/lib/paypal/client');
   const route = await import('../src/app/api/disputes/[id]/approve/route');
+  const regenerate = await import('../src/app/api/disputes/[id]/regenerate-draft/route');
+  const detail = await import('../src/app/api/disputes/[id]/route');
   const verify = await import('../src/app/api/disputes/[id]/verify-draft/route');
   const merchant = 'usr_'+'a'.repeat(32), foreign = 'usr_'+'b'.repeat(32);
   for (const [id,token] of [[merchant,'a'.repeat(64)],[foreign,'b'.repeat(64)]]) {
@@ -42,9 +45,11 @@ async function main() {
       if (!draft) return;
       const content=JSON.stringify({carrier:'USPS',tracking_number:'TRACK-'+id});
       db.prepare(`INSERT INTO evidence_items(id,dispute_id,evidence_type,source,title,content,sha256_hash,captured_at)
-        VALUES(?,?,'TRACKING_HISTORY','TEST','Tracking',?,?,?)`).run('ev-'+id,id,content,calculateSha256(content),now);
+        VALUES(?,?,'TRACKING_HISTORY','USPS','Tracking',?,?,?)`).run('ev-'+id,id,content,calculateSha256(content),now);
+      const claims = [{claim_id:'c1',claim_type:'TRACKING_NUMBER' as const,text:'',expected_value:'TRACK-'+id,evidence_id:'ev-'+id}];
+      claims[0].text = renderClaimText(claims[0]);
       db.prepare(`INSERT INTO ai_drafts(id,dispute_id,classification,draft_text,claims,model_name,verified,created_at)
-        VALUES(?,?,'INR',?,?,'test',1,?)`).run('draft-'+id,id,'Recorded tracking: TRACK-'+id,JSON.stringify([{claim_id:'c1',claim_type:'TRACKING_NUMBER',text:'Recorded tracking',expected_value:'TRACK-'+id,evidence_id:'ev-'+id}]),now);
+        VALUES(?,?,'INR',?,?,'test',1,?)`).run('draft-'+id,id,renderCitedNarrative(claims),JSON.stringify(claims),now);
     });
   }
   const originalProvide=paypalClient.provideEvidence.bind(paypalClient);
@@ -78,8 +83,46 @@ async function main() {
   ] as const) {
     fixture(id); const review=await (await preview(id)).json();
     scoped(()=>getDb().prepare(sql).run(value,id));
-    check((await post(id,input(review))).status===409 && !readOp(id),`${id} invalidates reviewed digest`);
+    check((await post(id,input(review))).status===(id==='draft-change'?422:409) && !readOp(id),`${id} invalidates reviewed digest`);
   }
+  fixture('unsupported-narrative');
+  scoped(()=>getDb().prepare("UPDATE ai_drafts SET draft_text=draft_text || ' Delivered successfully.' WHERE dispute_id='unsupported-narrative'").run());
+  const beforeUnsupported=calls;
+  check((await preview('unsupported-narrative')).status===422,'verified flag cannot bypass unsupported narrative');
+  const rechecked=await (await verify.POST(request('POST',{}),ctx('unsupported-narrative'))).json();
+  check(rechecked.verified===false && calls===beforeUnsupported,'reverification rejects narrative without provider execution');
+  fixture('malformed-claims');
+  scoped(()=>getDb().prepare("UPDATE ai_drafts SET claims='invalid JSON' WHERE dispute_id='malformed-claims'").run());
+  check((await preview('malformed-claims')).status===422,'malformed stored claims fail closed');
+  fixture('regenerate');
+  const oldReview=await (await preview('regenerate')).json();
+  check((await regenerate.POST(request('POST',{},'','b'.repeat(64)),ctx('regenerate'))).status===404,'foreign merchant cannot regenerate draft');
+  check((await regenerate.POST(request('POST',{},'','invalid'),ctx('regenerate'))).status===401,'anonymous regeneration rejected');
+  check((await regenerate.POST(request('POST',{notes:'override'}),ctx('regenerate'))).status===400,'regeneration rejects client facts');
+  const regenerated=await regenerate.POST(request('POST',{}),ctx('regenerate'));
+  const regeneratedBody=await regenerated.json();
+  check(regenerated.status===201 && regeneratedBody.draft.verified,'regeneration creates a new verified draft from stored evidence');
+  check((await post('regenerate',input(oldReview))).status===409,'regeneration invalidates prior approval review');
+  const history=scoped(()=>getDb().prepare("SELECT COUNT(*) AS n FROM ai_drafts WHERE dispute_id='regenerate'").get()) as any;
+  check(history.n===2,'regeneration preserves old draft history');
+  fixture('legacy-display');
+  scoped(()=>getDb().prepare("UPDATE ai_drafts SET draft_text='Unsupported delivery assertion' WHERE dispute_id='legacy-display'").run());
+  const legacyDetail=await (await detail.GET(request('GET'),ctx('legacy-display'))).json();
+  check(legacyDetail.draft.verified===false,'case detail does not display a stale verified flag as current truth');
+  fixture('malformed-recheck');
+  scoped(()=>getDb().prepare("UPDATE ai_drafts SET claims=? WHERE dispute_id='malformed-recheck'").run('[null]'));
+  for (let n=0;n<2;n++) {
+    const result=await (await verify.POST(request('POST',{}),ctx('malformed-recheck'))).json();
+    check(result.verified===false,'rechecking malformed claims cannot repair them by dropping invalid entries');
+  }
+  fixture('uncited-tracking');
+  scoped(()=>{
+    const content=JSON.stringify({carrier:'USPS',tracking_number:'UNTRUSTED-EXTRA'});
+    getDb().prepare(`INSERT INTO evidence_items(id,dispute_id,evidence_type,source,title,content,sha256_hash,captured_at)
+      VALUES('extra','uncited-tracking','TRACKING_HISTORY','BUYER_MESSAGE','Untrusted',?,?,?)`).run(content,calculateSha256(content),new Date().toISOString());
+  });
+  const checkedPayload=await (await preview('uncited-tracking')).json();
+  check(!JSON.stringify(checkedPayload.snapshot.provider_payload).includes('UNTRUSTED-EXTRA'),'uncited tracking is excluded from provider payload');
   fixture('latest'); const latest=await (await preview('latest')).json();
   scoped(()=>getDb().prepare(`INSERT INTO ai_drafts SELECT 'new-draft',dispute_id,classification,draft_text,claims,schema_valid,model_name,verified,verification_errors,created_at FROM ai_drafts WHERE id='draft-latest'`).run());
   check((await post('latest',input(latest))).status===409,'new draft with equal timestamp invalidates review');
@@ -132,6 +175,8 @@ async function main() {
   check((await post('timeout',input(timeout))).status===409 && calls===timeoutBefore+1,'uncertain operation cannot automatically resubmit');
   const uncertain=await (await preview('timeout')).json();
   check(uncertain.operation.state==='UNCERTAIN','status remains visible after reloading review');
+
+  check((await regenerate.POST(request('POST',{}),ctx('timeout'))).status===409,'uncertain approval blocks regeneration');
 
   // Exercise real client serialization with transport replaced; no network or credentials.
   const originalFetch=globalThis.fetch, originalToken=paypalClient.getAccessToken, originalConfigured=paypalClient.isConfigured;

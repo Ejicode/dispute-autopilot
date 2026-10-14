@@ -2,8 +2,8 @@ import { HttpError, withMerchant } from '@/lib/auth/session';
 import { readAuthBody } from '@/lib/auth/validation';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, recordAuditLog } from '@/lib/db';
-import { Dispute, EvidenceItem, Claim } from '@/lib/types';
-import { verifyDraftClaims } from '@/lib/ai/verifier';
+import { Dispute, EvidenceItem } from '@/lib/types';
+import { verifyCitedDraft, parseStoredClaims } from '@/lib/ai/verifier';
 import { realtimeHub } from '@/lib/realtime/hub';
 
 export const dynamic = 'force-dynamic';
@@ -30,16 +30,15 @@ async function handlePOST(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
   }
 
-  const claims: Claim[] = JSON.parse(draftRow.claims || '[]');
-  const verification = verifyDraftClaims(claims, evidenceItems, dispute);
+  const claims = parseStoredClaims(draftRow.claims);
+  const verification = verifyCitedDraft(claims, draftRow.draft_text, evidenceItems, dispute);
 
   // Update draft row with new verification state
   db.prepare(`
     UPDATE ai_drafts
-    SET claims = ?, verified = ?, verification_errors = ?
+    SET verified = ?, verification_errors = ?
     WHERE id = ?
   `).run(
-    JSON.stringify(verification.verifiedClaims),
     verification.verified ? 1 : 0,
     verification.errors.length > 0 ? JSON.stringify(verification.errors) : null,
     draftRow.id

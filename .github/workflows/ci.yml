@@ -45,6 +45,9 @@ jobs:
       - name: Verify durable webhook processing and recovery
         run: npm run test:webhooks
 
+      - name: Verify typed evidence and cited narratives
+        run: npm run test:evidence
+
       - name: Run Trust Lab attack suite
         run: npm run test:attacks
 

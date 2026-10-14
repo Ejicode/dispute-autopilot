@@ -294,6 +294,64 @@
           }
         }
       }
+    },
+    "/api/disputes/{id}/regenerate-draft": {
+      "post": {
+        "summary": "Create a new cited draft from current stored evidence without submitting a provider action",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "maxProperties": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "New draft returned as {draft}; verification may be false if evidence is insufficient"
+          },
+          "400": {
+            "description": "Malformed body or unsupported fields"
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "403": {
+            "description": "Origin denied"
+          },
+          "404": {
+            "description": "Dispute not found"
+          },
+          "409": {
+            "description": "Dispute no longer awaits action or an approval already exists"
+          },
+          "413": {
+            "description": "Request exceeds 8 KiB"
+          },
+          "415": {
+            "description": "JSON content type required"
+          }
+        }
+      }
     }
   },
   "components": {

@@ -1,6 +1,7 @@
 import { withMerchantScope } from '../src/lib/auth/context';
 import crypto from 'crypto';
 import { calculateEvidenceStrength } from '../src/lib/ai/triage';
+import { renderClaimText } from '../src/lib/ai/evidence-facts';
 import { verifyDraftClaims } from '../src/lib/ai/verifier';
 import { sanitizeUntrustedBuyerText } from '../src/lib/ai/injection-defense';
 import { addToVault, verifyEvidenceIntegrity, calculateSha256 } from '../src/lib/vault/vault';
@@ -67,6 +68,8 @@ async function runTests() {
     },
   ];
 
+  for (const item of mockEvidenceINR) item.sha256_hash = calculateSha256(item.content);
+
   const triageINR = calculateEvidenceStrength('MERCHANDISE_OR_SERVICE_NOT_RECEIVED', mockEvidenceINR);
   assert(triageINR.score === 100, `Full INR evidence receives maximum score (expected 100, got ${triageINR.score})`);
   assert(triageINR.recommendation === 'FIGHT', 'Full INR evidence recommends FIGHT');
@@ -104,6 +107,7 @@ async function runTests() {
     },
   ];
 
+  validClaims[0].text = renderClaimText(validClaims[0]);
   const resValid = verifyDraftClaims(validClaims, mockEvidenceINR, mockDispute);
   assert(resValid.verified === true, 'Claim with matching tracking number is VERIFIED');
   assert(resValid.errors.length === 0, 'Zero verification errors on accurate claim');

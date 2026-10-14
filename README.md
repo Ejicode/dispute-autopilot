@@ -166,6 +166,9 @@ npm run test:approvals
 # Check durable webhook retries, duplicates, and out-of-order events
 npm run test:webhooks
 
+# Check typed evidence and complete narrative verification
+npm run test:evidence
+
 # Run Trust Lab penetration test vectors
 make test-attacks   # or: npm run test:attacks
 
@@ -176,6 +179,8 @@ make bench          # or: npm run bench
 ---
 
 ## Team Roles (Team of 6)
+
+See [evidence verification](docs/evidence-verification.md) for supported facts, narrative checks, and regenerating legacy drafts.
 
 The approval API uses an explicit review-and-submit flow. See [approval safety](docs/approval-safety.md) for the request contract, execution states, and reconciliation limits. See [webhook reliability](docs/webhook-reliability.md) to configure the retry scheduler and inspect failed provider events.
 

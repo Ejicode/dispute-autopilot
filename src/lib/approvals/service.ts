@@ -4,7 +4,7 @@ import { HttpError } from '../auth/session';
 import { merchantScope } from '../auth/context';
 import { paypalClient } from '../paypal/client';
 import { realtimeHub } from '../realtime/hub';
-import { verifyDraftClaims } from '../ai/verifier';
+import { verifyCitedDraft, parseStoredClaims } from '../ai/verifier';
 import { calculateSha256 } from '../vault/vault';
 import type { ApprovalAction, ApprovalReview, Dispute, EvidenceItem } from '../types';
 
@@ -52,12 +52,13 @@ function buildReview(dispute: Dispute, action: ApprovalAction): ApprovalReview {
   if (action === 'PROVIDE_EVIDENCE') {
     if (!draft?.verified || !draft.schema_valid) throw new HttpError(422, 'A verified response draft is required.');
     if (evidence.some(item => calculateSha256(item.content) !== item.sha256_hash)) throw new HttpError(422, 'Evidence integrity check failed.');
-    const claims = JSON.parse(draft.claims);
+    const claims = parseStoredClaims(draft.claims);
     if (!Array.isArray(claims) || !claims.length || claims.some(c => !c || typeof c.expected_value !== 'string' || !c.expected_value.trim())) {
       throw new HttpError(422, 'Draft claims are incomplete.');
     }
-    if (!verifyDraftClaims(claims, evidence, dispute).verified) throw new HttpError(422, 'Draft claims no longer match the evidence.');
-    const tracking = evidence.filter(e => e.evidence_type === 'TRACKING_HISTORY').map(e => {
+    if (!verifyCitedDraft(claims, draft.draft_text, evidence, dispute).verified) throw new HttpError(422, 'Draft facts or narrative no longer match the evidence. Regenerate the draft.');
+    const citedTracking = new Set(claims.filter(c => c.claim_type === 'TRACKING_NUMBER').map(c => c.evidence_id));
+    const tracking = evidence.filter(e => citedTracking.has(e.id)).map(e => {
       try { return JSON.parse(e.content); } catch { return null; }
     }).filter(e => e && typeof e.carrier === 'string' && e.carrier.trim() && typeof e.tracking_number === 'string' && e.tracking_number.trim());
     if (!tracking.length) throw new HttpError(422, 'Recorded carrier and tracking number are required.');

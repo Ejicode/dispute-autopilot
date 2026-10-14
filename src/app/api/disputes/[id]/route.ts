@@ -1,5 +1,6 @@
 import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyCitedDraft, parseStoredClaims } from '@/lib/ai/verifier';
 import { getDb } from '@/lib/db';
 import { Dispute, EvidenceItem, AIDraft, Approval, AuditLogEntry } from '@/lib/types';
 
@@ -32,16 +33,17 @@ async function handleGET(req: NextRequest, { params }: { params: { id: string } 
 
   let draft: AIDraft | null = null;
   if (draftRow) {
+    const verification = verifyCitedDraft(parseStoredClaims(draftRow.claims), draftRow.draft_text, evidenceItems, dispute);
     draft = {
       id: draftRow.id,
       dispute_id: draftRow.dispute_id,
       classification: draftRow.classification,
       draft_text: draftRow.draft_text,
-      claims: JSON.parse(draftRow.claims || '[]'),
+      claims: verification.verifiedClaims,
       schema_valid: Boolean(draftRow.schema_valid),
       model_name: draftRow.model_name,
-      verified: Boolean(draftRow.verified),
-      verification_errors: draftRow.verification_errors ? JSON.parse(draftRow.verification_errors) : undefined,
+      verified: Boolean(draftRow.verified) && verification.verified,
+      verification_errors: verification.errors,
       created_at: draftRow.created_at,
     };
   }

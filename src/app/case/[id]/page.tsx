@@ -210,6 +210,21 @@ export default function CaseDetailPage() {
     } finally { setTampering(false); }
   };
 
+  const handleRegenerateDraft = async () => {
+    if (!dispute) return;
+    setTampering(true);
+    setReview(null);
+    setApprovalError('');
+    try {
+      const res = await fetch(`/api/disputes/${dispute.id}/regenerate-draft`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+      });
+      if (!res.ok) setApprovalError((await res.json()).error || 'Draft regeneration failed.');
+      await fetchCase();
+    } catch { setApprovalError('Unable to regenerate the draft. Please try again.'); }
+    finally { setTampering(false); }
+  };
+
   if (loading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
@@ -531,7 +546,7 @@ export default function CaseDetailPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-500" />
-                <h2 className="font-bold text-slate-900 text-sm">AI-Drafted Response</h2>
+                <h2 className="font-bold text-slate-900 text-sm">Evidence-Based Response</h2>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                   draft?.verified 
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
@@ -553,10 +568,15 @@ export default function CaseDetailPage() {
               </button>
             </div>
 
+            <button onClick={handleRegenerateDraft} disabled={tampering || dispute.status !== 'REQUIRED_ACTION'}
+              className="text-xs font-semibold text-[#0070BA] disabled:opacity-50">
+              Regenerate from current evidence
+            </button>
+
             {/* Narrative Draft Box */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed space-y-2.5">
               {draft?.draft_text ? (
-                draft.draft_text.split('\n\n').map((p, idx) => <p key={idx}>{p}</p>)
+                draft.draft_text.split('\n').map((p, idx) => <p key={idx}>{p}</p>)
               ) : (
                 <p className="text-slate-400 italic">No response drafted yet.</p>
               )}
@@ -618,7 +638,7 @@ export default function CaseDetailPage() {
                   ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                   : 'bg-rose-100 text-rose-800 border-rose-300'
               }`}>
-                {draft?.verified ? '100% DEFENSE RATE' : 'HARD-BLOCKED'}
+                {draft?.verified ? 'FACTS CHECKED' : 'HARD-BLOCKED'}
               </span>
             </div>
 
