@@ -11,7 +11,12 @@
     "seed": "tsx scripts/seed.ts",
     "bench": "tsx scripts/bench.ts",
     "test": "tsx scripts/test-runner.ts",
-    "test:attacks": "tsx scripts/test-attacks.ts"
+    "test:auth": "tsx scripts/test-auth.ts",
+    "test:approvals": "tsx scripts/test-approvals.ts",
+    "test:webhooks": "tsx scripts/test-webhooks.ts",
+    "webhooks:retry": "tsx scripts/retry-webhooks.ts",
+    "test:attacks": "tsx scripts/test-attacks.ts",
+    "test:evidence": "tsx scripts/test-evidence.ts"
   },
   "dependencies": {
     "ag-grid-community": "^32.3.3",

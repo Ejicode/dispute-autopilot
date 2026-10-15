@@ -1,3 +1,4 @@
+import { withMerchantScope } from '../src/lib/auth/context';
 import { runAllTrustLabAttacks } from '../src/lib/trust-lab/attacks';
 
 async function main() {
@@ -35,7 +36,7 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+withMerchantScope('demo', main).catch((err) => {
   console.error('Trust Lab runner failed:', err);
   process.exit(1);
 });

@@ -2,26 +2,31 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import { merchantScope } from '../auth/context';
+import { dataDirectory } from './storage';
 
-// Ensure data folder exists
-const DB_DIR = path.join(process.cwd(), 'data');
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
-}
-
-const DB_PATH = path.join(DB_DIR, 'dispute_autopilot.db');
-
-// Singleton connection
-let dbInstance: Database.Database | null = null;
+const runtime = globalThis as typeof globalThis & { disputeDatabases?: Map<string, Database.Database> };
+const databases = runtime.disputeDatabases ??= new Map<string, Database.Database>();
 
 export function getDb(): Database.Database {
-  if (!dbInstance) {
-    dbInstance = new Database(DB_PATH);
-    dbInstance.pragma('journal_mode = WAL');
-    dbInstance.pragma('foreign_keys = ON');
-    initSchema(dbInstance);
+  const { merchantId, user } = merchantScope();
+  const directory = path.join(dataDirectory(), 'merchants');
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  const filename = path.join(directory, `${merchantId}.db`);
+  let db = databases.get(filename);
+  if (!db) {
+    db = new Database(filename);
+    fs.chmodSync(filename, 0o600);
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
+    initSchema(db);
+    databases.set(filename, db);
   }
-  return dbInstance;
+  // Business queries receive only this merchant's public profile, never credentials.
+  if (user) db.prepare(`INSERT OR IGNORE INTO users
+    (id,name,email,store_name,role,avatar_url,created_at) VALUES(?,?,?,?,?,?,?)`)
+    .run(user.id,user.name,user.email,user.store_name,user.role,user.avatar_url || null,user.created_at);
+  return db;
 }
 
 function initSchema(db: Database.Database) {
@@ -201,6 +206,60 @@ function initSchema(db: Database.Database) {
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_chat_user ON ai_chat_messages(user_id, created_at);
+
+    -- One operation per dispute until reconciliation supports further response rounds.
+    CREATE TABLE IF NOT EXISTS approval_operations (
+      id TEXT PRIMARY KEY,
+      dispute_id TEXT NOT NULL UNIQUE REFERENCES disputes(id),
+      action_type TEXT NOT NULL CHECK(action_type IN ('PROVIDE_EVIDENCE','ACCEPT_CLAIM')),
+      snapshot_digest TEXT NOT NULL,
+      snapshot TEXT NOT NULL,
+      approver TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL UNIQUE,
+      state TEXT NOT NULL CHECK(state IN ('SUBMITTING','SUCCEEDED','UNCERTAIN')),
+      response TEXT,
+      executed_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TRIGGER IF NOT EXISTS approval_operation_snapshot_immutable
+    BEFORE UPDATE OF dispute_id, action_type, snapshot_digest, snapshot, approver, idempotency_key
+    ON approval_operations BEGIN
+      SELECT RAISE(ABORT, 'Approval snapshot is immutable');
+    END;
+
+    -- Verified receipts are durable before projection; completion commits with business changes.
+    CREATE TABLE IF NOT EXISTS webhook_inbox (
+      event_id TEXT PRIMARY KEY,
+      event_type TEXT NOT NULL,
+      resource_id TEXT,
+      payload TEXT NOT NULL,
+      payload_hash TEXT NOT NULL,
+      state TEXT NOT NULL CHECK(state IN ('RECEIVED','PROCESSED','IGNORED','FAILED','DEFERRED','DEAD_LETTER')),
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_attempt_at INTEGER NOT NULL DEFAULT 0,
+      last_error TEXT,
+      received_at TEXT NOT NULL,
+      completed_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_webhook_retry ON webhook_inbox(state,next_attempt_at);
+    CREATE INDEX IF NOT EXISTS idx_webhook_resource ON webhook_inbox(resource_id,state);
+    CREATE TRIGGER IF NOT EXISTS webhook_receipt_immutable
+    BEFORE UPDATE OF event_id,event_type,resource_id,payload,payload_hash ON webhook_inbox BEGIN
+      SELECT RAISE(ABORT, 'Verified webhook receipt is immutable');
+    END;
+    CREATE TABLE IF NOT EXISTS paypal_dispute_versions (
+      paypal_dispute_id TEXT PRIMARY KEY,
+      provider_updated_ms INTEGER NOT NULL,
+      last_event_id TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS paypal_captures (
+      capture_id TEXT PRIMARY KEY,
+      paypal_order_id TEXT,
+      order_id TEXT,
+      evidence_id TEXT NOT NULL REFERENCES evidence_items(id),
+      content_hash TEXT NOT NULL
+    );
   `);
 
   // Migrate avatar_url if column does not exist (safe migration for existing DBs)

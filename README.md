@@ -143,20 +143,31 @@ Copy `.env.example` to `.env.local` and configure your PayPal Sandbox credential
 cp .env.example .env.local
 ```
 
-### 4. Seed Database & Run
+### 4. Register & Run
 ```bash
-# Seed demo store orders, evidence vault, and initial disputes
-npm run seed
-
 # Start development server
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to view the AG Grid dispute dashboard.
+Open [http://localhost:3000](http://localhost:3000), register a merchant account with a password of at least 15 characters, and sign in. Each account starts with an empty, isolated workspace. Use the demo storefront and dispute simulator to create that account's sample data.
+
+`npm run seed` prepares a separate CLI-only demo workspace; it does not populate signed-in accounts. Existing legacy data is preserved but is not automatically assigned to new accounts. See [authentication and workspace setup](docs/authentication.md) for API contracts, PayPal ownership, deployment requirements, and migration guidance.
 
 ### 5. Run Verification & Benchmarks
 ```bash
 # Run unit & integration tests
 make test           # or: npm run test
+
+# Check sessions, authorization, merchant isolation, and realtime isolation
+npm run test:auth
+
+# Check reviewed actions, stale snapshots, concurrent execution, and provider failures
+npm run test:approvals
+
+# Check durable webhook retries, duplicates, and out-of-order events
+npm run test:webhooks
+
+# Check typed evidence and complete narrative verification
+npm run test:evidence
 
 # Run Trust Lab penetration test vectors
 make test-attacks   # or: npm run test:attacks
@@ -168,6 +179,10 @@ make bench          # or: npm run bench
 ---
 
 ## Team Roles (Team of 6)
+
+See [evidence verification](docs/evidence-verification.md) for supported facts, narrative checks, and regenerating legacy drafts.
+
+The approval API uses an explicit review-and-submit flow. See [approval safety](docs/approval-safety.md) for the request contract, execution states, and reconciliation limits. See [webhook reliability](docs/webhook-reliability.md) to configure the retry scheduler and inspect failed provider events.
 
 - **Role A (Tech Lead + PayPal)**: Disputes API, OAuth, State Machine, Policy Checks, Submit & Accept Claim.
 - **Role B (Backend + Data)**: Webhooks (verify & dedupe), Evidence Vault (SHA-256), Schemas, PDF Packet Generator, Audit Log.

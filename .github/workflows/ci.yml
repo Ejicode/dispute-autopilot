@@ -36,6 +36,18 @@ jobs:
       - name: Run automated test suite
         run: npm run test
 
+      - name: Verify authentication and merchant isolation
+        run: npm run test:auth
+
+      - name: Verify approval safety and concurrent execution
+        run: npm run test:approvals
+
+      - name: Verify durable webhook processing and recovery
+        run: npm run test:webhooks
+
+      - name: Verify typed evidence and cited narratives
+        run: npm run test:evidence
+
       - name: Run Trust Lab attack suite
         run: npm run test:attacks
 

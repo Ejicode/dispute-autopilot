@@ -1,3 +1,5 @@
+import { merchantScope } from '@/lib/auth/context';
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getDb } from '@/lib/db';
@@ -355,8 +357,8 @@ Respond helpfully, concisely, and cite exact numbers from the data where relevan
 }
 
 // ── GET: fetch chat history for a user ──
-export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get('user_id');
+async function handleGET(req: NextRequest) {
+  const userId = merchantScope().merchantId;
   if (!userId) return NextResponse.json({ messages: [] });
 
   const db = getDb();
@@ -372,11 +374,11 @@ export async function GET(req: NextRequest) {
 }
 
 // ── POST: send a message to the AI assistant ──
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const db = getDb();
   const body = await req.json().catch(() => ({}));
   const message = (body.message || '').trim();
-  const userId = body.user_id || 'anonymous';
+  const userId = merchantScope().merchantId;
 
   if (!message) {
     return NextResponse.json({ error: 'message is required' }, { status: 400 });
@@ -417,3 +419,7 @@ export async function POST(req: NextRequest) {
     message: { id: aiMsgId, role: 'assistant', content: aiText, created_at: aiNow },
   });
 }
+
+export const GET = withMerchant(handleGET);
+
+export const POST = withMerchant(handlePOST);

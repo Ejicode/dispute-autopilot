@@ -1,10 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserAccount } from '@/lib/types';
-import { useRealtime } from './RealtimeContext';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import type { UserAccount } from '@/lib/types';
 
-// Photo URLs for the avatar gallery — names/titles come from the merchant's own registration form
 export const CURATED_AVATARS = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
@@ -14,134 +12,97 @@ export const CURATED_AVATARS = [
   'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&q=80',
 ];
 
+type Registration = { name: string; email: string; password: string; store_name: string; avatar_url?: string };
+type AuthResult = { success: boolean; error?: string };
 interface UserContextType {
   users: UserAccount[];
   activeUser: UserAccount | null;
   loading: boolean;
+  sessionError: string | null;
   isCreateModalOpen: boolean;
-  setActiveUser: (user: UserAccount) => void;
   refreshUsers: () => Promise<void>;
   openCreateModal: () => void;
   closeCreateModal: () => void;
-  logout: () => void;
-  createAccount: (data: { name: string; email: string; store_name: string; avatar_url?: string }) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthResult>;
+  createAccount: (data: Registration) => Promise<AuthResult>;
 }
-
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [users, setUsers] = useState<UserAccount[]>([]);
   const [activeUser, setActiveUser] = useState<UserAccount | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const { lastEvent } = useRealtime();
+  const revision = useRef(0);
 
-  const fetchUsers = async () => {
+  const refreshUsers = useCallback(async () => {
+    const current = ++revision.current;
     try {
-      const res = await fetch('/api/auth');
-      if (res.ok) {
-        const data = await res.json();
-        const loadedUsers: UserAccount[] = data.users || [];
-        setUsers(loadedUsers);
-
-        // Restore active user from localStorage or pick the first available
-        const savedId = typeof window !== 'undefined' ? localStorage.getItem('active_user_id') : null;
-        let selected = loadedUsers.find((u) => u.id === savedId);
-        if (!selected && loadedUsers.length > 0) {
-          selected = loadedUsers[0];
-        }
-        if (selected) {
-          setActiveUser(selected);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('active_user_id', selected.id);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load user accounts:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
+      const response = await fetch('/api/auth', { cache: 'no-store' });
+      if (current !== revision.current) return;
+      if (response.status === 401) { setActiveUser(null); return; }
+      if (!response.ok) throw new Error('Unable to check your session.');
+      const data = await response.json();
+      if (current === revision.current) { setActiveUser(data.user); setSessionError(null); }
+    } catch {
+      if (current === revision.current) setSessionError('Unable to check your session. Please try again.');
+    } finally { if (current === revision.current) setLoading(false); }
   }, []);
 
-  // Sync on real-time USER_REGISTERED event
   useEffect(() => {
-    if ((lastEvent as any)?.type === 'USER_REGISTERED') {
-      fetchUsers();
-    }
-  }, [lastEvent]);
+    void refreshUsers();
+    const sync = () => { void refreshUsers(); };
+    const storage = (event: StorageEvent) => { if (event.key === 'session-changed') sync(); };
+    window.addEventListener('focus', sync);
+    window.addEventListener('storage', storage);
+    const timer = setInterval(sync, 60000);
+    return () => { clearInterval(timer); window.removeEventListener('focus', sync); window.removeEventListener('storage', storage); };
+  }, [refreshUsers]);
 
-  const handleSelectUser = (user: UserAccount) => {
-    setActiveUser(user);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('active_user_id', user.id);
-    }
+  const notifyTabs = () => {
+    // Identity is never stored here; this only tells other tabs to re-check their cookie.
+    try { localStorage.removeItem('active_user_id'); localStorage.setItem('session-changed', String(Date.now())); } catch {}
   };
 
-  const logout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('active_user_id');
-    }
-    // Switch to alternate user if available or clear
-    if (users.length > 1) {
-      const alternate = users.find((u) => u.id !== activeUser?.id) || users[0];
-      setActiveUser(alternate);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('active_user_id', alternate.id);
-      }
-    } else if (users.length > 0) {
-      setActiveUser(users[0]);
-    }
-  };
-
-  const createAccount = async (data: { name: string; email: string; store_name: string; avatar_url?: string }) => {
+  const authenticate = async (url: string, data: unknown): Promise<AuthResult> => {
     try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const result = await res.json();
-      if (res.ok && result.user) {
-        await fetchUsers();
-        handleSelectUser(result.user);
-        setIsCreateModalOpen(false);
-        return { success: true };
-      }
-      return { success: false, error: result.error || 'Failed to create account.' };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Network error.' };
-    }
+      const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const result = await response.json();
+      if (!response.ok) return { success: false, error: result.error || 'Unable to sign in.' };
+      ++revision.current;
+      setActiveUser(result.user);
+      setLoading(false);
+      setSessionError(null);
+      setIsCreateModalOpen(false);
+      notifyTabs();
+      return { success: true };
+    } catch { return { success: false, error: 'Connection failed. Please try again.' }; }
   };
 
-  return (
-    <UserContext.Provider
-      value={{
-        users,
-        activeUser,
-        loading,
-        isCreateModalOpen,
-        setActiveUser: handleSelectUser,
-        refreshUsers: fetchUsers,
-        openCreateModal: () => setIsCreateModalOpen(true),
-        closeCreateModal: () => setIsCreateModalOpen(false),
-        logout,
-        createAccount,
-      }}
-    >
-      {children}
-    </UserContext.Provider>
-  );
+  const logout = async () => {
+    try {
+      const response = await fetch('/api/auth', { method: 'DELETE' });
+      if (!response.ok) throw new Error();
+      ++revision.current;
+      setActiveUser(null);
+      setLoading(false);
+      setSessionError(null);
+      setIsCreateModalOpen(false);
+      notifyTabs();
+    } catch { setSessionError('Sign-out failed. Please try again.'); }
+  };
+
+  return <UserContext.Provider value={{
+    users: activeUser ? [activeUser] : [], activeUser, loading, sessionError, isCreateModalOpen,
+    refreshUsers, openCreateModal: () => setIsCreateModalOpen(true), closeCreateModal: () => setIsCreateModalOpen(false),
+    logout, login: (email, password) => authenticate('/api/auth/login', { email, password }),
+    createAccount: data => authenticate('/api/auth', data),
+  }}>{children}</UserContext.Provider>;
 }
 
 export function useUser() {
   const context = useContext(UserContext);
-  if (!context) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
+  if (!context) throw new Error('useUser must be used within a UserProvider');
   return context;
 }

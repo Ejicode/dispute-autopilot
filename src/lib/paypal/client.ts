@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import { Dispute, ExactActionSnapshot } from '../types';
 import { recordAuditLog } from '../db';
+import { merchantScope } from '../auth/context';
+import { HttpError } from '../auth/session';
 
 export interface PayPalCredentials {
   clientId?: string;
@@ -25,10 +27,17 @@ export class PayPalClient {
     return Boolean(this.clientId && this.clientSecret);
   }
 
+  public assertMerchantAccess(): void {
+    if (this.isConfigured() && merchantScope().merchantId !== process.env.PAYPAL_MERCHANT_USER_ID) {
+      throw new HttpError(403, 'PayPal is not connected to this merchant workspace.');
+    }
+  }
+
   /**
    * Obtain OAuth 2.0 access token with in-memory caching
    */
   public async getAccessToken(): Promise<string> {
+    this.assertMerchantAccess();
     if (!this.isConfigured()) {
       return 'SANDBOX_MOCK_ACCESS_TOKEN_' + Date.now();
     }
@@ -45,6 +54,7 @@ export class PayPalClient {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) {
@@ -69,20 +79,10 @@ export class PayPalClient {
     action: ExactActionSnapshot,
     idempotencyKey: string
   ): Promise<{ success: boolean; result: any }> {
+    if (action.action_type !== 'PROVIDE_EVIDENCE' || !action.provider_payload) throw new Error('A reviewed evidence request is required.');
+    const payload = action.provider_payload;
+    const requestBody = JSON.stringify(payload);
     const token = await this.getAccessToken();
-
-    const payload = {
-      evidence_type: 'PROOF_OF_DELIVERY',
-      evidence_info: {
-        tracking_info: [
-          {
-            carrier_name: 'USPS',
-            tracking_number: action.notes.match(/TRK-[A-Za-z0-9]+/)?.[0] || 'TRK-98214-USPS',
-          },
-        ],
-      },
-      notes: action.notes,
-    };
 
     if (!this.isConfigured()) {
       // High fidelity sandbox simulation
@@ -117,7 +117,8 @@ export class PayPalClient {
         'Content-Type': 'application/json',
         'PayPal-Request-Id': idempotencyKey,
       },
-      body: JSON.stringify(payload),
+      body: requestBody,
+      signal: AbortSignal.timeout(30000),
     });
 
     const resText = await res.text();
@@ -155,6 +156,8 @@ export class PayPalClient {
     action: ExactActionSnapshot,
     idempotencyKey: string
   ): Promise<{ success: boolean; result: any }> {
+    if (action.action_type !== 'ACCEPT_CLAIM' || !action.provider_payload) throw new Error('A reviewed acceptance request is required.');
+    const requestBody = JSON.stringify(action.provider_payload);
     const token = await this.getAccessToken();
 
     if (!this.isConfigured()) {
@@ -187,10 +190,8 @@ export class PayPalClient {
         'Content-Type': 'application/json',
         'PayPal-Request-Id': idempotencyKey,
       },
-      body: JSON.stringify({
-        note: action.notes || 'Seller accepted buyer claim.',
-        accept_claim_reason: 'DID_NOT_SHIP_ITEM',
-      }),
+      body: requestBody,
+      signal: AbortSignal.timeout(30000),
     });
 
     const resText = await res.text();
@@ -233,13 +234,10 @@ export class PayPalClient {
     webhookEvent: Record<string, any>;
   }): Promise<boolean> {
     if (!this.isConfigured()) {
-      // Deterministic validation for sandbox testing:
-      // If transmissionSig starts with 'FORGED_INVALID', explicitly reject
-      if (params.transmissionSig.includes('FORGED_INVALID') || !params.transmissionId) {
-        return false;
-      }
-      return true;
+      return false;
     }
+
+    if (!params.webhookId) return false;
 
     const token = await this.getAccessToken();
     const res = await fetch(`${this.baseUrl}/v1/notifications/verify-webhook-signature`, {
@@ -254,13 +252,14 @@ export class PayPalClient {
         transmission_id: params.transmissionId,
         transmission_sig: params.transmissionSig,
         transmission_time: params.transmissionTime,
-        webhook_id: params.webhookId || process.env.PAYPAL_WEBHOOK_ID || 'TEST_WEBHOOK_ID',
+        webhook_id: params.webhookId,
         webhook_event: params.webhookEvent,
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) {
-      return false;
+      throw new Error(`PayPal webhook verification unavailable (${res.status}).`);
     }
 
     const data = await res.json();

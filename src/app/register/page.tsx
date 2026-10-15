@@ -16,9 +16,9 @@ const AVATAR_PHOTOS = [
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { users, loading: userLoading, createAccount, setActiveUser, refreshUsers } = useUser();
+  const { users, loading: userLoading, createAccount, refreshUsers } = useUser();
 
-  const [form, setForm] = useState({ name: '', email: '', store_name: '', avatar_url: AVATAR_PHOTOS[0] });
+  const [form, setForm] = useState({ name: '', email: '', password: '', store_name: '', avatar_url: AVATAR_PHOTOS[0] });
   const [useCustomUrl, setUseCustomUrl] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +45,7 @@ export default function RegisterPage() {
     }
 
     const result = await createAccount({
+      password: form.password,
       name: form.name.trim(),
       email: form.email.trim().toLowerCase(),
       store_name: form.store_name.trim(),
@@ -91,7 +92,7 @@ export default function RegisterPage() {
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
           <div className="bg-gradient-to-r from-[#003087] to-[#0070BA] px-6 py-4">
             <h2 className="text-white font-bold text-base">Merchant Registration</h2>
-            <p className="text-white/70 text-xs mt-0.5">Your account is stored locally — no external auth needed</p>
+            <p className="text-white/70 text-xs mt-0.5">Sign in securely to your merchant workspace</p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -154,6 +155,14 @@ export default function RegisterPage() {
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all font-medium text-slate-900"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="form-password" className="block text-xs font-bold text-slate-700 mb-1.5">Password</label>
+              <input id="form-password" type="password" required minLength={15} maxLength={128} autoComplete="new-password"
+                value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm" />
+              <p className="text-xs text-slate-500 mt-1">Use at least 15 characters.</p>
             </div>
 
             {/* Profile Photo */}
@@ -256,7 +265,7 @@ export default function RegisterPage() {
             </button>
 
             <p className="text-center text-[11px] text-slate-400 font-medium">
-              Your data is stored locally in SQLite — no external services required.
+              Already have an account? <a href="/login" className="text-blue-700 underline">Sign in</a>
             </p>
           </form>
         </div>

@@ -10,11 +10,11 @@ import { Loader2 } from 'lucide-react';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
-  const { activeUser, users, loading: userLoading } = useUser();
+  const { activeUser, sessionError, loading: userLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
-  const isRegisterPage = pathname === '/register';
+  const isRegisterPage = pathname === '/register' || pathname === '/login';
 
   // Restore sidebar state from localStorage on load
   useEffect(() => {
@@ -22,12 +22,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (saved === 'true') setCollapsed(true);
   }, []);
 
-  // First-run gate: if no users exist and we're NOT already on /register, redirect there
+  // API authorization is enforced server-side; this gate provides the sign-in UI.
   useEffect(() => {
-    if (!userLoading && users.length === 0 && !isRegisterPage) {
-      router.replace('/register');
+    if (!userLoading && !activeUser && !isRegisterPage) {
+      router.replace('/login');
     }
-  }, [userLoading, users, isRegisterPage, router]);
+  }, [userLoading, activeUser, isRegisterPage, router]);
 
   const handleToggle = () => {
     const next = !collapsed;
@@ -35,7 +35,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     localStorage.setItem('sidebar_collapsed', String(next));
   };
 
-  // /register page renders without the sidebar shell (full-page layout)
+  // Authentication pages render without the sidebar shell.
   if (isRegisterPage) {
     return <>{children}</>;
   }
@@ -52,8 +52,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // While redirecting to /register, render nothing (redirect is in flight)
-  if (!userLoading && users.length === 0) {
+  // Keep protected content unmounted while redirecting to sign-in.
+  if (!activeUser) {
     return (
       <div className="min-h-screen bg-[#EDF2F7] flex items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-[#0070BA] mx-auto" />
@@ -71,6 +71,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <TopHeader onToggleSidebar={handleToggle} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
+            {sessionError && <p role="alert" className="mb-4 text-sm text-rose-700">{sessionError}</p>}
             {children}
           </div>
         </main>

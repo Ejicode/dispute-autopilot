@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dispute-autopilot.dev/schemas/cited_draft.schema.json",
   "title": "AIDraftWithCitations",
-  "description": "Structured AI draft with citation links to vault evidence verified by code",
+  "description": "Cited factual draft: claim text uses fixed templates and the narrative exactly renders those claims with evidence IDs; verification also checks typed evidence, source, linkage, and content integrity.",
   "type": "object",
   "required": [
     "id",
@@ -16,10 +16,18 @@
     "created_at"
   ],
   "properties": {
-    "id": { "type": "string" },
-    "dispute_id": { "type": "string" },
-    "classification": { "type": "string" },
-    "draft_text": { "type": "string" },
+    "id": {
+      "type": "string"
+    },
+    "dispute_id": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "string"
+    },
+    "draft_text": {
+      "type": "string"
+    },
     "claims": {
       "type": "array",
       "items": {
@@ -32,8 +40,12 @@
           "evidence_id"
         ],
         "properties": {
-          "claim_id": { "type": "string" },
-          "text": { "type": "string" },
+          "claim_id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
           "claim_type": {
             "type": "string",
             "enum": [
@@ -45,20 +57,43 @@
               "BUYER_NAME"
             ]
           },
-          "expected_value": { "type": "string" },
-          "evidence_id": { "type": "string" },
-          "verified": { "type": "boolean" },
-          "mismatch_reason": { "type": "string" }
+          "expected_value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Complete recorded field; monetary values use currency and decimal amount, e.g. USD 100.00."
+          },
+          "evidence_id": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "mismatch_reason": {
+            "type": "string"
+          }
         }
-      }
+      },
+      "maxItems": 200
     },
-    "schema_valid": { "type": "boolean" },
-    "model_name": { "type": "string" },
-    "verified": { "type": "boolean" },
+    "schema_valid": {
+      "type": "boolean"
+    },
+    "model_name": {
+      "type": "string"
+    },
+    "verified": {
+      "type": "boolean"
+    },
     "verification_errors": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
-    "created_at": { "type": "string", "format": "date-time" }
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
   }
 }

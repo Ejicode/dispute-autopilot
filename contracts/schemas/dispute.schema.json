@@ -50,7 +50,10 @@
         "APPEALED"
       ]
     },
-    "response_deadline": { "type": "string", "format": "date-time" },
+    "response_deadline": {
+      "description": "Provider deadline, or an empty string when unknown; unknown deadlines block approval",
+      "anyOf": [{ "type": "string", "format": "date-time" }, { "const": "" }]
+    },
     "outcome": { "type": ["string", "null"] },
     "strength_score": {
       "type": "number",

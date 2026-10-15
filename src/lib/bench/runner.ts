@@ -4,7 +4,7 @@ import { BENCH_SCENARIOS, BenchScenario } from './scenarios';
 import { Dispute, EvidenceItem } from '../types';
 import { calculateEvidenceStrength } from '../ai/triage';
 import { generateDeterministicDraft } from '../ai/drafter';
-import { verifyDraftClaims } from '../ai/verifier';
+import { verifyCitedDraft } from '../ai/verifier';
 import { realtimeHub } from '../realtime/hub';
 
 export interface BenchRunSummary {
@@ -79,7 +79,7 @@ export async function runDisputeBench(batchId: string = 'batch_' + Date.now()): 
           events: [
             {
               status: scenario.carrier_status,
-              timestamp: '2026-10-02T14:30:00Z',
+              timestamp: scenario.carrier_status === 'DELIVERED' ? '2026-10-04T11:20:00Z' : '2026-10-02T14:30:00Z',
               location: 'Los Angeles, CA',
             },
           ],
@@ -122,6 +122,7 @@ export async function runDisputeBench(batchId: string = 'batch_' + Date.now()): 
         order_id: dispute.order_id,
         transaction_id: dispute.transaction_id,
         amount_cents: dispute.amount_cents,
+        currency: dispute.currency,
         shipping_address: '100 Market St, San Francisco, CA',
         buyer_name: 'Alex Johnson',
       }),
@@ -145,6 +146,9 @@ export async function runDisputeBench(batchId: string = 'batch_' + Date.now()): 
       });
     }
 
+    // These are synthetic records, but their integrity hashes must cover their actual content.
+    for (const item of evidenceItems) item.sha256_hash = crypto.createHash('sha256').update(item.content).digest('hex');
+
     // 3. Triage & Strength Score calculation
     const triage = calculateEvidenceStrength(dispute.reason, evidenceItems);
     dispute.strength_score = triage.score;
@@ -158,7 +162,7 @@ export async function runDisputeBench(batchId: string = 'batch_' + Date.now()): 
     const draftOutput = generateDeterministicDraft(dispute, evidenceItems, scenario.buyer_message);
 
     // 5. Run deterministic code verifier on claims
-    const verification = verifyDraftClaims(draftOutput.claims, evidenceItems, dispute);
+    const verification = verifyCitedDraft(draftOutput.claims, draftOutput.narrative, evidenceItems, dispute);
     if (verification.verified) {
       allClaimsVerifiedCount++;
     }

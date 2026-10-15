@@ -1,10 +1,12 @@
+import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyCitedDraft, parseStoredClaims } from '@/lib/ai/verifier';
 import { getDb } from '@/lib/db';
 import { Dispute, EvidenceItem, AIDraft, Approval, AuditLogEntry } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+async function handleGET(req: NextRequest, { params }: { params: { id: string } }) {
   const db = getDb();
   const disputeId = params.id;
 
@@ -25,22 +27,23 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const draftRow = db.prepare(`
     SELECT * FROM ai_drafts
     WHERE dispute_id = ?
-    ORDER BY created_at DESC
+    ORDER BY created_at DESC, rowid DESC
     LIMIT 1
   `).get(dispute.id) as any;
 
   let draft: AIDraft | null = null;
   if (draftRow) {
+    const verification = verifyCitedDraft(parseStoredClaims(draftRow.claims), draftRow.draft_text, evidenceItems, dispute);
     draft = {
       id: draftRow.id,
       dispute_id: draftRow.dispute_id,
       classification: draftRow.classification,
       draft_text: draftRow.draft_text,
-      claims: JSON.parse(draftRow.claims || '[]'),
+      claims: verification.verifiedClaims,
       schema_valid: Boolean(draftRow.schema_valid),
       model_name: draftRow.model_name,
-      verified: Boolean(draftRow.verified),
-      verification_errors: draftRow.verification_errors ? JSON.parse(draftRow.verification_errors) : undefined,
+      verified: Boolean(draftRow.verified) && verification.verified,
+      verification_errors: verification.errors,
       created_at: draftRow.created_at,
     };
   }
@@ -86,5 +89,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     } : null,
     auditLogs: formattedAudit,
     order,
+    operation: db.prepare('SELECT id,state,action_type,created_at,executed_at FROM approval_operations WHERE dispute_id=?').get(dispute.id) || null,
   });
 }
+
+export const GET = withMerchant(handleGET);

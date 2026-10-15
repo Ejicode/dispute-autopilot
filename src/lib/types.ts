@@ -86,6 +86,15 @@ export interface ExactActionSnapshot {
   evidence_ids: string[];
   notes: string;
   timestamp: string;
+  /** Frozen request body reviewed before execution. */
+  provider_payload?: Record<string, unknown>;
+}
+
+export type ApprovalAction = ExactActionSnapshot['action_type'];
+export interface ApprovalReview {
+  snapshot_digest: string;
+  snapshot: ExactActionSnapshot & { draft_id: string | null; response_deadline: string };
+  operation?: { id: string; state: 'SUBMITTING' | 'SUCCEEDED' | 'UNCERTAIN' };
 }
 
 export interface Approval {

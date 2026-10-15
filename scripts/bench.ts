@@ -1,3 +1,4 @@
+import { withMerchantScope } from '../src/lib/auth/context';
 import fs from 'fs';
 import path from 'path';
 import { runDisputeBench } from '../src/lib/bench/runner';
@@ -63,7 +64,7 @@ async function main() {
   console.log(`✓ Benchmark results saved to: ${outputPath}\n`);
 }
 
-main().catch((err) => {
+withMerchantScope('demo', main).catch((err) => {
   console.error('Benchmark failed:', err);
   process.exit(1);
 });

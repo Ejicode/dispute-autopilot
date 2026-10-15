@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ApprovalRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action_type", "snapshot_digest"],
+  "properties": {
+    "action_type": { "type": "string", "enum": ["PROVIDE_EVIDENCE", "ACCEPT_CLAIM"] },
+    "snapshot_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}
