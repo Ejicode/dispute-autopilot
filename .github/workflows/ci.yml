@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
@@ -53,6 +53,9 @@ jobs:
 
       - name: Verify dispute reconciliation and recovery
         run: npm run test:reconciliation
+
+      - name: Verify database upgrades and backend lifecycle
+        run: npm run test:readiness
 
       - name: Run Trust Lab attack suite
         run: npm run test:attacks

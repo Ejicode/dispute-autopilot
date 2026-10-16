@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: dispute-autopilot
+    runtime: node
+    plan: starter
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /api/health
+    disk:
+      name: dispute-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 22.23.2
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data/dispute-autopilot
+      - key: APP_MODE
+        value: demo
+      - key: APP_ORIGIN
+        sync: false
+      - key: PAYPAL_ENVIRONMENT
+        value: sandbox
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: PAYPAL_MERCHANT_USER_ID
+        sync: false

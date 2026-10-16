@@ -88,9 +88,9 @@ export function getVaultEvidenceForDispute(disputeId: string): EvidenceItem[] {
   const db = getDb();
   const rows = db.prepare(`
     SELECT * FROM evidence_items
-    WHERE dispute_id = ?
-    ORDER BY captured_at ASC
-  `).all(disputeId) as EvidenceItem[];
+    WHERE dispute_id = ? OR order_id = (SELECT order_id FROM disputes WHERE id = ?)
+    ORDER BY captured_at ASC, id ASC
+  `).all(disputeId, disputeId) as EvidenceItem[];
 
   return rows;
 }
