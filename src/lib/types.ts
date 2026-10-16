@@ -140,7 +140,7 @@ export interface DemoOrder {
   paypal_order_id: string | null;
   carrier: string;
   tracking_number: string;
-  delivery_status: 'LABEL_CREATED' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED';
+  delivery_status: 'LABEL_CREATED' | 'PICKED_UP' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED';
   delivered_at: string | null;
   created_at: string;
 }

@@ -1,30 +1,19 @@
 import { requireDemo } from '@/lib/runtime/safety';
-import { getDb } from '@/lib/db';
-import { withMerchant } from '@/lib/auth/session';
+import { HttpError, withMerchant } from '@/lib/auth/session';
+import { readAuthBody, field } from '@/lib/auth/validation';
 import { NextRequest, NextResponse } from 'next/server';
-import { advanceCarrierStatus } from '@/lib/carrier/simulator';
+import { advanceCarrierStatus, CarrierMilestone } from '@/lib/carrier/simulator';
 
 export const dynamic = 'force-dynamic';
 
 async function handlePOST(req: NextRequest) {
   requireDemo();
-  try {
-    const body = await req.json();
-    const { order_id, target_status } = body;
-
-    if (!order_id) {
-      return NextResponse.json({ error: 'order_id is required' }, { status: 400 });
-    }
-
-    if (!getDb().prepare('SELECT id FROM demo_orders WHERE id = ?').get(order_id)) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-
-    const result = await advanceCarrierStatus(order_id, target_status);
-    return NextResponse.json(result);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  const body = await readAuthBody(req);
+  const orderId = field(body, 'order_id', 100);
+  if (body.target_status !== undefined && !['LABEL_CREATED','PICKED_UP','IN_TRANSIT','OUT_FOR_DELIVERY','DELIVERED'].includes(body.target_status as string)) {
+    throw new HttpError(400, 'Invalid target_status');
   }
+  return NextResponse.json(await advanceCarrierStatus(orderId, body.target_status as CarrierMilestone['status'] | undefined));
 }
 
 export const POST = withMerchant(handlePOST);

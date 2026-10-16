@@ -18,7 +18,10 @@
     "test:attacks": "tsx scripts/test-attacks.ts",
     "test:evidence": "tsx scripts/test-evidence.ts",
     "test:environments": "tsx scripts/test-environments.ts",
-    "test:reconciliation": "tsx scripts/test-reconciliation.ts"
+    "test:reconciliation": "tsx scripts/test-reconciliation.ts",
+    "test:readiness": "tsx scripts/test-readiness.ts",
+    "start:render": "node scripts/start-render.mjs",
+    "db:backup": "tsx scripts/backup-database.ts"
   },
   "dependencies": {
     "ag-grid-community": "^32.3.3",

@@ -94,7 +94,7 @@ async function main() {
   authDb().prepare('UPDATE sessions SET expires_at=0 WHERE token_hash=?').run(tokenHash(expiringCookie.split('=')[1]));
   check((await auth.GET(request('GET',expiringCookie))).status === 401, 'expired session rejected');
 
-  const orderInput = { buyer_name:'Private A Buyer',buyer_email:'buyer-a@example.test',shipping_address:'1 Test Street',items:[{name:'Test',sku:'test',quantity:1,unit_price_cents:10000}] };
+  const orderInput = { buyer_name:'Private A Buyer',buyer_email:'buyer-a@example.test',shipping_address:'1 Test Street',items:[{name:'Test',sku:'DJI-M3P-CINE',quantity:1,unit_price_cents:10000}] };
   check((await routes.checkout.POST(request('POST',cookieA,orderInput,'/api/storefront/checkout','https://attacker.example'),context())).status === 403, 'cross-origin business mutation rejected');
   const orderA = (await (await routes.checkout.POST(request('POST',cookieA,orderInput),context())).json()).order;
   const orderB = (await (await routes.checkout.POST(request('POST',cookieB,{...orderInput,buyer_name:'Private B Buyer',buyer_email:'buyer-b@example.test'}),context())).json()).order;

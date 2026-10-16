@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import { dataDirectory } from '../db/storage';
+import { migrate } from '../db/migrations';
 
 const runtime = globalThis as typeof globalThis & { disputeAuthDatabases?: Map<string, Database.Database> };
 const databases = runtime.disputeAuthDatabases ??= new Map<string, Database.Database>();
@@ -14,7 +15,7 @@ export function authDb(): Database.Database {
   fs.chmodSync(filename, 0o600);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
-  db.exec(`
+  try { migrate(db, [{ version: 1, name: 'auth-baseline', up: () => db.exec(`
     CREATE TABLE IF NOT EXISTS accounts (
       id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE COLLATE NOCASE,
       name TEXT NOT NULL, store_name TEXT NOT NULL,
@@ -31,7 +32,7 @@ export function authDb(): Database.Database {
     CREATE TABLE IF NOT EXISTS auth_attempts (
       key TEXT PRIMARY KEY, count INTEGER NOT NULL, resets_at INTEGER NOT NULL
     );
-  `);
+  `) }]); } catch (error) { db.close(); throw error; }
   databases.set(filename, db);
   return db;
 }
