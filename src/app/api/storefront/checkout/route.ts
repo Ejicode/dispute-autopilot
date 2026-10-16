@@ -1,3 +1,4 @@
+import { requireDemo } from '@/lib/runtime/safety';
 import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
@@ -21,6 +22,7 @@ async function handleGET() {
 }
 
 async function handlePOST(req: NextRequest) {
+  requireDemo();
   const db = getDb();
   const body = await req.json().catch(() => ({}));
 
@@ -119,7 +121,7 @@ async function handlePOST(req: NextRequest) {
   addToVault({
     orderId,
     evidenceType: 'TRACKING_HISTORY',
-    source: 'CARRIER_INTEGRATION',
+    source: 'CARRIER_SIMULATOR',
     title: `${carrier} Label Created — Awaiting Pickup`,
     content: JSON.stringify({
       carrier,
@@ -133,7 +135,7 @@ async function handlePOST(req: NextRequest) {
           timestamp: now,
         },
       ],
-      source: 'CARRIER_INTEGRATION',
+      source: 'CARRIER_SIMULATOR',
     }, null, 2),
   });
 

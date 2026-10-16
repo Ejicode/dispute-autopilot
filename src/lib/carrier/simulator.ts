@@ -1,3 +1,4 @@
+import { requireDemo } from '../runtime/safety';
 import crypto from 'crypto';
 import { getDb, recordAuditLog } from '../db';
 import { addToVault } from '../vault/vault';
@@ -41,6 +42,7 @@ export async function advanceCarrierStatus(
   orderId: string,
   targetStatus?: CarrierMilestone['status']
 ): Promise<{ order: any; newStatus: string }> {
+  requireDemo();
   const db = getDb();
   const order = db.prepare('SELECT * FROM demo_orders WHERE id = ?').get(orderId) as any;
   if (!order) {
@@ -90,13 +92,13 @@ export async function advanceCarrierStatus(
     status: nextStatus,
     events: [milestoneEvent],
     delivered_at: deliveredAt,
-    source: 'CARRIER_INTEGRATION',
+    source: 'CARRIER_SIMULATOR',
   };
 
   addToVault({
     orderId,
     evidenceType: nextStatus === 'DELIVERED' ? 'PROOF_OF_DELIVERY' : 'TRACKING_HISTORY',
-    source: 'CARRIER_INTEGRATION',
+    source: 'CARRIER_SIMULATOR',
     title: `${carrier} Update: ${nextStatus.replace(/_/g, ' ')}`,
     content: JSON.stringify(trackingPayload, null, 2),
   });

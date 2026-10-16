@@ -1,3 +1,4 @@
+import { requireDemo } from '@/lib/runtime/safety';
 import { getDb } from '@/lib/db';
 import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
@@ -6,6 +7,7 @@ import { advanceCarrierStatus } from '@/lib/carrier/simulator';
 export const dynamic = 'force-dynamic';
 
 async function handlePOST(req: NextRequest) {
+  requireDemo();
   try {
     const body = await req.json();
     const { order_id, target_status } = body;

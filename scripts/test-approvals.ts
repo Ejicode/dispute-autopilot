@@ -5,6 +5,8 @@ import path from 'node:path';
 import { NextRequest } from 'next/server';
 
 async function main() {
+  process.env.APP_MODE = 'demo';
+  process.env.PAYPAL_ENVIRONMENT = 'sandbox';
   process.env.DATA_DIR = mkdtempSync(path.join(tmpdir(),'approval-tests-'));
   process.env.APP_ORIGIN = 'http://localhost:3000';
   for (const key of ['PAYPAL_CLIENT_ID','PAYPAL_CLIENT_SECRET','GEMINI_API_KEY','OPENAI_API_KEY']) delete process.env[key];
@@ -13,6 +15,8 @@ async function main() {
   const { tokenHash } = await import('../src/lib/auth/session');
   const { getDb } = await import('../src/lib/db');
   const { renderClaimText, renderCitedNarrative } = await import('../src/lib/ai/evidence-facts');
+  const { provenanceFor } = await import('../src/lib/runtime/mode');
+  const { merchantScope } = await import('../src/lib/auth/context');
   const { calculateSha256 } = await import('../src/lib/vault/vault');
   const { paypalClient } = await import('../src/lib/paypal/client');
   const route = await import('../src/app/api/disputes/[id]/approve/route');
@@ -39,13 +43,13 @@ async function main() {
   function fixture(id:string,draft=true) {
     scoped(()=>{
       const db=getDb(), now=new Date().toISOString();
-      db.prepare(`INSERT INTO disputes(id,paypal_dispute_id,transaction_id,reason,amount_cents,status,response_deadline,created_at,updated_at)
-        VALUES(?,?,?,'MERCHANDISE_OR_SERVICE_NOT_RECEIVED',10000,'REQUIRED_ACTION',?,?,?)`)
-        .run(id,'PP-'+id,'TX-'+id,new Date(Date.now()+3600000).toISOString(),now,now);
+      db.prepare(`INSERT INTO disputes(id,paypal_dispute_id,transaction_id,reason,amount_cents,status,response_deadline,created_at,updated_at,provenance)
+        VALUES(?,?,?,'MERCHANDISE_OR_SERVICE_NOT_RECEIVED',10000,'REQUIRED_ACTION',?,?,?,?)`)
+        .run(id,'PP-'+id,'TX-'+id,new Date(Date.now()+3600000).toISOString(),now,now,provenanceFor(merchantScope().mode));
       if (!draft) return;
       const content=JSON.stringify({carrier:'USPS',tracking_number:'TRACK-'+id});
-      db.prepare(`INSERT INTO evidence_items(id,dispute_id,evidence_type,source,title,content,sha256_hash,captured_at)
-        VALUES(?,?,'TRACKING_HISTORY','USPS','Tracking',?,?,?)`).run('ev-'+id,id,content,calculateSha256(content),now);
+      db.prepare(`INSERT INTO evidence_items(id,dispute_id,evidence_type,source,title,content,sha256_hash,captured_at,provenance)
+        VALUES(?,?,'TRACKING_HISTORY','USPS','Tracking',?,?,?,?)`).run('ev-'+id,id,content,calculateSha256(content),now,provenanceFor(merchantScope().mode));
       const claims = [{claim_id:'c1',claim_type:'TRACKING_NUMBER' as const,text:'',expected_value:'TRACK-'+id,evidence_id:'ev-'+id}];
       claims[0].text = renderClaimText(claims[0]);
       db.prepare(`INSERT INTO ai_drafts(id,dispute_id,classification,draft_text,claims,model_name,verified,created_at)
@@ -180,14 +184,21 @@ async function main() {
 
   // Exercise real client serialization with transport replaced; no network or credentials.
   const originalFetch=globalThis.fetch, originalToken=paypalClient.getAccessToken, originalConfigured=paypalClient.isConfigured;
+  process.env.APP_MODE='sandbox';
+  process.env.PAYPAL_MERCHANT_USER_ID=merchant;
+  paypalClient.isConfigured=()=>true;
+  fixture('transport');
+  const { reviewAction } = await import('../src/lib/approvals/service');
+  const transportEvidence=scoped(()=>reviewAction('transport','PROVIDE_EVIDENCE'));
+  const transportAcceptance=scoped(()=>reviewAction('transport','ACCEPT_CLAIM'));
   const requests: any[]=[];
   paypalClient.getAccessToken=async()=> 'test-token'; paypalClient.isConfigured=()=>true;
   globalThis.fetch=async (url,options)=>{ requests.push({url,options}); return new Response('{}',{status:200}); };
   try {
-    await scoped(()=>originalProvide('concurrent',concurrent.snapshot,'stable-test'));
-    await scoped(()=>originalAccept('no-draft',acceptance.snapshot,'stable-accept'));
-    assert.equal(requests[0].options.body,JSON.stringify(concurrent.snapshot.provider_payload));
-    assert.equal(requests[1].options.body,JSON.stringify(acceptance.snapshot.provider_payload));
+    await scoped(()=>originalProvide('transport',transportEvidence.snapshot,'stable-test'));
+    await scoped(()=>originalAccept('transport',transportAcceptance.snapshot,'stable-accept'));
+    assert.equal(requests[0].options.body,JSON.stringify(transportEvidence.snapshot.provider_payload));
+    assert.equal(requests[1].options.body,JSON.stringify(transportAcceptance.snapshot.provider_payload));
     check(requests[0].options.headers['PayPal-Request-Id']==='stable-test','provider transport sends exactly the reviewed body and stable key');
     check(!requests[0].options.body.includes('TRK-98214-USPS') && !requests[1].options.body.includes('DID_NOT_SHIP_ITEM'),'provider does not invent tracking or a reason for accepting');
   } finally { globalThis.fetch=originalFetch; paypalClient.getAccessToken=originalToken; paypalClient.isConfigured=originalConfigured; }

@@ -1,3 +1,5 @@
+import { merchantScope } from '../auth/context';
+import { provenanceFor } from '../runtime/mode';
 import crypto from 'node:crypto';
 import { getDb, recordAuditLog } from '../db';
 import { addToVault, calculateSha256, linkOrderEvidenceToDispute } from '../vault/vault';
@@ -46,6 +48,7 @@ function projectDispute(event: PayPalWebhookEvent): Projection {
   const amount=resource.dispute_amount !== undefined ? money(resource.dispute_amount) : undefined;
   if (resource.reason !== undefined && (typeof resource.reason!=='string' || !/^[A-Z_]{1,100}$/.test(resource.reason))) throw new InvalidEvent('Invalid dispute reason.');
   let current=db.prepare('SELECT * FROM disputes WHERE paypal_dispute_id=?').get(providerId) as Dispute | undefined;
+  if (current && current.provenance !== provenanceFor(merchantScope().mode)) throw new InvalidEvent('Dispute provenance does not match this environment.');
   const previous=db.prepare('SELECT provider_updated_ms FROM paypal_dispute_versions WHERE paypal_dispute_id=?').get(providerId) as {provider_updated_ms:number}|undefined;
   if (current && event.event_type==='CUSTOMER.DISPUTE.CREATED') return {ignored:true,disputeId:current.id,notifications};
   // Terminal states do not reopen automatically. Reopening requires provider reconciliation.
@@ -69,10 +72,10 @@ function projectDispute(event: PayPalWebhookEvent): Projection {
   if (!current) {
     const transactionId=identifier(resource.disputed_transactions?.[0]?.seller_transaction_id,'seller transaction ID');
     if (!amount || typeof resource.reason!=='string' || !/^[A-Z_]{1,100}$/.test(resource.reason)) throw new InvalidEvent('Dispute amount and reason are required.');
-    const order=db.prepare(`SELECT id FROM demo_orders WHERE id=(SELECT order_id FROM paypal_captures WHERE capture_id=?) OR paypal_order_id=? LIMIT 1`).get(transactionId,transactionId) as {id:string}|undefined;
+    const order=db.prepare(`SELECT id FROM demo_orders WHERE (id=(SELECT order_id FROM paypal_captures WHERE capture_id=?) OR paypal_order_id=?) AND provenance=? LIMIT 1`).get(transactionId,transactionId,provenanceFor(merchantScope().mode)) as {id:string}|undefined;
     const id='dsp_'+crypto.randomBytes(16).toString('hex');
-    db.prepare(`INSERT INTO disputes(id,paypal_dispute_id,transaction_id,order_id,reason,amount_cents,currency,status,response_deadline,outcome,created_at,updated_at)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(id,providerId,transactionId,order?.id || null,resource.reason,amount.amount,amount.currency,status,resource.seller_response_due_date || '',outcome,now,now);
+    db.prepare(`INSERT INTO disputes(id,paypal_dispute_id,transaction_id,order_id,reason,amount_cents,currency,status,response_deadline,outcome,created_at,updated_at,provenance)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id,providerId,transactionId,order?.id || null,resource.reason,amount.amount,amount.currency,status,resource.seller_response_due_date || '',outcome,now,now,provenanceFor(merchantScope().mode));
     if (order) linkOrderEvidenceToDispute(order.id,id);
     current=db.prepare('SELECT * FROM disputes WHERE id=?').get(id) as Dispute;
   } else {
@@ -104,23 +107,24 @@ function projectCapture(event: PayPalWebhookEvent): Projection {
     if (existing.content_hash!==hash || (existing.paypal_order_id && providerOrderId && existing.paypal_order_id!==providerOrderId)) throw new InvalidEvent('Conflicting capture facts require reconciliation.');
     return {ignored:true,notifications};
   }
-  const order=providerOrderId ? db.prepare('SELECT id FROM demo_orders WHERE paypal_order_id=?').get(providerOrderId) as {id:string}|undefined : undefined;
+  const order=providerOrderId ? db.prepare('SELECT id FROM demo_orders WHERE paypal_order_id=? AND provenance=?').get(providerOrderId,provenanceFor(merchantScope().mode)) as {id:string}|undefined : undefined;
   // Older releases may have captured evidence before this inbox existed. Reuse it safely.
   const legacy=db.prepare(`SELECT * FROM evidence_items WHERE source='PAYMENT_CAPTURE_WEBHOOK'
     AND json_extract(CASE WHEN json_valid(content) THEN content ELSE '{}' END,'$.capture_id')=? LIMIT 1`).get(captureId) as EvidenceItem|undefined;
   let evidence: EvidenceItem;
   if (legacy) {
+    if (legacy.provenance !== provenanceFor(merchantScope().mode)) throw new InvalidEvent('Legacy capture provenance requires reconciliation.');
     const value=JSON.parse(legacy.content);
     if (value.amount_cents!==amount.amount || value.currency!==amount.currency || calculateSha256(legacy.content)!==legacy.sha256_hash) throw new InvalidEvent('Legacy capture evidence requires reconciliation.');
     evidence=legacy;
     if (order && !legacy.order_id) db.prepare('UPDATE evidence_items SET order_id=? WHERE id=?').run(order.id,legacy.id);
   } else {
-    evidence=addToVault({orderId:order?.id,evidenceType:'ORDER_CONFIRMATION',source:'PAYMENT_CAPTURE_WEBHOOK',title:`Payment Capture ${captureId}`,content,publish:false});
+    evidence=addToVault({orderId:order?.id,evidenceType:'ORDER_CONFIRMATION',source:'PAYMENT_CAPTURE_WEBHOOK',title:`Payment Capture ${captureId}`,content,publish:false,provenance:provenanceFor(merchantScope().mode)});
     notifications.push({type:'VAULT_ITEM_ADDED',payload:evidence});
   }
   db.prepare('INSERT INTO paypal_captures VALUES(?,?,?,?,?)').run(captureId,providerOrderId ?? null,order?.id ?? null,evidence.id,hash);
   if (order) {
-    const disputes=db.prepare('SELECT id FROM disputes WHERE transaction_id=? AND order_id IS NULL').all(captureId) as {id:string}[];
+    const disputes=db.prepare('SELECT id FROM disputes WHERE transaction_id=? AND order_id IS NULL AND provenance=?').all(captureId,provenanceFor(merchantScope().mode)) as {id:string}[];
     for (const dispute of disputes) {
       db.prepare('UPDATE disputes SET order_id=?,updated_at=? WHERE id=?').run(order.id,new Date().toISOString(),dispute.id);
       linkOrderEvidenceToDispute(order.id,dispute.id);

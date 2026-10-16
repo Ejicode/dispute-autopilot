@@ -6,6 +6,8 @@ import { spawnSync } from 'node:child_process';
 import { NextRequest } from 'next/server';
 
 async function main() {
+  process.env.APP_MODE = 'sandbox';
+  process.env.PAYPAL_ENVIRONMENT = 'sandbox';
   process.env.DATA_DIR=mkdtempSync(path.join(tmpdir(),'webhook-tests-'));
   for (const key of ['PAYPAL_CLIENT_ID','PAYPAL_CLIENT_SECRET','GEMINI_API_KEY','OPENAI_API_KEY']) delete process.env[key];
   const merchant='usr_'+'c'.repeat(32), foreign='usr_'+'d'.repeat(32);
@@ -37,7 +39,7 @@ async function main() {
   const count=(table:string)=> (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as any).n;
   const notes:any[]=[];
   const listener=(value:any)=>notes.push(value);
-  realtimeHub.on('system_event:'+merchant,listener);
+  realtimeHub.on('system_event:sandbox:'+merchant,listener);
 
   check((await send(capture('bad-signature'),async()=>false)).statusCode===401 && count('webhook_inbox')===0,'invalid signatures never reach the inbox');
   check((await scoped(()=>processPayPalWebhook({},capture('missing-headers'),async()=>true))).statusCode===401,'missing verification headers fail closed');
@@ -90,9 +92,9 @@ async function main() {
   check((await send(resolution)).status==='DEFERRED' && !dispute('out-of-order'),'resolution before creation is retained without inventing a dispute');
   const observed:string[]=[];
   const observer=()=>{const value=dispute('out-of-order');if(value) observed.push(value.status);};
-  realtimeHub.on('system_event:'+merchant,observer);
+  realtimeHub.on('system_event:sandbox:'+merchant,observer);
   check((await send(created('create-later','out-of-order'))).status==='PROCESSED','creation repairs previously deferred resolution');
-  realtimeHub.off('system_event:'+merchant,observer);
+  realtimeHub.off('system_event:sandbox:'+merchant,observer);
   check(dispute('out-of-order').status==='RESOLVED' && dispute('out-of-order').outcome===null,'missing outcome remains unknown instead of becoming a seller win');
   check(receipt('resolve-first').state==='PROCESSED' && observed.length>0 && observed.every(s=>s==='RESOLVED'),'deferred resolution commits before creation notifications are delivered');
   check((await send(event('late-open','CUSTOMER.DISPUTE.UPDATED',{dispute_id:'out-of-order',status:'WAITING_FOR_SELLER_RESPONSE',update_time:newest},newest))).status==='IGNORED' && dispute('out-of-order').status==='RESOLVED','late updates cannot reopen a terminal dispute');
@@ -121,8 +123,8 @@ async function main() {
   db.prepare('INSERT INTO paypal_events VALUES(?,?,?,?,?,?,?,?)').run('legacy',old.id,old.event_type,old.resource_type,'',JSON.stringify(old),'PROCESSED',now);
   check((await send(old)).status==='PROCESSED' && dispute('legacy-receipt'),'legacy processed receipts do not suppress missing business state');
 
-  db.prepare(`INSERT INTO demo_orders(id,order_number,buyer_name,buyer_email,shipping_address,items,total_cents,paypal_order_id,created_at)
-    VALUES('linked-order','ORDER-1','Buyer','buyer@example.test','Test Street','[]',1234,'PAYPAL-ORDER',?)`).run(now);
+  db.prepare(`INSERT INTO demo_orders(id,order_number,buyer_name,buyer_email,shipping_address,items,total_cents,paypal_order_id,created_at,provenance)
+    VALUES('linked-order','ORDER-1','Buyer','buyer@example.test','Test Street','[]',1234,'PAYPAL-ORDER',?,'PAYPAL_SANDBOX')`).run(now);
   const correlated=capture('correlated-capture','CAP-LINKED');
   correlated.resource.supplementary_data={related_ids:{order_id:'PAYPAL-ORDER'}};
   await send(correlated);
@@ -162,7 +164,7 @@ async function main() {
     check((await route.POST(req(JSON.stringify(capture('no-signature')),{'content-type':'application/json'}))).status===401,'HTTP route requires verification headers');
     check((await route.POST(req(JSON.stringify(capture('http-route'))))).status===200,'configured public route projects into its server-selected merchant');
   } finally {paypalClient.isConfigured=originalConfigured;paypalClient.verifyWebhookSignature=originalVerifier;}
-  realtimeHub.off('system_event:'+merchant,listener);
+  realtimeHub.off('system_event:sandbox:'+merchant,listener);
   console.log(`\n${checks} webhook reliability checks passed.`);
 }
 main().catch(error=>{console.error(error);process.exit(1);});

@@ -1,3 +1,4 @@
+import { requireDemo } from '../runtime/safety';
 import crypto from 'crypto';
 import { getDb } from '../db';
 import { BENCH_SCENARIOS, BenchScenario } from './scenarios';
@@ -33,6 +34,7 @@ export interface BenchRunSummary {
 }
 
 export async function runDisputeBench(batchId: string = 'batch_' + Date.now()): Promise<BenchRunSummary> {
+  requireDemo();
   const db = getDb();
   const results: BenchRunSummary['results'] = [];
   const times: number[] = [];

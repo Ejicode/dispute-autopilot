@@ -1,3 +1,4 @@
+import { applicationMode } from '@/lib/runtime/mode';
 import { NextRequest, NextResponse } from 'next/server';
 import { processPayPalWebhook } from '@/lib/paypal/webhooks';
 import { paypalClient } from '@/lib/paypal/client';
@@ -11,6 +12,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    if (applicationMode() === 'demo') return NextResponse.json({error:'PayPal webhooks are disabled in demo mode.'},{status:503});
     // Provider webhooks have no browser session. Only server configuration selects their owner.
     const ownerId = process.env.PAYPAL_MERCHANT_USER_ID;
     if (!paypalClient.isConfigured() || !process.env.PAYPAL_WEBHOOK_ID || !ownerId) {
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
     };
 
     const body = await readAuthBody(req,256 * 1024);
-    const result = await withMerchantScope(owner.id, () => processPayPalWebhook(headers, body), owner);
+    const result = await withMerchantScope(owner.id, () => { paypalClient.assertMerchantAccess(); return processPayPalWebhook(headers, body); }, owner);
 
     return NextResponse.json(
       { status: result.status, message: result.message, disputeId: result.disputeId },

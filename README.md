@@ -138,7 +138,7 @@ npm install
 ```
 
 ### 3. Environment Configuration
-Copy `.env.example` to `.env.local` and configure your PayPal Sandbox credentials:
+Copy `.env.example` to `.env.local`. The default `APP_MODE=demo` runs offline simulations. To connect PayPal Sandbox, set both `APP_MODE=sandbox` and `PAYPAL_ENVIRONMENT=sandbox`, then configure credentials and integration ownership. See [environment isolation](docs/environment-isolation.md), including the changed database paths for existing installations:
 ```bash
 cp .env.example .env.local
 ```
@@ -168,6 +168,9 @@ npm run test:webhooks
 
 # Check typed evidence and complete narrative verification
 npm run test:evidence
+
+# Check demo/sandbox/live API, database, and provider boundaries
+npm run test:environments
 
 # Run Trust Lab penetration test vectors
 make test-attacks   # or: npm run test:attacks

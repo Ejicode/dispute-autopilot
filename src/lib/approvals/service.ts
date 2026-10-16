@@ -1,3 +1,4 @@
+import { requireMatchingProvenance } from '../runtime/safety';
 import crypto from 'node:crypto';
 import { getDb, recordAuditLog } from '../db';
 import { HttpError } from '../auth/session';
@@ -30,6 +31,7 @@ function operationFor(id: string): Operation | undefined {
 }
 
 function checkPolicy(dispute: Dispute) {
+  requireMatchingProvenance(dispute);
   if (dispute.status !== 'REQUIRED_ACTION') throw new HttpError(409, 'This dispute is not awaiting a merchant action.');
   const deadline = Date.parse(dispute.response_deadline);
   if (!Number.isFinite(deadline) || deadline <= Date.now()) throw new HttpError(422, 'The response deadline is expired or unknown.');
@@ -50,6 +52,7 @@ function buildReview(dispute: Dispute, action: ApprovalAction): ApprovalReview {
     WHERE dispute_id=? OR order_id=? ORDER BY id`).all(dispute.id, dispute.order_id || '') as EvidenceItem[] : [];
   let payload: Record<string, unknown>;
   if (action === 'PROVIDE_EVIDENCE') {
+    evidence.forEach(requireMatchingProvenance);
     if (!draft?.verified || !draft.schema_valid) throw new HttpError(422, 'A verified response draft is required.');
     if (evidence.some(item => calculateSha256(item.content) !== item.sha256_hash)) throw new HttpError(422, 'Evidence integrity check failed.');
     const claims = parseStoredClaims(draft.claims);
@@ -69,7 +72,7 @@ function buildReview(dispute: Dispute, action: ApprovalAction): ApprovalReview {
     payload = { note: 'Seller accepted buyer claim.' };
   }
   const snapshot: ApprovalReview['snapshot'] = {
-    action_type: action, dispute_id: dispute.id, paypal_dispute_id: dispute.paypal_dispute_id,
+    environment: merchantScope().mode, action_type: action, dispute_id: dispute.id, paypal_dispute_id: dispute.paypal_dispute_id,
     amount_cents: dispute.amount_cents, currency: dispute.currency,
     evidence_ids: evidence.map(e => e.id), notes: draft?.draft_text || 'Seller accepted buyer claim.',
     timestamp: dispute.updated_at, draft_id: draft?.id || null,

@@ -1,6 +1,7 @@
+import { requireMatchingProvenance } from '../runtime/safety';
 import crypto from 'crypto';
 import { Dispute, ExactActionSnapshot } from '../types';
-import { recordAuditLog } from '../db';
+import { getDb, recordAuditLog } from '../db';
 import { merchantScope } from '../auth/context';
 import { HttpError } from '../auth/session';
 
@@ -12,6 +13,7 @@ export interface PayPalCredentials {
 
 export class PayPalClient {
   private baseUrl: string;
+  private environment: string;
   private clientId: string;
   private clientSecret: string;
   private cachedToken: { token: string; expiresAt: number } | null = null;
@@ -20,6 +22,7 @@ export class PayPalClient {
     this.clientId = process.env.PAYPAL_CLIENT_ID || '';
     this.clientSecret = process.env.PAYPAL_CLIENT_SECRET || '';
     const env = process.env.PAYPAL_ENVIRONMENT || 'sandbox';
+    this.environment = env;
     this.baseUrl = env === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
   }
 
@@ -28,8 +31,25 @@ export class PayPalClient {
   }
 
   public assertMerchantAccess(): void {
-    if (this.isConfigured() && merchantScope().merchantId !== process.env.PAYPAL_MERCHANT_USER_ID) {
+    const scope = merchantScope();
+    if (scope.mode === 'demo') return; // Demo ignores credentials and never uses the transport.
+    if (!this.isConfigured()) throw new HttpError(503, 'PayPal credentials are required in operational modes.');
+    if (this.environment !== scope.mode) throw new HttpError(503, 'PAYPAL_ENVIRONMENT must match APP_MODE.');
+    if (scope.merchantId !== process.env.PAYPAL_MERCHANT_USER_ID) {
       throw new HttpError(403, 'PayPal is not connected to this merchant workspace.');
+    }
+  }
+
+  private assertAction(disputeId: string, action: ExactActionSnapshot): void {
+    this.assertMerchantAccess();
+    if (action.environment !== merchantScope().mode) throw new HttpError(422, 'Reviewed action belongs to a different environment.');
+    const dispute = getDb().prepare('SELECT * FROM disputes WHERE id=?').get(disputeId) as Dispute | undefined;
+    if (!dispute || action.dispute_id !== disputeId || action.paypal_dispute_id !== dispute.paypal_dispute_id) throw new HttpError(422, 'Reviewed dispute identity does not match.');
+    requireMatchingProvenance(dispute);
+    for (const id of action.evidence_ids) {
+      const evidence = getDb().prepare('SELECT provenance,dispute_id,order_id FROM evidence_items WHERE id=?').get(id) as {provenance:string;dispute_id:string;order_id:string}|undefined;
+      if (!evidence || (evidence.dispute_id !== dispute.id && (!dispute.order_id || evidence.order_id !== dispute.order_id))) throw new HttpError(422, 'Reviewed evidence is unavailable.');
+      requireMatchingProvenance(evidence);
     }
   }
 
@@ -38,9 +58,7 @@ export class PayPalClient {
    */
   public async getAccessToken(): Promise<string> {
     this.assertMerchantAccess();
-    if (!this.isConfigured()) {
-      return 'SANDBOX_MOCK_ACCESS_TOKEN_' + Date.now();
-    }
+    if (merchantScope().mode === 'demo') throw new HttpError(503, 'Demo mode does not request PayPal access tokens.');
 
     if (this.cachedToken && this.cachedToken.expiresAt > Date.now() + 60000) {
       return this.cachedToken.token;
@@ -82,10 +100,10 @@ export class PayPalClient {
     if (action.action_type !== 'PROVIDE_EVIDENCE' || !action.provider_payload) throw new Error('A reviewed evidence request is required.');
     const payload = action.provider_payload;
     const requestBody = JSON.stringify(payload);
-    const token = await this.getAccessToken();
+    this.assertAction(disputeId, action);
 
-    if (!this.isConfigured()) {
-      // High fidelity sandbox simulation
+    if (merchantScope().mode === 'demo') {
+      // Explicit offline demo adapter.
       recordAuditLog(
         'paypal',
         'PAYPAL_API_PROVIDE_EVIDENCE_MOCK',
@@ -110,6 +128,7 @@ export class PayPalClient {
       };
     }
 
+    const token = await this.getAccessToken();
     const res = await fetch(`${this.baseUrl}/v1/customer/disputes/${action.paypal_dispute_id}/provide-evidence`, {
       method: 'POST',
       headers: {
@@ -158,9 +177,9 @@ export class PayPalClient {
   ): Promise<{ success: boolean; result: any }> {
     if (action.action_type !== 'ACCEPT_CLAIM' || !action.provider_payload) throw new Error('A reviewed acceptance request is required.');
     const requestBody = JSON.stringify(action.provider_payload);
-    const token = await this.getAccessToken();
+    this.assertAction(disputeId, action);
 
-    if (!this.isConfigured()) {
+    if (merchantScope().mode === 'demo') {
       recordAuditLog(
         'paypal',
         'PAYPAL_API_ACCEPT_CLAIM_MOCK',
@@ -176,13 +195,13 @@ export class PayPalClient {
         success: true,
         result: {
           dispute_id: disputeId,
-          status: 'RESOLVED',
-          outcome: 'RESOLVED_BUYER_FAVOUR',
-          refund_completed: true,
+          status: 'UNDER_REVIEW',
+          simulation: true,
         },
       };
     }
 
+    const token = await this.getAccessToken();
     const res = await fetch(`${this.baseUrl}/v1/customer/disputes/${action.paypal_dispute_id}/accept-claim`, {
       method: 'POST',
       headers: {
@@ -233,7 +252,7 @@ export class PayPalClient {
     webhookId: string;
     webhookEvent: Record<string, any>;
   }): Promise<boolean> {
-    if (!this.isConfigured()) {
+    if (merchantScope().mode === 'demo' || !this.isConfigured()) {
       return false;
     }
 

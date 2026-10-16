@@ -5,6 +5,8 @@ import path from 'node:path';
 import { NextRequest, NextResponse } from 'next/server';
 
 async function main() {
+  process.env.APP_MODE = 'demo';
+  process.env.PAYPAL_ENVIRONMENT = 'sandbox';
   // These tests never open the development database or use provider credentials.
   process.env.DATA_DIR = mkdtempSync(path.join(tmpdir(), 'dispute-auth-test-'));
   process.env.APP_ORIGIN = 'http://localhost:3000';
@@ -115,7 +117,10 @@ async function main() {
   const sourceIsConfigured = paypalClient.isConfigured;
   paypalClient.isConfigured = () => true;
   process.env.PAYPAL_MERCHANT_USER_ID = userB.id;
-  check((await routes.approval.POST(request('POST',cookieA,{action_type:'ACCEPT_CLAIM',snapshot_digest:'0'.repeat(64)}),context(disputeA.id))).status === 403, 'merchant cannot use another workspace PayPal credentials');
+  process.env.APP_MODE='sandbox';
+  assert.throws(()=>withMerchantScope(userA.id,()=>paypalClient.assertMerchantAccess()), /not connected/);
+  check(true, 'merchant cannot use another workspace PayPal credentials');
+  process.env.APP_MODE='demo';
   paypalClient.isConfigured = sourceIsConfigured;
   delete process.env.PAYPAL_MERCHANT_USER_ID;
   const review = await (await routes.approval.GET(request('GET',cookieA,undefined,'/api/approve?action_type=ACCEPT_CLAIM'),context(disputeA.id))).json();
@@ -146,12 +151,14 @@ async function main() {
   process.env.PAYPAL_WEBHOOK_ID = 'test-webhook';
   process.env.PAYPAL_MERCHANT_USER_ID = userA.id;
   const providerEvent = {id:'owned-event',create_time:new Date().toISOString(),event_type:'PAYMENT.CAPTURE.COMPLETED',resource_type:'capture',resource:{id:'private-capture',amount:{value:'12.00',currency_code:'USD'}}};
+  process.env.APP_MODE='sandbox';
   paypalClient.verifyWebhookSignature = async () => false;
   check((await webhook.POST(request('POST','',providerEvent))).status === 401, 'configured webhook rejects failed signature verification');
   paypalClient.verifyWebhookSignature = async () => true;
   check((await webhook.POST(request('POST',cookieB,providerEvent,`/api/webhooks/paypal?user_id=${userB.id}`))).status === 200, 'verified webhook accepts configured owner despite foreign browser identity');
   const countProviderEvents = (id: string) => withMerchantScope(id,()=> (getDb().prepare('SELECT COUNT(*) AS n FROM paypal_events WHERE event_id=?').get(providerEvent.id) as any).n);
   check(countProviderEvents(userA.id) === 1 && countProviderEvents(userB.id) === 0, 'webhook persists only in server-configured merchant workspace');
+  process.env.APP_MODE='demo';
   paypalClient.isConfigured = sourceIsConfigured;
   paypalClient.verifyWebhookSignature = sourceVerify;
   delete process.env.PAYPAL_MERCHANT_USER_ID;
@@ -174,7 +181,7 @@ async function main() {
   withMerchantScope(userA.id,()=>realtimeHub.publish('ORDER_CAPTURED',{secret:'after logout'}));
   check((await readerA.read()).done, 'revoked session stops existing SSE stream before further delivery');
   await readerB.cancel();
-  check(realtimeHub.listenerCount(`system_event:${userA.id}`) === 0 && realtimeHub.listenerCount(`system_event:${userB.id}`) === 0, 'SSE disconnect cleans listeners');
+  check(realtimeHub.listenerCount(`system_event:demo:${userA.id}`) === 0 && realtimeHub.listenerCount(`system_event:demo:${userB.id}`) === 0, 'SSE disconnect cleans listeners');
   authDb().prepare('INSERT OR REPLACE INTO auth_attempts VALUES(?,8,?)').run(tokenHash('rate@example.test'),Date.now()+900000);
   check((await login.POST(request('POST','',{email:'rate@example.test',password:registration.password}))).status === 429, 'repeated sign-in attempts are rate limited');
   console.log(`\n${checks} authentication and isolation checks passed. Temporary data: ${process.env.DATA_DIR}`);

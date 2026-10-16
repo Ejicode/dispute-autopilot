@@ -26,7 +26,7 @@ Browser mutations require an `Origin` header matching `APP_ORIGIN`. API clients 
 
 - `DATA_DIR` defaults to `./data` and must be persistent and writable.
 - `auth.db` stores accounts, salted scrypt password hashes, session token digests, and rate-limit counters.
-- `merchants/<account-id>.db` holds that account's business tables. Account IDs are generated on the server. Database access without a merchant context fails closed.
+- `environments/<mode>/merchants/<account-id>.db` holds that account's business tables. Account IDs are generated on the server. Database access without a merchant context fails closed.
 - Password hashing uses scrypt with N=131072, r=8, p=1, a random 16-byte salt, and a process-wide limit of two concurrent derivations.
 - Sessions use random 32-byte tokens, stored only as SHA-256 digests on the server. Cookies are HttpOnly, SameSite=Lax, Path=/, and Secure in production. Sessions expire after seven days without sliding renewal. Signing in revokes the incoming session; signing out revokes the current session, not sessions on other devices.
 - SSE channels are per merchant and check session validity before every event and every 20-second heartbeat. Client workspace state remounts on account changes. Other tabs refresh identity on a storage signal, focus, or a 60-second interval.
@@ -45,4 +45,6 @@ Set `APP_ORIGIN` to the exact public origin, for example `https://disputes.examp
 
 The old `data/dispute_autopilot.db` is left untouched and is no longer opened by web requests. Old profile records had no passwords and cannot safely establish account ownership. There is intentionally no automatic email-based claim or migration. For installations with legacy data, an administrator must first verify ownership, take a consistent backup, and perform a reviewed, explicit import into the intended account's database. Do not copy a mixed-merchant database into an account. No legacy migration tool is included in this feature.
 
-CLI seed, test, attack, and benchmark scripts run in `data/merchants/demo.db`, which web accounts cannot select. The authentication suite instead uses a fresh temporary data directory and disables provider credentials. Run `npm run test:auth`, `npm test`, and `npm run build` to validate the feature; CI runs the authentication suite too. Remaining unrelated audit findings are tracked in `AUDIT.md`.
+CLI seed, test, attack, and benchmark scripts run in `data/environments/demo/merchants/demo.db`, which web accounts cannot select. The authentication suite instead uses a fresh temporary data directory and disables provider credentials. Run `npm run test:auth`, `npm test`, and `npm run build` to validate the feature; CI runs the authentication suite too. Remaining unrelated audit findings are tracked in `AUDIT.md`.
+
+Environment namespaces and legacy-data migration boundaries are documented in [environment isolation](environment-isolation.md).

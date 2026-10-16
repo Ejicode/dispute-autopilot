@@ -40,7 +40,7 @@ class RealtimeHub extends EventEmitter {
       payload,
       timestamp: new Date().toISOString(),
     };
-    this.emit(`system_event:${merchantScope().merchantId}`, event);
+    this.emit(`system_event:${merchantScope().mode}:${merchantScope().merchantId}`, event);
   }
 }
 

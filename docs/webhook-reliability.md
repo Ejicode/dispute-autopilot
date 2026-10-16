@@ -21,7 +21,7 @@ The retry delay starts at 30 seconds, doubles after each failed attempt, and cap
 
 ## Run the recovery command
 
-The CLI loads `.env.local` through Next's environment loader and targets only `PAYPAL_MERCHANT_USER_ID` in the configured `DATA_DIR`. That account must exist. It processes only receipts that already passed verification and never sends payment actions.
+The CLI selects its database using `APP_MODE`; see [environment isolation](environment-isolation.md). The CLI loads `.env.local` through Next's environment loader and targets only `PAYPAL_MERCHANT_USER_ID` in the configured `DATA_DIR`. That account must exist. It processes only receipts that already passed verification and never sends payment actions.
 
 ```bash
 # Inspect pending, failed, deferred, and dead-letter events without replaying them

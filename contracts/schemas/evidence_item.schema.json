@@ -14,9 +14,21 @@
     "captured_at"
   ],
   "properties": {
-    "id": { "type": "string" },
-    "dispute_id": { "type": ["string", "null"] },
-    "order_id": { "type": ["string", "null"] },
+    "id": {
+      "type": "string"
+    },
+    "dispute_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "order_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "evidence_type": {
       "type": "string",
       "enum": [
@@ -28,15 +40,40 @@
         "DEVICE_FINGERPRINT"
       ]
     },
-    "source": { "type": "string" },
-    "title": { "type": "string" },
-    "content": { "type": "string" },
-    "file_path": { "type": ["string", "null"] },
+    "source": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "file_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "sha256_hash": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$",
       "description": "SHA-256 cryptographic digest of content"
     },
-    "captured_at": { "type": "string", "format": "date-time" }
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provenance": {
+      "type": "string",
+      "enum": [
+        "DEMO",
+        "PAYPAL_SANDBOX",
+        "PAYPAL_LIVE",
+        "UNKNOWN"
+      ],
+      "readOnly": true,
+      "description": "Server-owned immutable origin; unknown or mismatched origin cannot be submitted."
+    }
   }
 }

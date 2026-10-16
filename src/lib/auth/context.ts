@@ -1,14 +1,15 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { applicationMode, type AppMode } from '../runtime/mode';
 import type { UserAccount } from '../types';
 
-interface MerchantScope { merchantId: string; user?: UserAccount }
+interface MerchantScope { merchantId: string; mode: AppMode; user?: UserAccount }
 // Route bundles and development reloads must share the same request context.
 const runtime = globalThis as typeof globalThis & { disputeMerchantContext?: AsyncLocalStorage<MerchantScope> };
 const context = runtime.disputeMerchantContext ??= new AsyncLocalStorage<MerchantScope>();
 
 export function withMerchantScope<T>(merchantId: string, work: () => T, user?: UserAccount): T {
   if (!/^usr_[a-f0-9]{32}$/.test(merchantId) && merchantId !== 'demo') throw new Error('Invalid merchant workspace');
-  return context.run({ merchantId, user }, work);
+  return context.run({ merchantId, mode: applicationMode(), user }, work);
 }
 
 export function merchantScope(): MerchantScope {

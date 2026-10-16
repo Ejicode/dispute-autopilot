@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import type { UserAccount } from '../types';
 import { authDb } from './store';
-import { withMerchantScope } from './context';
+import { merchantScope, withMerchantScope } from './context';
 
 export const SESSION_COOKIE = 'dispute_session';
 export const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -76,8 +76,11 @@ export function withMerchant(handler: MerchantHandler) {
     try {
       const user = requireUser(req);
       assertSameOrigin(req);
-      const response = await withMerchantScope(user.id, () => handler(req, context, user), user);
+      const { response, mode } = await withMerchantScope(user.id, async () => ({
+        response: await handler(req, context, user), mode: merchantScope().mode,
+      }), user);
       response.headers.set('Cache-Control', 'no-store');
+      response.headers.set('X-Application-Mode', mode);
       return response;
     } catch (error) { return routeError(error); }
   };

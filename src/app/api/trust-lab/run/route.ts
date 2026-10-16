@@ -1,3 +1,4 @@
+import { requireDemo } from '@/lib/runtime/safety';
 import { withMerchant } from '@/lib/auth/session';
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
@@ -12,6 +13,7 @@ async function handleGET() {
 }
 
 async function handlePOST() {
+  requireDemo();
   try {
     const results = await runAllTrustLabAttacks();
     return NextResponse.json({ results, allBlocked: results.every((r) => r.blocked) });

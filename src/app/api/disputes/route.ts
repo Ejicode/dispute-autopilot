@@ -1,3 +1,4 @@
+import { requireDemo } from '@/lib/runtime/safety';
 import { withMerchant } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
@@ -55,6 +56,7 @@ async function handleGET() {
 }
 
 async function handlePOST(req: NextRequest) {
+  requireDemo();
   const db = getDb();
   const body = await req.json().catch(() => ({}));
 
