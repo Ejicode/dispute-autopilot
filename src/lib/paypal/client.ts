@@ -240,6 +240,38 @@ export class PayPalClient {
     return { success: true, result: resJson };
   }
 
+  /** Read current provider state; never follow arbitrary response URLs or submit an action. */
+  public async getDisputeDetails(disputeId: string): Promise<unknown> {
+    this.assertMerchantAccess();
+    if (merchantScope().mode === 'demo') throw new HttpError(409, 'Provider reconciliation is unavailable in demo mode.');
+    const dispute = getDb().prepare('SELECT * FROM disputes WHERE id=?').get(disputeId) as Dispute | undefined;
+    if (!dispute) throw new HttpError(404, 'Dispute not found.');
+    requireMatchingProvenance(dispute);
+    if (!/^[A-Za-z0-9_-]{1,255}$/.test(dispute.paypal_dispute_id)) throw new HttpError(422, 'Invalid provider dispute identity.');
+    try {
+      const token = await this.getAccessToken();
+      const response = await fetch(`${this.baseUrl}/v1/customer/disputes/${encodeURIComponent(dispute.paypal_dispute_id)}`, {
+        method: 'GET', headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(15000), redirect: 'error', cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('Provider lookup failed.');
+      // Bound the response while streaming; do not retain provider messages or attachments.
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Empty provider response.');
+      const chunks: Uint8Array[] = []; let length = 0;
+      try {
+        while (true) {
+          const {value,done} = await reader.read();
+          if (done) break;
+          length += value.byteLength;
+          if (length > 1024 * 1024) throw new Error('Provider response exceeds limit.');
+          chunks.push(value);
+        }
+      } finally { await reader.cancel().catch(() => {}); }
+      return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    } catch { throw new HttpError(502, 'Unable to retrieve PayPal dispute details. No action was retried.'); }
+  }
+
   /**
    * Verify Webhook Signature via PayPal API
    */

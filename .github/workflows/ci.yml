@@ -51,6 +51,9 @@ jobs:
       - name: Verify environment and provenance isolation
         run: npm run test:environments
 
+      - name: Verify dispute reconciliation and recovery
+        run: npm run test:reconciliation
+
       - name: Run Trust Lab attack suite
         run: npm run test:attacks
 

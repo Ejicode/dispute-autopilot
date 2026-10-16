@@ -14,7 +14,7 @@ Online sellers lose thousands of dollars each month on PayPal disputes because e
 3. **Drafts evidence-backed responses** where every factual sentence is tied to vault citations.
 4. **Validates claims in plain code** (not by the LLM) before a human can approve.
 5. **Enforces human-in-the-loop approval** before any action touches the PayPal Disputes API.
-6. **Confirms resolution** only upon receiving a cryptographically verified PayPal webhook.
+6. **Confirms resolution** from a verified PayPal webhook or authenticated provider reconciliation.
 
 > **Data Honesty Guarantee**: PayPal dispute lifecycle actions and webhooks interact with the real PayPal Sandbox REST API. Simulated carrier events, orders, and products are explicitly marked **`DEMO DATA`**. Win rates are never fabricated—all benchmarks report actual measured coverage and verification rates.
 
@@ -75,7 +75,7 @@ Online sellers lose thousands of dollars each month on PayPal disputes because e
 
 ### The 7 Non-Negotiable Safety Rules
 1. **The AI Never Submits Anything**: The LLM only proposes drafts. Deterministic code validates, policy checks, and the human seller approves before PayPal executes.
-2. **Webhooks are the Ground Truth**: A dispute is marked resolved only upon receipt of a verified PayPal webhook. The UI never speculates.
+2. **Webhooks are the Ground Truth**: A dispute is marked resolved only from a verified PayPal webhook or authenticated provider reconciliation. The UI never speculates.
 3. **Duplicates Do Nothing**: Every PayPal event ID is deduplicated via database unique constraints.
 4. **Untrusted Text Stays Data**: Buyer messages and dispute notes are sanitized and wrapped in inert data blocks. Injected instructions cannot manipulate agent policy.
 5. **No Claim Without a Source**: Every sentence asserting a fact must point to a vault record. Code verifies tracking numbers, dates, and amounts.
@@ -172,6 +172,9 @@ npm run test:evidence
 # Check demo/sandbox/live API, database, and provider boundaries
 npm run test:environments
 
+# Check uncertain approvals and reconciliation races
+npm run test:reconciliation
+
 # Run Trust Lab penetration test vectors
 make test-attacks   # or: npm run test:attacks
 
@@ -199,3 +202,5 @@ The approval API uses an explicit review-and-submit flow. See [approval safety](
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+See [dispute reconciliation](docs/dispute-reconciliation.md) for inspecting unresolved approvals without retrying provider actions.

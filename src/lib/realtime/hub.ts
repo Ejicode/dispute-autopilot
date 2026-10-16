@@ -6,6 +6,7 @@ export interface SystemEvent {
     | 'ORDER_CAPTURED'
     | 'VAULT_ITEM_ADDED'
     | 'DISPUTE_OPENED'
+    | 'DISPUTE_RECONCILED'
     | 'CARRIER_UPDATE'
     | 'DRAFT_GENERATED'
     | 'CLAIM_VERIFIED'

@@ -17,7 +17,8 @@
     "webhooks:retry": "tsx scripts/retry-webhooks.ts",
     "test:attacks": "tsx scripts/test-attacks.ts",
     "test:evidence": "tsx scripts/test-evidence.ts",
-    "test:environments": "tsx scripts/test-environments.ts"
+    "test:environments": "tsx scripts/test-environments.ts",
+    "test:reconciliation": "tsx scripts/test-reconciliation.ts"
   },
   "dependencies": {
     "ag-grid-community": "^32.3.3",

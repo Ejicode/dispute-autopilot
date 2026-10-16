@@ -246,6 +246,30 @@ function initSchema(db: Database.Database, mode: AppMode) {
       SELECT RAISE(ABORT, 'Approval snapshot is immutable');
     END;
 
+    -- Reconciliation observations never authorize another provider mutation.
+    CREATE TABLE IF NOT EXISTS dispute_reconciliations (
+      id TEXT PRIMARY KEY,
+      dispute_id TEXT NOT NULL REFERENCES disputes(id),
+      operation_id TEXT NOT NULL REFERENCES approval_operations(id),
+      actor TEXT NOT NULL,
+      environment TEXT NOT NULL,
+      result TEXT NOT NULL CHECK(result IN ('APPLIED','UNCHANGED','STALE','CONFLICT','ERROR','SUPERSEDED')),
+      observation TEXT,
+      observation_hash TEXT,
+      message TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_reconciliation_dispute ON dispute_reconciliations(dispute_id,created_at);
+    CREATE TRIGGER IF NOT EXISTS reconciliation_no_update BEFORE UPDATE ON dispute_reconciliations
+      BEGIN SELECT RAISE(ABORT,'Reconciliation history is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS reconciliation_no_delete BEFORE DELETE ON dispute_reconciliations
+      BEGIN SELECT RAISE(ABORT,'Reconciliation history is immutable'); END;
+    CREATE TABLE IF NOT EXISTS reconciliation_leases (
+      dispute_id TEXT PRIMARY KEY REFERENCES disputes(id),
+      token TEXT NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
+
     -- Verified receipts are durable before projection; completion commits with business changes.
     CREATE TABLE IF NOT EXISTS webhook_inbox (
       event_id TEXT PRIMARY KEY,

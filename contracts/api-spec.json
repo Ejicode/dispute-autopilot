@@ -469,6 +469,108 @@
           }
         }
       }
+    },
+    "/api/disputes/{id}/reconcile": {
+      "get": {
+        "summary": "Read operation details and recent reconciliation history",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation, observations, and retry_allowed false"
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "404": {
+            "description": "Dispute not found"
+          },
+          "409": {
+            "description": "No approval operation"
+          }
+        }
+      },
+      "post": {
+        "summary": "Observe provider state without retrying an action",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "maxProperties": 0,
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Observation recorded; retry_allowed remains false"
+          },
+          "400": {
+            "description": "Malformed body or attempted override"
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "403": {
+            "description": "Origin or merchant integration denied"
+          },
+          "404": {
+            "description": "Dispute not found"
+          },
+          "409": {
+            "description": "Demo mode, active/completed/missing operation, or lease conflict"
+          },
+          "413": {
+            "description": "Body exceeds 8 KiB"
+          },
+          "415": {
+            "description": "JSON required"
+          },
+          "422": {
+            "description": "Provenance or operation mismatch"
+          },
+          "429": {
+            "description": "30-second cooldown"
+          },
+          "502": {
+            "description": "Provider lookup or resource validation failed; ERROR recorded"
+          },
+          "503": {
+            "description": "Provider configuration unavailable or mismatched"
+          }
+        }
+      }
     }
   },
   "components": {
