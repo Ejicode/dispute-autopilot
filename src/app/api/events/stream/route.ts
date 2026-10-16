@@ -1,3 +1,4 @@
+import { merchantScope } from '@/lib/auth/context';
 import { realtimeHub, type SystemEvent } from '@/lib/realtime/hub';
 import { sessionUser, withMerchant } from '@/lib/auth/session';
 
@@ -5,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export const GET = withMerchant(async (req, _context, user) => {
   const encoder = new TextEncoder();
-  const channel = `system_event:${user.id}`;
+  const channel = `system_event:${merchantScope().mode}:${user.id}`;
   let cleanup = () => {};
   const stream = new ReadableStream({
     start(controller) {

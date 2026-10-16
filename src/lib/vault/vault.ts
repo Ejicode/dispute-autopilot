@@ -1,3 +1,5 @@
+import { merchantScope } from '../auth/context';
+import type { Provenance } from '../runtime/mode';
 import crypto from 'crypto';
 import { getDb, recordAuditLog } from '../db';
 import { EvidenceItem, EvidenceType } from '../types';
@@ -19,16 +21,18 @@ export function addToVault(params: {
   content: string;
   filePath?: string | null;
   publish?: boolean;
+  provenance?: Provenance;
 }): EvidenceItem {
   const db = getDb();
   const id = 'ev_' + crypto.randomBytes(8).toString('hex');
   const capturedAt = new Date().toISOString();
+  const provenance = params.provenance ?? (merchantScope().mode === 'demo' ? 'DEMO' : 'UNKNOWN');
   const sha256Hash = calculateSha256(params.content);
 
   const stmt = db.prepare(`
     INSERT INTO evidence_items (
-      id, dispute_id, order_id, evidence_type, source, title, content, file_path, sha256_hash, captured_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      id, dispute_id, order_id, evidence_type, source, title, content, file_path, sha256_hash, captured_at, provenance
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
@@ -41,7 +45,8 @@ export function addToVault(params: {
     params.content,
     params.filePath || null,
     sha256Hash,
-    capturedAt
+    capturedAt,
+    provenance
   );
 
   const item: EvidenceItem = {
@@ -55,6 +60,7 @@ export function addToVault(params: {
     file_path: params.filePath || null,
     sha256_hash: sha256Hash,
     captured_at: capturedAt,
+    provenance,
   };
 
   recordAuditLog(

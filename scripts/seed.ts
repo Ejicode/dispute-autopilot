@@ -1,3 +1,4 @@
+import { requireDemo } from '../src/lib/runtime/safety';
 import { withMerchantScope } from '../src/lib/auth/context';
 import crypto from 'crypto';
 import { getDb, recordAuditLog } from '../src/lib/db';
@@ -8,6 +9,7 @@ import { Dispute } from '../src/lib/types';
 
 async function seed() {
   console.log('Seeding Dispute Autopilot database with realistic demo data...');
+  requireDemo();
   const db = getDb();
 
   // Clear existing demo tables

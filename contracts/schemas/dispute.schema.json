@@ -19,10 +19,21 @@
     "updated_at"
   ],
   "properties": {
-    "id": { "type": "string" },
-    "paypal_dispute_id": { "type": "string" },
-    "transaction_id": { "type": "string" },
-    "order_id": { "type": ["string", "null"] },
+    "id": {
+      "type": "string"
+    },
+    "paypal_dispute_id": {
+      "type": "string"
+    },
+    "transaction_id": {
+      "type": "string"
+    },
+    "order_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "reason": {
       "type": "string",
       "enum": [
@@ -39,7 +50,10 @@
       "type": "integer",
       "description": "Amount in integer minor units (cents)"
     },
-    "currency": { "type": "string", "default": "USD" },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -52,9 +66,22 @@
     },
     "response_deadline": {
       "description": "Provider deadline, or an empty string when unknown; unknown deadlines block approval",
-      "anyOf": [{ "type": "string", "format": "date-time" }, { "const": "" }]
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "const": ""
+        }
+      ]
     },
-    "outcome": { "type": ["string", "null"] },
+    "outcome": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "strength_score": {
       "type": "number",
       "minimum": 0,
@@ -63,9 +90,30 @@
     },
     "recommendation": {
       "type": "string",
-      "enum": ["FIGHT", "ACCEPT", "ASK A HUMAN"]
+      "enum": [
+        "FIGHT",
+        "ACCEPT",
+        "ASK A HUMAN"
+      ]
     },
-    "created_at": { "type": "string", "format": "date-time" },
-    "updated_at": { "type": "string", "format": "date-time" }
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provenance": {
+      "type": "string",
+      "enum": [
+        "DEMO",
+        "PAYPAL_SANDBOX",
+        "PAYPAL_LIVE",
+        "UNKNOWN"
+      ],
+      "readOnly": true,
+      "description": "Server-owned immutable origin; unknown or mismatched origin cannot be submitted."
+    }
   }
 }

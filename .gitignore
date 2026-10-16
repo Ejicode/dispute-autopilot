@@ -19,6 +19,7 @@ data/*.db
 data/*.db-shm
 data/*.db-wal
 data/merchants/
+data/environments/
 !data/.gitkeep
 
 # Environment files

@@ -17,6 +17,7 @@ export type DisputeStatus =
 export type TriageRecommendation = 'FIGHT' | 'ACCEPT' | 'ASK A HUMAN';
 
 export interface Dispute {
+  provenance?: import('./runtime/mode').Provenance;
   id: string;
   paypal_dispute_id: string;
   transaction_id: string;
@@ -42,6 +43,7 @@ export type EvidenceType =
   | 'DEVICE_FINGERPRINT';
 
 export interface EvidenceItem {
+  provenance?: import('./runtime/mode').Provenance;
   id: string;
   dispute_id: string | null;
   order_id: string | null;
@@ -78,6 +80,7 @@ export interface AIDraft {
 }
 
 export interface ExactActionSnapshot {
+  environment?: import('./runtime/mode').AppMode;
   action_type: 'PROVIDE_EVIDENCE' | 'ACCEPT_CLAIM';
   dispute_id: string;
   paypal_dispute_id: string;
@@ -120,6 +123,7 @@ export interface AuditLogEntry {
 }
 
 export interface DemoOrder {
+  provenance?: import('./runtime/mode').Provenance;
   id: string;
   order_number: string;
   buyer_name: string;

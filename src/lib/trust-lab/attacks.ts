@@ -1,3 +1,4 @@
+import { requireDemo } from '../runtime/safety';
 import crypto from 'crypto';
 import { getDb, recordAuditLog } from '../db';
 import { processPayPalWebhook } from '../paypal/webhooks';
@@ -281,6 +282,7 @@ export async function runAttackDoubleSubmit(): Promise<AttackResult> {
  * Run the entire Trust Lab attack suite
  */
 export async function runAllTrustLabAttacks(): Promise<AttackResult[]> {
+  requireDemo();
   const db = getDb();
   const results: AttackResult[] = [
     await runAttackForgedWebhook(),

@@ -3,14 +3,15 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { merchantScope } from '../auth/context';
+import type { AppMode } from '../runtime/mode';
 import { dataDirectory } from './storage';
 
 const runtime = globalThis as typeof globalThis & { disputeDatabases?: Map<string, Database.Database> };
 const databases = runtime.disputeDatabases ??= new Map<string, Database.Database>();
 
 export function getDb(): Database.Database {
-  const { merchantId, user } = merchantScope();
-  const directory = path.join(dataDirectory(), 'merchants');
+  const { merchantId, user, mode } = merchantScope();
+  const directory = path.join(dataDirectory(), 'environments', mode, 'merchants');
   fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
   const filename = path.join(directory, `${merchantId}.db`);
   let db = databases.get(filename);
@@ -19,7 +20,10 @@ export function getDb(): Database.Database {
     fs.chmodSync(filename, 0o600);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
-    initSchema(db);
+    try {
+      db.transaction(() => bindEnvironment(db!, mode)).immediate();
+      initSchema(db, mode);
+    } catch (error) { db.close(); throw error; }
     databases.set(filename, db);
   }
   // Business queries receive only this merchant's public profile, never credentials.
@@ -29,7 +33,21 @@ export function getDb(): Database.Database {
   return db;
 }
 
-function initSchema(db: Database.Database) {
+function bindEnvironment(db: Database.Database, mode: AppMode) {
+  const marker = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='environment_identity'").get();
+  if (!marker) {
+    const existing = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT 1").get();
+    if (existing) throw new Error('Unclassified database requires reviewed migration; refusing to assign an environment.');
+    db.exec(`CREATE TABLE environment_identity (id INTEGER PRIMARY KEY CHECK(id=1), mode TEXT NOT NULL CHECK(mode IN ('demo','sandbox','live')))`);
+    db.prepare('INSERT INTO environment_identity VALUES(1,?)').run(mode);
+    db.exec(`CREATE TRIGGER environment_identity_no_update BEFORE UPDATE ON environment_identity BEGIN SELECT RAISE(ABORT,'Environment identity is immutable'); END;
+      CREATE TRIGGER environment_identity_no_delete BEFORE DELETE ON environment_identity BEGIN SELECT RAISE(ABORT,'Environment identity is immutable'); END;`);
+  }
+  const identity = db.prepare('SELECT mode FROM environment_identity WHERE id=1').get() as {mode:string}|undefined;
+  if (identity?.mode !== mode) throw new Error('Database environment does not match APP_MODE.');
+}
+
+function initSchema(db: Database.Database, mode: AppMode) {
   db.exec(`
     -- 1. Disputes table
     CREATE TABLE IF NOT EXISTS disputes (
@@ -228,6 +246,30 @@ function initSchema(db: Database.Database) {
       SELECT RAISE(ABORT, 'Approval snapshot is immutable');
     END;
 
+    -- Reconciliation observations never authorize another provider mutation.
+    CREATE TABLE IF NOT EXISTS dispute_reconciliations (
+      id TEXT PRIMARY KEY,
+      dispute_id TEXT NOT NULL REFERENCES disputes(id),
+      operation_id TEXT NOT NULL REFERENCES approval_operations(id),
+      actor TEXT NOT NULL,
+      environment TEXT NOT NULL,
+      result TEXT NOT NULL CHECK(result IN ('APPLIED','UNCHANGED','STALE','CONFLICT','ERROR','SUPERSEDED')),
+      observation TEXT,
+      observation_hash TEXT,
+      message TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_reconciliation_dispute ON dispute_reconciliations(dispute_id,created_at);
+    CREATE TRIGGER IF NOT EXISTS reconciliation_no_update BEFORE UPDATE ON dispute_reconciliations
+      BEGIN SELECT RAISE(ABORT,'Reconciliation history is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS reconciliation_no_delete BEFORE DELETE ON dispute_reconciliations
+      BEGIN SELECT RAISE(ABORT,'Reconciliation history is immutable'); END;
+    CREATE TABLE IF NOT EXISTS reconciliation_leases (
+      dispute_id TEXT PRIMARY KEY REFERENCES disputes(id),
+      token TEXT NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
+
     -- Verified receipts are durable before projection; completion commits with business changes.
     CREATE TABLE IF NOT EXISTS webhook_inbox (
       event_id TEXT PRIMARY KEY,
@@ -261,6 +303,18 @@ function initSchema(db: Database.Database) {
       content_hash TEXT NOT NULL
     );
   `);
+
+  // Operational rows inserted outside a trusted adapter remain UNKNOWN and cannot execute.
+  for (const table of ['disputes', 'demo_orders', 'evidence_items']) {
+    const columns = db.prepare(`PRAGMA table_info(${table})`).all() as {name:string}[];
+    if (!columns.some(column => column.name === 'provenance')) {
+      const initial = mode === 'demo' ? 'DEMO' : 'UNKNOWN';
+      db.exec(`ALTER TABLE ${table} ADD COLUMN provenance TEXT NOT NULL DEFAULT '${initial}'
+        CHECK(provenance IN ('DEMO','PAYPAL_SANDBOX','PAYPAL_LIVE','UNKNOWN'))`);
+    }
+    db.exec(`CREATE TRIGGER IF NOT EXISTS ${table}_provenance_immutable BEFORE UPDATE OF provenance ON ${table}
+      BEGIN SELECT RAISE(ABORT,'Record provenance is immutable'); END;`);
+  }
 
   // Migrate avatar_url if column does not exist (safe migration for existing DBs)
   try {

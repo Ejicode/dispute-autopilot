@@ -6,6 +6,7 @@ export interface SystemEvent {
     | 'ORDER_CAPTURED'
     | 'VAULT_ITEM_ADDED'
     | 'DISPUTE_OPENED'
+    | 'DISPUTE_RECONCILED'
     | 'CARRIER_UPDATE'
     | 'DRAFT_GENERATED'
     | 'CLAIM_VERIFIED'
@@ -40,7 +41,7 @@ class RealtimeHub extends EventEmitter {
       payload,
       timestamp: new Date().toISOString(),
     };
-    this.emit(`system_event:${merchantScope().merchantId}`, event);
+    this.emit(`system_event:${merchantScope().mode}:${merchantScope().merchantId}`, event);
   }
 }
 

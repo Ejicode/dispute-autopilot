@@ -21,7 +21,7 @@ The retry delay starts at 30 seconds, doubles after each failed attempt, and cap
 
 ## Run the recovery command
 
-The CLI loads `.env.local` through Next's environment loader and targets only `PAYPAL_MERCHANT_USER_ID` in the configured `DATA_DIR`. That account must exist. It processes only receipts that already passed verification and never sends payment actions.
+The CLI selects its database using `APP_MODE`; see [environment isolation](environment-isolation.md). The CLI loads `.env.local` through Next's environment loader and targets only `PAYPAL_MERCHANT_USER_ID` in the configured `DATA_DIR`. That account must exist. It processes only receipts that already passed verification and never sends payment actions.
 
 ```bash
 # Inspect pending, failed, deferred, and dead-letter events without replaying them
@@ -56,7 +56,7 @@ Realtime notifications emit after commit. Delivery to SSE listeners is advisory;
 
 Schema creation is additive: existing disputes, evidence, and legacy `paypal_events` records are preserved. The new inbox is authoritative for retry state. An old `PROCESSED` receipt does not prove that older code finished projection; a newly verified redelivery may repair it. Capture projection reuses compatible legacy capture evidence rather than duplicating it. Legacy events are not bulk-imported as verified or replayed automatically.
 
-This remains a SQLite deployment using persistent local storage. There is no provider polling/reconciliation API, automatic support for reopened disputes, or approval-operation recovery based solely on a resolution webhook. The current amount model uses integer cents and accepts up to two decimal places; broader currency exponent handling remains separate work. Existing deterministic drafting and analytics limitations are not fixed here. Real PayPal Sandbox delivery and signature verification still need integration validation.
+This remains a SQLite deployment using persistent local storage. An authenticated [reconciliation API](dispute-reconciliation.md) now supports operator-initiated lookups for unresolved approvals. There is no automatic polling, automatic reopening, or approval success inferred solely from resolution. The current amount model uses integer cents and accepts up to two decimal places; broader currency exponent handling remains separate work. Existing deterministic drafting and analytics limitations are not fixed here. Real PayPal Sandbox delivery and signature verification still need integration validation.
 
 ## Validation
 

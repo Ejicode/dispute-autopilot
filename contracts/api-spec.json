@@ -30,6 +30,25 @@
             }
           }
         }
+      },
+      "post": {
+        "summary": "Create a simulated dispute in demo mode only",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Simulated dispute and draft"
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "403": {
+            "description": "Simulation disabled outside demo mode or Origin denied"
+          }
+        }
       }
     },
     "/api/disputes/{id}": {
@@ -270,7 +289,7 @@
             "description": "Verified event requires dead-letter review"
           },
           "503": {
-            "description": "Integration unavailable, verification outage, or durable event awaiting retry/dependency"
+            "description": "Demo mode, configuration mismatch/unavailable integration, verification outage, or durable retry/dependency pending"
           }
         }
       }
@@ -281,6 +300,9 @@
         "responses": {
           "200": {
             "description": "All 6 attacks executed and confirmed blocked"
+          },
+          "403": {
+            "description": "Simulation is disabled outside demo mode"
           }
         }
       }
@@ -291,6 +313,9 @@
         "responses": {
           "200": {
             "description": "Benchmark metrics summary"
+          },
+          "403": {
+            "description": "Simulation is disabled outside demo mode"
           }
         }
       }
@@ -349,6 +374,200 @@
           },
           "415": {
             "description": "JSON content type required"
+          }
+        }
+      }
+    },
+    "/api/runtime": {
+      "get": {
+        "summary": "Read the server-selected environment and simulation capability",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Runtime configuration; mode cannot be selected by the client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "mode",
+                    "simulation_enabled",
+                    "provider_environment"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "demo",
+                        "sandbox",
+                        "live"
+                      ]
+                    },
+                    "simulation_enabled": {
+                      "type": "boolean"
+                    },
+                    "provider_environment": {
+                      "enum": [
+                        null,
+                        "sandbox",
+                        "live"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session required"
+          }
+        }
+      }
+    },
+    "/api/storefront/checkout": {
+      "post": {
+        "summary": "Create a simulated order in demo mode only",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Simulation result"
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "403": {
+            "description": "Simulation disabled outside demo mode or Origin denied"
+          }
+        }
+      }
+    },
+    "/api/carrier/update": {
+      "post": {
+        "summary": "Advance simulated carrier evidence in demo mode only",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Simulation result"
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "403": {
+            "description": "Simulation disabled outside demo mode or Origin denied"
+          }
+        }
+      }
+    },
+    "/api/disputes/{id}/reconcile": {
+      "get": {
+        "summary": "Read operation details and recent reconciliation history",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation, observations, and retry_allowed false"
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "404": {
+            "description": "Dispute not found"
+          },
+          "409": {
+            "description": "No approval operation"
+          }
+        }
+      },
+      "post": {
+        "summary": "Observe provider state without retrying an action",
+        "security": [
+          {
+            "merchantSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "maxProperties": 0,
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Observation recorded; retry_allowed remains false"
+          },
+          "400": {
+            "description": "Malformed body or attempted override"
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "403": {
+            "description": "Origin or merchant integration denied"
+          },
+          "404": {
+            "description": "Dispute not found"
+          },
+          "409": {
+            "description": "Demo mode, active/completed/missing operation, or lease conflict"
+          },
+          "413": {
+            "description": "Body exceeds 8 KiB"
+          },
+          "415": {
+            "description": "JSON required"
+          },
+          "422": {
+            "description": "Provenance or operation mismatch"
+          },
+          "429": {
+            "description": "30-second cooldown"
+          },
+          "502": {
+            "description": "Provider lookup or resource validation failed; ERROR recorded"
+          },
+          "503": {
+            "description": "Provider configuration unavailable or mismatched"
           }
         }
       }

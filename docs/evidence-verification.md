@@ -13,7 +13,7 @@ Draft generation and approval now use the same typed evidence verifier. Every cl
 
 Text comparisons trim and collapse whitespace, preserve case, and match whole fields. Dates must be valid ISO calendar dates or timestamps; comparisons use the recorded calendar day. Currency support retains the existing integer-cent model.
 
-Carrier sources currently include USPS, UPS, FEDEX, DHL, CARRIER_INTEGRATION and CARRIER_SIMULATOR. Order sources are the existing storefront/capture adapters listed in `evidence-facts.ts`. Unknown source labels and plain text cannot supply these claims. Adding an adapter requires a reviewed mapping and tests. Simulation labels remain supported for demonstration: separating demo/sandbox/live data is still separate work.
+Carrier sources currently include USPS, UPS, FEDEX, DHL, CARRIER_INTEGRATION and CARRIER_SIMULATOR. Order sources are the existing storefront/capture adapters listed in `evidence-facts.ts`. Unknown source labels and plain text cannot supply these claims. Adding an adapter requires a reviewed mapping and tests. Simulation labels remain supported for demonstration: approval now also enforces the [environment provenance boundary](environment-isolation.md).
 
 ## Narrative binding
 
@@ -29,7 +29,7 @@ Legacy drafts with unsupported narrative templates cannot be approved. Case deta
 
 Use **Regenerate from current evidence** on the case page, or authenticated `POST /api/disputes/{id}/regenerate-draft` with `{}` and the configured Origin. The endpoint creates a new draft and audit record atomically, preserves history, and invalidates earlier reviews. It returns `201` with `{draft}`; a draft with no usable evidence remains unverified. Client-supplied content is rejected (`400`), unknown/foreign cases return `404`, and cases no longer awaiting action or with any submitted/reserved approval return `409`. Anonymous requests return `401`.
 
-Regeneration is explicit. Automatic refresh after every carrier update, broader evidence association changes, operational provenance isolation, provider document uploads, and Sandbox contract validation remain separate work.
+Regeneration is explicit. Automatic refresh after every carrier update, broader evidence association changes, provider document uploads, and Sandbox contract validation remain separate work.
 
 ## Validation
 
