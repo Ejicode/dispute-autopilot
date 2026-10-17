@@ -104,8 +104,9 @@ export default function StorefrontPage() {
     });
   }, [searchQuery, selectedCategory, sortBy]);
 
-  // Real-time Checkout handler — uses buyer form data
+  // Demo checkout handler — submitted from the buyer details modal
   const handleBuyProduct = async (product: Product) => {
+    if (buyingProductId) return;
     setCheckoutError(null);
     const name = buyerForm.name.trim();
     const email = buyerForm.email.trim();
@@ -153,6 +154,8 @@ export default function StorefrontPage() {
         const errData = await res.json().catch(() => ({}));
         setCheckoutError(errData.error || 'Checkout failed. Please try again.');
       }
+    } catch {
+      setCheckoutError('Unable to reach checkout. Please check your connection and try again.');
     } finally {
       setBuyingProductId(null);
     }
@@ -312,7 +315,7 @@ export default function StorefrontPage() {
             Showing <strong>{displayedProducts.length}</strong> of <strong>{PRODUCTS.length}</strong> real products
           </span>
           <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live PayPal Sandbox Ready
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Demo storefront — no payment collected
           </span>
         </div>
 
@@ -397,8 +400,8 @@ export default function StorefrontPage() {
                   </div>
 
                   <button
-                    onClick={() => handleBuyProduct(prod)}
-                    disabled={buyingProductId === prod.id}
+                    onClick={() => { setCheckoutError(null); setSelectedProduct(prod); }}
+                    disabled={buyingProductId !== null}
                     className="w-full py-2.5 rounded-full bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-bold transition-all shadow-md shadow-blue-800/30 flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
                   >
                     {buyingProductId === prod.id ? (
@@ -406,7 +409,7 @@ export default function StorefrontPage() {
                     ) : (
                       <ShoppingBag className="w-3.5 h-3.5 text-[#FFC439]" />
                     )}
-                    <span>Buy with PayPal Sandbox</span>
+                    <span>Create demo order</span>
                   </button>
                 </div>
               </div>
@@ -494,8 +497,9 @@ export default function StorefrontPage() {
               {/* Buyer Checkout Form — required fields */}
               <div className="border border-slate-200 rounded-2xl p-4 space-y-3 bg-slate-50">
                 <h4 className="font-bold text-xs uppercase text-slate-500 tracking-wider">Buyer Details (Required)</h4>
+                <p className="text-xs text-slate-600">This creates a simulated order in demo mode. No PayPal payment is collected.</p>
                 {checkoutError && (
-                  <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                  <div role="alert" className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
                     <span>⚠</span><span>{checkoutError}</span>
                   </div>
                 )}
@@ -547,7 +551,7 @@ export default function StorefrontPage() {
 
                 <button
                   onClick={() => handleBuyProduct(selectedProduct)}
-                  disabled={buyingProductId === selectedProduct.id}
+                  disabled={buyingProductId !== null}
                   className="px-6 py-2.5 rounded-full bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-bold transition-all shadow-md shadow-blue-800/30 flex items-center gap-2 disabled:opacity-50"
                 >
                   {buyingProductId === selectedProduct.id ? (
@@ -555,7 +559,7 @@ export default function StorefrontPage() {
                   ) : (
                     <ShoppingBag className="w-4 h-4 text-[#FFC439]" />
                   )}
-                  <span>Buy with PayPal Sandbox</span>
+                  <span>Create demo order</span>
                 </button>
               </div>
             </div>
@@ -586,7 +590,7 @@ export default function StorefrontPage() {
           </div>
         ) : orders.length === 0 ? (
           <div className="bg-white p-8 rounded-2xl border border-slate-200/90 shadow-sm text-center text-slate-500 text-xs">
-            No orders captured yet. Click "Buy with PayPal Sandbox" on any product above to generate an order and evidence hash.
+            No orders captured yet. Click "Create demo order" on any product above to generate an order and evidence hash.
           </div>
         ) : (
           <div className="space-y-4">
