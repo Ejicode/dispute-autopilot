@@ -33,6 +33,6 @@ Regeneration is explicit. Automatic refresh after every carrier update, broader 
 
 ## Validation
 
-Run `npm run test:evidence`, `npm run test:approvals`, `npm run test:auth`, `npm run test:webhooks`, `npm test`, and `npm run build`. Tests cover exact fields, unsupported facts, hashes, ownership, malformed claims, narrative tampering, draft history, and the authenticated approval/regeneration routes. They do not make real provider calls.
+Run `go test ./internal/ai/ ./internal/approvals/ ./internal/paypal/ ./internal/httpapi/ -count=1`, `go test ./...`, and `npm run build`. Tests cover exact fields, unsupported facts, hashes, ownership, malformed claims, narrative tampering, draft history, and the authenticated approval/regeneration routes. They do not make real provider calls.
 
 The synthetic benchmark now verifies 40/40 generated drafts because the in-transit case no longer invents delivery facts. This measures the claims actually included, not completeness or a successful defense. Its existing live labels and safety/speedup metrics still require separate correction. No Sandbox calls occur in that benchmark.

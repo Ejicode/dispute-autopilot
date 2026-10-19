@@ -15,53 +15,57 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Verify no uncommitted secrets or hardcoded private keys
         run: |
           echo "Scanning codebase for accidentally committed credentials..."
-          ! grep -rn "sk_live_" src/ scripts/
-          ! grep -rn "ghp_" src/ scripts/
-          ! grep -rn "AIzaSy" src/ scripts/
+          ! grep -rn "sk_live_" internal/ cmd/ src/
+          ! grep -rn "ghp_" internal/ cmd/ src/
+          ! grep -rn "AIzaSy" internal/ cmd/ src/
           ! grep -rn "BEGIN RSA PRIVATE KEY" .
           echo "Secret scan clean: No secrets found."
 
-      - name: Run automated test suite
-        run: npm run test
+      - name: Verify backend builds and vets clean
+        run: |
+          go build ./...
+          go vet ./...
+
+      - name: Run automated Go test suite
+        run: go test ./... -count=1
 
       - name: Verify authentication and merchant isolation
-        run: npm run test:auth
+        run: go test ./internal/httpapi/ -run TestHTTPApiEndToEnd -count=1
 
-      - name: Verify approval safety and concurrent execution
-        run: npm run test:approvals
+      - name: Verify approval safety and reconciliation
+        run: go test ./internal/approvals/ -count=1
 
       - name: Verify durable webhook processing and recovery
-        run: npm run test:webhooks
+        run: go test ./internal/paypal/ -count=1
 
       - name: Verify typed evidence and cited narratives
-        run: npm run test:evidence
+        run: go test ./internal/ai/ -count=1
 
       - name: Verify environment and provenance isolation
-        run: npm run test:environments
-
-      - name: Verify dispute reconciliation and recovery
-        run: npm run test:reconciliation
-
-      - name: Verify database upgrades and backend lifecycle
-        run: npm run test:readiness
+        run: go test ./internal/config/ ./internal/store/ -count=1
 
       - name: Run Trust Lab attack suite
-        run: npm run test:attacks
+        run: go test ./internal/trustlab/ -count=1
 
       - name: Run Dispute Bench (40 scenarios)
-        run: npm run bench
+        run: go run ./cmd/bench
 
-      - name: Typecheck and Build Next.js
-        run: npm run build
+      - name: Typecheck and build the static frontend
+        run: |
+          npm ci
+          npm run build

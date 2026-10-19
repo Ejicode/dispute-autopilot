@@ -112,6 +112,12 @@ export default function SearchBar() {
   const handleSelect = (href: string) => {
     setOpen(false);
     setQuery('');
+    // Dynamic /case/<id> routes are not prerendered in the static export, so
+    // use a full page load for them instead of Next's client-side router.
+    if (href.startsWith('/case/')) {
+      window.location.assign(href);
+      return;
+    }
     router.push(href);
   };
 

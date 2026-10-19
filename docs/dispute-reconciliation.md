@@ -46,4 +46,4 @@ Lifecycle changes, provider version, observation, and completion audit commit at
 
 These controls protect application-level history, not against a privileged administrator rewriting database files and triggers.
 
-Run npm run test:reconciliation and the existing authentication, approval, webhook, and environment suites. Tests use actual routes, temporary databases, controlled transport/races, and database fault injection. They make no real PayPal calls.
+Run `go test ./internal/approvals/ -count=1` and the existing authentication, approval, webhook, and environment suites (`go test ./...`). Tests use actual routes, temporary databases, controlled transport/races, and database fault injection. They make no real PayPal calls.

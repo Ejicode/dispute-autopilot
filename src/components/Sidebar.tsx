@@ -91,20 +91,15 @@ export default function Sidebar({
             const isActive = item.matchPrefix
               ? pathname.startsWith(item.matchPrefix)
               : pathname === item.href;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`w-full flex items-center rounded-2xl transition-all duration-200 group relative ${
-                  collapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3 text-xs font-bold'
-                } ${
-                  isActive
-                    ? 'bg-[#0070BA] text-white shadow-lg shadow-blue-800/40'
-                    : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
-                }`}
-                title={collapsed ? item.label : undefined}
-              >
+            const className = `w-full flex items-center rounded-2xl transition-all duration-200 group relative ${
+              collapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3 text-xs font-bold'
+            } ${
+              isActive
+                ? 'bg-[#0070BA] text-white shadow-lg shadow-blue-800/40'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+            }`;
+            const content = (
+              <>
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
                 {!collapsed && <span>{item.label}</span>}
 
@@ -114,6 +109,19 @@ export default function Sidebar({
                     {item.label}
                   </span>
                 )}
+              </>
+            );
+
+            // Dynamic /case/<id> links are not prerendered in the static export,
+            // so use a full page load (handled by the Go server) instead of
+            // Next's client-side router for them.
+            return item.href.startsWith('/case/') ? (
+              <a key={item.href} href={item.href} className={className} title={collapsed ? item.label : undefined}>
+                {content}
+              </a>
+            ) : (
+              <Link key={item.href} href={item.href} className={className} title={collapsed ? item.label : undefined}>
+                {content}
               </Link>
             );
           })}

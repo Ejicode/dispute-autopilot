@@ -4,7 +4,7 @@ This version gives each registered account one merchant workspace. Registration 
 
 ## Local setup
 
-1. Copy `.env.example` to `.env.local`, install dependencies with `npm ci`, and run `npm run dev`.
+1. Copy `.env.example` to `.env.local`, build the frontend with `npm ci && npm run build`, and run the Go server with `make dev` (or `./bin/server`).
 2. Open `/register` and supply a name, store name, email, and password of 15–128 characters. Email matching is case-insensitive. Passwords preserve whitespace.
 3. Use `/login` to return to that account. Sign out using the account menu.
 4. Create sample orders in the demo storefront. New accounts have empty workspaces.
@@ -41,10 +41,10 @@ With no PayPal credentials, existing browser simulation actions use the applicat
 
 ## Deployment and legacy data
 
-Set `APP_ORIGIN` to the exact public origin, for example `https://disputes.example.com`, and serve production over HTTPS. In production, missing `APP_ORIGIN` causes mutations to return `503`. Proxy headers do not override the configured origin. Use one long-running Node.js process with persistent local SQLite storage: realtime events are process-local, and this implementation is not designed for multiple replicas or ephemeral serverless filesystems. Back up both auth and merchant databases consistently, including SQLite WAL state; restrict filesystem access and add upstream request limits.
+Set `APP_ORIGIN` to the exact public origin, for example `https://disputes.example.com`, and serve production over HTTPS. In production, missing `APP_ORIGIN` causes mutations to return `503`. Proxy headers do not override the configured origin. Use one long-running Go process with persistent local SQLite storage: realtime events are process-local, and this implementation is not designed for multiple replicas or ephemeral serverless filesystems. Back up both auth and merchant databases consistently, including SQLite WAL state; restrict filesystem access and add upstream request limits.
 
 The old `data/dispute_autopilot.db` is left untouched and is no longer opened by web requests. Old profile records had no passwords and cannot safely establish account ownership. There is intentionally no automatic email-based claim or migration. For installations with legacy data, an administrator must first verify ownership, take a consistent backup, and perform a reviewed, explicit import into the intended account's database. Do not copy a mixed-merchant database into an account. No legacy migration tool is included in this feature.
 
-CLI seed, test, attack, and benchmark scripts run in `data/environments/demo/merchants/demo.db`, which web accounts cannot select. The authentication suite instead uses a fresh temporary data directory and disables provider credentials. Run `npm run test:auth`, `npm test`, and `npm run build` to validate the feature; CI runs the authentication suite too. Remaining unrelated audit findings are tracked in `AUDIT.md`.
+CLI seed, test, attack, and benchmark commands run in `data/environments/demo/merchants/demo.db`, which web accounts cannot select. The authentication suite instead uses a fresh temporary data directory and disables provider credentials. Run `go test ./internal/httpapi/ -run TestHTTPApiEndToEnd -count=1`, `go test ./...`, and `npm run build` to validate the feature; CI runs the authentication suite too. Remaining unrelated audit findings are tracked in `AUDIT.md`.
 
 Environment namespaces and legacy-data migration boundaries are documented in [environment isolation](environment-isolation.md).

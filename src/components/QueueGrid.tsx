@@ -3,7 +3,6 @@
 import React, { useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef } from 'ag-grid-community';
-import Link from 'next/link';
 import { Dispute } from '@/lib/types';
 import { AlertCircle, Clock, ShieldCheck, ArrowRight, CheckCircle2, Search } from 'lucide-react';
 
@@ -23,13 +22,13 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
         const d: Dispute = params.data;
         if (!d) return null;
         return (
-          <Link
-            href={`/case/${d.id}`}
+          <a
+            href={`/case/${d.id}/`}
             className="font-mono text-xs font-bold text-[#0070BA] hover:underline flex items-center gap-1.5 h-full transition-colors"
           >
             <ShieldCheck className="w-4 h-4 text-[#0070BA] shrink-0" />
             <span>{d.paypal_dispute_id}</span>
-          </Link>
+          </a>
         );
       },
     },
@@ -187,13 +186,13 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
         if (!d) return null;
         return (
           <div className="flex items-center h-full">
-            <Link
-              href={`/case/${d.id}`}
+            <a
+              href={`/case/${d.id}/`}
               className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0070BA] hover:bg-[#003087] text-white rounded-full text-xs font-bold transition-all shadow-sm hover:shadow"
             >
               <span>Review</span>
               <ArrowRight className="w-3 h-3" />
-            </Link>
+            </a>
           </div>
         );
       },
