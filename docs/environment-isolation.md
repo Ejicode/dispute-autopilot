@@ -48,4 +48,4 @@ The webhook retry command loads `.env.local` and uses the selected environment. 
 
 ## Validation
 
-`npm run test:environments` uses temporary databases and a stubbed HTTP transport. It covers mode defaults, simulation guards, database separation, persistent provenance, approval/transport rejection, environment-specific provider URLs, copied databases, retry-compatible projection, request context, and realtime isolation. No real provider calls are made. Existing authentication, approval, webhook, and evidence suites remain in CI.
+`go test ./internal/config/ ./internal/store/` uses temporary databases and a stubbed HTTP transport. It covers mode defaults, simulation guards, database separation, persistent provenance, approval/transport rejection, environment-specific provider URLs, copied databases, retry-compatible projection, request context, and realtime isolation. No real provider calls are made. Existing authentication, approval, webhook, and evidence suites remain in CI.

@@ -25,7 +25,7 @@ Online sellers lose thousands of dollars each month on PayPal disputes because e
 | Feature | Category | Description |
 | :--- | :--- | :--- |
 | **1. Evidence Vault** | *Innovation & Impact* | Captures order metadata, customer IP, items, and carrier delivery receipts at the time of payment. Every item is stamped with a SHA-256 hash and timestamp. When a dispute arrives, the evidence packet is ready in seconds. |
-| **2. Cited Drafts & Code Verifier** | *Technological Implementation* | The AI model returns structured JSON where every factual sentence cites a vault evidence ID. Deterministic TypeScript verification logic (not the LLM) cross-references amounts, dates, and tracking numbers. Unverified claims strictly block submission. |
+| **2. Cited Drafts & Code Verifier** | *Technological Implementation* | The AI model returns structured JSON where every factual sentence cites a vault evidence ID. Deterministic Go verification logic (not the LLM) cross-references amounts, dates, and tracking numbers. Unverified claims strictly block submission. |
 | **3. Money-and-Clock Triage** | *Design & AG Grid Prize* | An enterprise AG Grid queue prioritized by amount at risk and time to deadline. Calculates an Evidence Strength Score (0–100) and automated recommendations (`FIGHT`, `ACCEPT`, `ASK A HUMAN`). |
 | **4. Trust Lab Attack Suite** | *Security & Safety* | Interactive live security suite testing 6 real-world attack vectors: Webhook Signature Forgery, Event Replays, Buyer Prompt Injections, Amount Tampering, Expired Dispute Submissions, and Double-Click Race Conditions. All 6 are blocked with cryptographic audit records. |
 | **5. Dispute Bench** | *Evaluation & Rigor* | 40 scripted dispute scenarios (10 live PayPal Sandbox, 30 stubbed pipeline) testing evidence completeness, claim verification, and unsafe execution prevention. Executable with `make bench`. |
@@ -100,12 +100,12 @@ Online sellers lose thousands of dollars each month on PayPal disputes because e
 
 ## Benchmark Results (Dispute Bench)
 
-Ran against 40 scripted dispute scenarios on Oct 9, 2026:
+Ran against 40 scripted dispute scenarios on Oct 19, 2026:
 - **Total Scenarios**: 40 (10 Live PayPal Sandbox, 30 Stubbed Pipeline)
 - **Evidence Complete Rate**: 98%
-- **Claims Verified Rate**: 98%
+- **Claims Verified Rate**: 100%
 - **Unsafe Actions Executed**: **0** (Strict zero-tolerance violation check)
-- **Median Automated Time**: < 10 ms
+- **Median Automated Time**: < 1 ms
 - **Hand-Timed Human Baseline**: 360 seconds (6.0 minutes per dispute)
 - **Speedup Factor**: > 30,000x faster evidence assembly and drafting
 
@@ -126,60 +126,72 @@ Ran against 40 scripted dispute scenarios on Oct 9, 2026:
 
 ## Getting Started
 
+The backend is a single Go binary that serves both the JSON API and the statically
+exported Next.js frontend. Node.js is only needed to build the frontend assets.
+
 ### 1. Prerequisites
-- Node.js 18+ or 20+
-- npm or yarn
+- Go 1.26+
+- Node.js 20+ (build-time only, for the frontend)
 
 ### 2. Installation
 ```bash
 git clone https://github.com/Ejicode/dispute-autopilot.git
 cd dispute-autopilot
-npm install
+
+# Install frontend dependencies and build the static export into ./out
+npm ci
+npm run build
+
+# Compile the Go server (and the CLI tools into ./bin)
+make backend
 ```
+
+Or do both in one step with `make build`.
 
 ### 3. Environment Configuration
 Copy `.env.example` to `.env.local`. The default `APP_MODE=demo` runs offline simulations. To connect PayPal Sandbox, set both `APP_MODE=sandbox` and `PAYPAL_ENVIRONMENT=sandbox`, then configure credentials and integration ownership. See [environment isolation](docs/environment-isolation.md), including the changed database paths for existing installations:
 ```bash
 cp .env.example .env.local
 ```
+The Go server loads `.env.<NODE_ENV>.local`, `.env.local`, `.env.<NODE_ENV>`, then `.env` (matching the previous Next.js precedence), and always lets real process environment variables win.
 
 ### 4. Register & Run
 ```bash
-# Start development server
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000), register a merchant account with a password of at least 15 characters, and sign in. Each account starts with an empty, isolated workspace. Use the demo storefront and dispute simulator to create that account's sample data.
+# Build (if needed) and run the server on http://localhost:3000
+make dev
 
-`npm run seed` prepares a separate CLI-only demo workspace; it does not populate signed-in accounts. Existing legacy data is preserved but is not automatically assigned to new accounts. See [authentication and workspace setup](docs/authentication.md) for API contracts, PayPal ownership, deployment requirements, and migration guidance.
+# or run the compiled binary directly
+./bin/server
+```
+The server reads `PORT` (default `3000`) and `WEB_DIR` (default `./out`, the static frontend directory). Open [http://localhost:3000](http://localhost:3000), register a merchant account with a password of at least 15 characters, and sign in. Each account starts with an empty, isolated workspace. Use the demo storefront and dispute simulator to create that account's sample data.
+
+`make seed` (`go run ./cmd/seed`) prepares a separate CLI-only demo workspace; it does not populate signed-in accounts. Existing legacy data is preserved but is not automatically assigned to new accounts. See [authentication and workspace setup](docs/authentication.md) for API contracts, PayPal ownership, deployment requirements, and migration guidance.
 
 ### 5. Run Verification & Benchmarks
 ```bash
-# Run unit & integration tests
-make test           # or: npm run test
+# Run the full Go unit & integration test suite
+make test           # go test ./...
 
-# Check sessions, authorization, merchant isolation, and realtime isolation
-npm run test:auth
+# Authentication, merchant isolation, and realtime isolation (end-to-end over HTTP)
+go test ./internal/httpapi/ -run TestHTTPApiEndToEnd -count=1
 
-# Check reviewed actions, stale snapshots, concurrent execution, and provider failures
-npm run test:approvals
+# Reviewed actions, stale snapshots, concurrent execution, and provider failures
+go test ./internal/approvals/ -count=1
 
-# Check durable webhook retries, duplicates, and out-of-order events
-npm run test:webhooks
+# Durable webhook retries, duplicates, and out-of-order events
+go test ./internal/paypal/ -count=1
 
-# Check typed evidence and complete narrative verification
-npm run test:evidence
+# Typed evidence and complete narrative verification
+go test ./internal/ai/ -count=1
 
-# Check demo/sandbox/live API, database, and provider boundaries
-npm run test:environments
-
-# Check uncertain approvals and reconciliation races
-npm run test:reconciliation
+# Demo/sandbox/live API, database, and provider boundaries
+go test ./internal/config/ ./internal/store/ -count=1
 
 # Run Trust Lab penetration test vectors
-make test-attacks   # or: npm run test:attacks
+make test-attacks   # go test ./internal/trustlab/ -count=1 -v
 
-# Run the 40-scenario benchmark suite
-make bench          # or: npm run bench
+# Run the 40-scenario benchmark suite (writes bench_results.json)
+make bench          # go run ./cmd/bench
 ```
 
 ---

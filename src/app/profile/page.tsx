@@ -421,13 +421,13 @@ export default function MerchantProfilePage() {
                       </span>
                     </td>
                     <td className="py-3 px-3 text-right">
-                      <Link
-                        href={`/case/${d.id}`}
+                      <a
+                        href={`/case/${d.id}/`}
                         className="inline-flex items-center gap-1 py-1 px-3 rounded-lg bg-blue-50 text-[#0070BA] font-bold hover:bg-blue-100 transition-colors"
                       >
                         <span>Review</span>
                         <ArrowRight className="w-3 h-3" />
-                      </Link>
+                      </a>
                     </td>
                   </tr>
                 ))}

@@ -36,4 +36,4 @@ The provider payload structure follows the [PayPal dispute API reference](https:
 
 ## Verification
 
-Run `npm run test:approvals`, `npm run test:auth`, `npm test`, and `npm run build`. The approval suite uses fresh temporary databases, real authenticated route handlers, controlled concurrent provider promises, injected failures, and a stubbed HTTP transport. It asserts provider call counts, immutable request bodies, stale-review rejection, cross-merchant denial, execution timestamps, and preservation of a concurrent resolution. No real money or provider credentials are used.
+Run `go test ./internal/approvals/ ./internal/httpapi/ -count=1`, `go test ./...`, and `npm run build`. The approval suite uses fresh temporary databases, real authenticated route handlers, controlled concurrent provider calls, injected failures, and a stubbed HTTP transport. It asserts provider call counts, immutable request bodies, stale-review rejection, cross-merchant denial, execution timestamps, and preservation of a concurrent resolution. No real money or provider credentials are used.

@@ -21,21 +21,23 @@ The retry delay starts at 30 seconds, doubles after each failed attempt, and cap
 
 ## Run the recovery command
 
-The CLI selects its database using `APP_MODE`; see [environment isolation](environment-isolation.md). The CLI loads `.env.local` through Next's environment loader and targets only `PAYPAL_MERCHANT_USER_ID` in the configured `DATA_DIR`. That account must exist. It processes only receipts that already passed verification and never sends payment actions.
+The CLI selects its database using `APP_MODE`; see [environment isolation](environment-isolation.md). The CLI loads `.env.local` through the same environment loader the server uses and targets only `PAYPAL_MERCHANT_USER_ID` in the configured `DATA_DIR`. That account must exist. It processes only receipts that already passed verification and never sends payment actions.
 
 ```bash
 # Inspect pending, failed, deferred, and dead-letter events without replaying them
-npm run webhooks:retry -- --list
+go run ./cmd/retry-webhooks --list
 
 # Retry up to 100 due events
-npm run webhooks:retry
+go run ./cmd/retry-webhooks
 
 # Limit work per invocation
-npm run webhooks:retry -- --limit 25
+go run ./cmd/retry-webhooks --limit 25
 
 # After reviewing/fixing the cause, retry one stored receipt immediately
-npm run webhooks:retry -- --event-id WH-EXAMPLE --force
+go run ./cmd/retry-webhooks --event-id WH-EXAMPLE --force
 ```
+
+The Go server also runs the due-event sweep every minute in-process when `APP_MODE` is not `demo` and `PAYPAL_MERCHANT_USER_ID` is set.
 
 Schedule the due-event command approximately once per minute using your deployment's scheduler, with the project working directory and the same persistent data directory as the application. This repository supplies the command, not a deployed scheduler. Overlapping workers serialize through SQLite; completed receipts are not reprojected. The command exits nonzero when attempted processing fails or dead letters remain, so monitoring can alert operators. `--list` is read-only and exits successfully even when it lists failures.
 
@@ -60,4 +62,4 @@ This remains a SQLite deployment using persistent local storage. An authenticate
 
 ## Validation
 
-`npm run test:webhooks` exercises actual processor and HTTP route code with explicit fake verifiers, temporary databases, transaction fault injection, concurrent delivery, changed payload detection, out-of-order events, legacy repair, capture correlation, and a separate recovery process. `npm run test:auth` and `npm run test:approvals` cover ownership and approval regressions. No real provider calls or payment actions are made by these tests.
+`go test ./internal/paypal/ -count=1` exercises actual processor and HTTP route code with explicit fake verifiers, temporary databases, transaction fault injection, concurrent delivery, changed payload detection, out-of-order events, legacy repair, capture correlation, and a separate recovery process. `go test ./internal/httpapi/` and `go test ./internal/approvals/` cover ownership and approval regressions. No real provider calls or payment actions are made by these tests.

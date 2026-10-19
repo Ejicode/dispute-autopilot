@@ -13,7 +13,7 @@ Draft generation and approval now use the same typed evidence verifier. Every cl
 
 Text comparisons trim and collapse whitespace, preserve case, and match whole fields. Dates must be valid ISO calendar dates or timestamps; comparisons use the recorded calendar day. Currency support retains the existing integer-cent model.
 
-Carrier sources currently include USPS, UPS, FEDEX, DHL, CARRIER_INTEGRATION and CARRIER_SIMULATOR. Order sources are the existing storefront/capture adapters listed in `evidence-facts.ts`. Unknown source labels and plain text cannot supply these claims. Adding an adapter requires a reviewed mapping and tests. Simulation labels remain supported for demonstration: approval now also enforces the [environment provenance boundary](environment-isolation.md).
+Carrier sources currently include USPS, UPS, FEDEX, DHL, CARRIER_INTEGRATION and CARRIER_SIMULATOR. Order sources are the existing storefront/capture adapters implemented in `internal/ai/facts.go`. Unknown source labels and plain text cannot supply these claims. Adding an adapter requires a reviewed mapping and tests. Simulation labels remain supported for demonstration: approval now also enforces the [environment provenance boundary](environment-isolation.md).
 
 ## Narrative binding
 
@@ -33,6 +33,6 @@ Regeneration is explicit. Automatic refresh after every carrier update, broader 
 
 ## Validation
 
-Run `npm run test:evidence`, `npm run test:approvals`, `npm run test:auth`, `npm run test:webhooks`, `npm test`, and `npm run build`. Tests cover exact fields, unsupported facts, hashes, ownership, malformed claims, narrative tampering, draft history, and the authenticated approval/regeneration routes. They do not make real provider calls.
+Run `go test ./internal/ai/ ./internal/approvals/ ./internal/paypal/ ./internal/httpapi/ -count=1`, `go test ./...`, and `npm run build`. Tests cover exact fields, unsupported facts, hashes, ownership, malformed claims, narrative tampering, draft history, and the authenticated approval/regeneration routes. They do not make real provider calls.
 
 The synthetic benchmark now verifies 40/40 generated drafts because the in-transit case no longer invents delivery facts. This measures the claims actually included, not completeness or a successful defense. Its existing live labels and safety/speedup metrics still require separate correction. No Sandbox calls occur in that benchmark.

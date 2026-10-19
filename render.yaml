@@ -1,22 +1,23 @@
 services:
   - type: web
     name: dispute-autopilot
-    runtime: node
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     plan: starter
-    buildCommand: npm ci --include=dev && npm run build
-    startCommand: npm run start:render
     healthCheckPath: /api/health
     disk:
       name: dispute-data
       mountPath: /var/data
       sizeGB: 1
     envVars:
-      - key: NODE_VERSION
-        value: 22.23.2
+      - key: PORT
+        value: 3000
       - key: NODE_ENV
         value: production
       - key: DATA_DIR
-        value: /var/data/dispute-autopilot
+        value: /var/data
+      - key: WEB_DIR
+        value: /app/out
       - key: APP_MODE
         value: demo
       - key: APP_ORIGIN
@@ -30,4 +31,8 @@ services:
       - key: PAYPAL_WEBHOOK_ID
         sync: false
       - key: PAYPAL_MERCHANT_USER_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI_MODEL_NAME
         sync: false

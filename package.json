@@ -3,48 +3,30 @@
   "version": "1.0.0",
   "description": "An AI agent that wins back money for online sellers - safely. Built for the PayPal AI Hackathon 2026.",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "seed": "tsx scripts/seed.ts",
-    "bench": "tsx scripts/bench.ts",
-    "test": "tsx scripts/test-runner.ts",
-    "test:auth": "tsx scripts/test-auth.ts",
-    "test:approvals": "tsx scripts/test-approvals.ts",
-    "test:webhooks": "tsx scripts/test-webhooks.ts",
-    "webhooks:retry": "tsx scripts/retry-webhooks.ts",
-    "test:attacks": "tsx scripts/test-attacks.ts",
-    "test:evidence": "tsx scripts/test-evidence.ts",
-    "test:environments": "tsx scripts/test-environments.ts",
-    "test:reconciliation": "tsx scripts/test-reconciliation.ts",
-    "test:readiness": "tsx scripts/test-readiness.ts",
-    "start:render": "node scripts/start-render.mjs",
-    "db:backup": "tsx scripts/backup-database.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "ag-grid-community": "^32.3.3",
     "ag-grid-react": "^32.3.3",
-    "better-sqlite3": "^11.8.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",
     "next": "^14.2.24",
-    "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^3.10.1",
     "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^20.17.19",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
-    "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }
 }

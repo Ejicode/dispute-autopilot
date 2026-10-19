@@ -11,6 +11,9 @@ out/
 build/
 dist/
 
+# Go build output
+bin/
+
 # TypeScript build info cache
 *.tsbuildinfo
 
