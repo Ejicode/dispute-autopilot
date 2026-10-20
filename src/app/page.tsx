@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
 import QueueGrid from '@/components/QueueGrid';
 import { Dispute } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
@@ -10,6 +11,7 @@ import {
   DollarSign, 
   Clock, 
   ArrowUpRight, 
+  ArrowRight,
   ChevronLeft, 
   ChevronRight,
   TrendingUp,
@@ -206,6 +208,47 @@ export default function DashboardPage() {
           </button>
         </div>
       )}
+
+      {/* ── 0. VIDEO HERO TRIAGE BANNER (Direct 3-Minute Video Script Anchor) ── */}
+      <div className="bg-gradient-to-r from-[#003087] via-[#0070BA] to-[#009CDE] text-white p-6 rounded-3xl shadow-lg shadow-blue-900/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2 relative z-10">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFC439] text-[#003087] uppercase tracking-wider">
+              Real-Time Triage Banner
+            </span>
+            <span className="text-white/80 text-xs font-medium flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-[#FFC439]" />
+              Response Countdown Active
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+            ${(kpis.totalAtRiskCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} is at risk and {kpis.expiring48hCount} {kpis.expiring48hCount === 1 ? 'case expires' : 'cases expire'} in 48 hours.
+          </h1>
+          <p className="text-xs sm:text-sm text-white/80 max-w-2xl leading-relaxed">
+            &ldquo;Sellers lose money on disputes they cannot answer in time. The proof was captured when the buyer paid—packets are assembled in seconds, not hunted down by hand.&rdquo;
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 relative z-10 shrink-0">
+          <button
+            onClick={() => {
+              const el = document.getElementById('dispute-queue-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-4 py-2.5 rounded-full bg-white text-[#003087] hover:bg-slate-50 text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
+          >
+            <span>Focus Urgent Cases</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+          <Link
+            href="/trust-lab"
+            className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-[#FFC439]" />
+            <span>Open Trust Lab</span>
+          </Link>
+        </div>
+      </div>
 
       {/* ── 1. TOP STAT / KPI CARDS ROW (100% Real-Time DB Computations) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -565,7 +608,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── 4. DISPUTE QUEUE TABLE (AG GRID IN CLEAN WHITE CARD) ── */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+      <div id="dispute-queue-section" className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm space-y-4 scroll-mt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
