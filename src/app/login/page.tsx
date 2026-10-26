@@ -97,7 +97,7 @@ export default function LoginPage() {
 
         {/* Top: Brand Monogram Header */}
         <div className="relative z-30 flex items-center">
-          <Logo variant="light" size="md" href="/login" />
+          <Logo variant="light" size="lg" href="/login" />
         </div>
 
         {/* Center: Welcome Headline */}

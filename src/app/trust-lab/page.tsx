@@ -190,7 +190,7 @@ export default function TrustLabPage() {
           {results && (
             <button
               onClick={handleDownloadReport}
-              className="px-4 py-2.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-2 transition-colors shadow-sm"
+              className="px-4 py-2.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-2 transition-all shadow-sm btn-press"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export Audit JSON</span>
@@ -200,7 +200,7 @@ export default function TrustLabPage() {
           <button
             onClick={handleRunAttacks}
             disabled={running || testingVectorId !== null}
-            className="px-5 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold shadow-md shadow-blue-950/20 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap"
+            className="px-5 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold shadow-md shadow-blue-950/20 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap btn-press"
           >
             {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Activity className="w-3.5 h-3.5 text-[#FFC439]" />}
             <span>Execute Attack Suite (Live)</span>
@@ -313,7 +313,7 @@ export default function TrustLabPage() {
                 <button
                   onClick={() => handleTestVector(vec.id)}
                   disabled={testingVectorId !== null || running}
-                  className="px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#003087] border border-blue-200 text-[10px] font-bold flex items-center gap-1 transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                  className="px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#003087] border border-blue-200 text-[10px] font-bold flex items-center gap-1 transition-all shrink-0 cursor-pointer disabled:opacity-50 btn-press"
                   title={`Run isolated test for ${vec.name}`}
                 >
                   {testingVectorId === vec.id ? (

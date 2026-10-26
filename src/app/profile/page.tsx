@@ -426,7 +426,7 @@ export default function MerchantProfilePage() {
                     <td className="py-3 px-3 text-right">
                       <a
                         href={`/case/${d.id}/`}
-                        className="inline-flex items-center gap-1 py-1 px-3 rounded-lg bg-blue-50 text-[#003087] font-bold hover:bg-blue-100 transition-colors"
+                        className="inline-flex items-center gap-1 py-1 px-3 rounded-lg bg-blue-50 text-[#003087] font-bold hover:bg-blue-100 transition-all btn-press"
                       >
                         <span>Review</span>
                         <ArrowRight className="w-3 h-3" />

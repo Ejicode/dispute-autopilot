@@ -31,10 +31,10 @@ func (a *API) search(w http.ResponseWriter, r *http.Request, _ *types.UserAccoun
 	rebuildSearchIndexes(r.Context(), db)
 
 	like := likeArg(q)
-	if rows, err := queryMaps(r.Context(), db, `SELECT id, paypal_dispute_id, reason, status, recommendation, amount_cents, response_deadline, created_at
+	if rows, err := queryMaps(r.Context(), db, `SELECT id, paypal_dispute_id, transaction_id, reason, status, recommendation, amount_cents, response_deadline, created_at
 		FROM disputes
-		WHERE paypal_dispute_id LIKE ? OR reason LIKE ? OR status LIKE ? OR recommendation LIKE ?
-		LIMIT 5`, like, like, like, like); err != nil {
+		WHERE paypal_dispute_id LIKE ? OR transaction_id LIKE ? OR reason LIKE ? OR status LIKE ? OR recommendation LIKE ?
+		LIMIT 6`, like, like, like, like, like); err != nil {
 		return err
 	} else {
 		for _, d := range rows {
@@ -45,11 +45,16 @@ func (a *API) search(w http.ResponseWriter, r *http.Request, _ *types.UserAccoun
 			} else if status == string(types.StatusResolved) {
 				badgeColor = "emerald"
 			}
+			txnID := stringValue(d["transaction_id"])
+			sub := strings.ReplaceAll(stringValue(d["reason"]), "_", " ") + " · $" + formatCents(intValue(d["amount_cents"]))
+			if txnID != "" {
+				sub = "Txn: " + txnID + " · " + sub
+			}
 			results = append(results, map[string]any{
 				"type":       "dispute",
 				"id":         d["id"],
 				"title":      d["paypal_dispute_id"],
-				"subtitle":   strings.ReplaceAll(stringValue(d["reason"]), "_", " ") + " — $" + formatCents(intValue(d["amount_cents"])),
+				"subtitle":   sub,
 				"badge":      d["status"],
 				"badgeColor": badgeColor,
 				"href":       "/case/" + stringValue(d["id"]),
@@ -58,10 +63,10 @@ func (a *API) search(w http.ResponseWriter, r *http.Request, _ *types.UserAccoun
 		}
 	}
 
-	if rows, err := queryMaps(r.Context(), db, `SELECT id, order_number, buyer_name, buyer_email, delivery_status, total_cents, created_at
+	if rows, err := queryMaps(r.Context(), db, `SELECT id, order_number, buyer_name, buyer_email, tracking_number, paypal_order_id, items, delivery_status, total_cents, created_at
 		FROM demo_orders
-		WHERE order_number LIKE ? OR buyer_name LIKE ? OR buyer_email LIKE ? OR shipping_address LIKE ?
-		LIMIT 5`, like, like, like, like); err != nil {
+		WHERE order_number LIKE ? OR buyer_name LIKE ? OR buyer_email LIKE ? OR paypal_order_id LIKE ? OR tracking_number LIKE ? OR items LIKE ? OR shipping_address LIKE ?
+		LIMIT 6`, like, like, like, like, like, like, like); err != nil {
 		return err
 	} else {
 		for _, o := range rows {
@@ -70,11 +75,15 @@ func (a *API) search(w http.ResponseWriter, r *http.Request, _ *types.UserAccoun
 			if deliveryStatus == "DELIVERED" {
 				badgeColor = "emerald"
 			}
+			sub := strings.ReplaceAll(deliveryStatus, "_", " ") + " · $" + formatCents(intValue(o["total_cents"]))
+			if track := stringValue(o["tracking_number"]); track != "" {
+				sub += " · " + track
+			}
 			results = append(results, map[string]any{
 				"type":       "order",
 				"id":         o["id"],
 				"title":      stringValue(o["order_number"]) + " — " + stringValue(o["buyer_name"]),
-				"subtitle":   strings.ReplaceAll(deliveryStatus, "_", " ") + " · $" + formatCents(intValue(o["total_cents"])),
+				"subtitle":   sub,
 				"badge":      o["delivery_status"],
 				"badgeColor": badgeColor,
 				"href":       "/storefront",

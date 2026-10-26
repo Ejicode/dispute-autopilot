@@ -77,34 +77,13 @@ export default function TopHeader({ title = 'Sales Report', onToggleSidebar }: T
         </div>
       </div>
 
-      {/* ── Right Side: Circular Search, Mail Envelope & User Profile Pill ── */}
-      <div className="flex items-center gap-2.5 sm:gap-3">
-        {/* Search Trigger Button */}
-        <div className="relative">
-          <button
-            onClick={() => setSearchModalOpen(!searchModalOpen)}
-            className="w-10 h-10 rounded-full bg-white card-3d-reflection hover:-translate-y-0.5 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all cursor-pointer"
-            title="Search (Ctrl+K)"
-          >
-            <Search className="w-4 h-4" />
-          </button>
+      {/* ── Center / In-Place Search Bar ── */}
+      <div className="flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2 sm:mx-4">
+        <SearchBar variant="light" placeholder="Search transactions, items, disputes…" />
+      </div>
 
-          {/* Quick Search Modal Popover */}
-          {searchModalOpen && (
-            <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white card-3d-reflection p-3 rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2">
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
-                <span className="text-xs font-bold text-slate-700">Quick Global Search</span>
-                <button
-                  onClick={() => setSearchModalOpen(false)}
-                  className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <SearchBar />
-            </div>
-          )}
-        </div>
+      {/* ── Right Side: Mail Envelope & User Profile Pill ── */}
+      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
 
         {/* Circular Mail / Envelope Button with Popover */}
         <div className="relative">

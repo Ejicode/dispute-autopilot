@@ -496,7 +496,7 @@ export default function AiAssistant() {
       )}
 
       {open && (
-        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[340px] sm:w-[360px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-32px)] sm:max-h-[min(540px,calc(100vh-48px))] h-auto rounded-[24px] card-3d-reflection bg-white flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[340px] sm:w-[360px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-100px)] sm:max-h-[min(500px,calc(100vh-110px))] h-auto rounded-[24px] card-3d-reflection bg-white flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in">
           
           <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-4 py-2.5 flex items-center justify-between shrink-0 text-white select-none">
             <div className="flex items-center gap-2 min-w-0">

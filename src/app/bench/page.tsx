@@ -77,7 +77,7 @@ export default function BenchPage() {
           {summary && (
             <button
               onClick={handleDownloadReport}
-              className="px-4 py-2.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-2 transition-colors shadow-sm cursor-pointer"
+              className="px-4 py-2.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-2 transition-all shadow-sm btn-press"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export Benchmark JSON</span>
@@ -86,7 +86,7 @@ export default function BenchPage() {
           <button
             onClick={handleRunBench}
             disabled={running}
-            className="px-5 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold shadow-md shadow-blue-950/25 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap cursor-pointer"
+            className="px-5 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold shadow-md shadow-blue-950/25 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap btn-press"
           >
             {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-blue-200" />}
             <span>Run 40-Scenario Benchmark</span>

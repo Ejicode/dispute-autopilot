@@ -277,7 +277,7 @@ export default function CaseDetailPage() {
       <div className="flex items-center justify-between">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#003087] transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200/90 shadow-sm card-3d-reflection"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#003087] transition-all bg-white px-3.5 py-2 rounded-xl border border-slate-200/90 shadow-sm card-3d-reflection btn-press"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Dispute Dashboard</span>
@@ -800,7 +800,7 @@ export default function CaseDetailPage() {
               </select>
             </label>
             <button onClick={handleReview} disabled={reviewLoading || approving}
-              className={`w-full rounded-2xl border p-3.5 text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              className={`w-full rounded-2xl border p-3.5 text-xs font-bold transition-all flex items-center justify-center gap-2 btn-press ${
                 review
                   ? 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   : 'bg-[#E6F0FA] text-[#003087] border-[#C9E0FA] hover:bg-[#D4E6FA] shadow-sm'
@@ -839,7 +839,7 @@ export default function CaseDetailPage() {
             {approvalResult && <p role="status" className="text-sm text-emerald-700 font-bold">✓ Action acknowledged by PayPal. Await final dispute outcome.</p>}
             <button onClick={handleApproveAction}
               disabled={!review || Boolean(operation) || approving || dispute.status !== 'REQUIRED_ACTION'}
-              className="w-full py-3.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-[#003087] hover:bg-[#001C48] text-white shadow-md shadow-blue-950/25 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none">
+              className="w-full py-3.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-[#003087] hover:bg-[#001C48] text-white shadow-md shadow-blue-950/25 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none btn-press">
               {approving ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

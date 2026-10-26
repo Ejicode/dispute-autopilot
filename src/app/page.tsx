@@ -289,100 +289,100 @@ export default function DashboardPage() {
         ═══════════════════════════════════════════════════════════ */}
         <div className="xl:col-span-8 space-y-6">
           
-          {/* 2x2 Metric Cards Grid */}
+          {/* 2x2 Balanced Metric Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
-            {/* Card 1 (Top-Left): SOLID PAYPAL NAVY CARD WITH 3D SPECULAR REFLECTION */}
-            <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white rounded-3xl p-6 shadow-md shadow-blue-950/20 flex flex-col justify-between min-h-[175px] relative overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent">
+            {/* Card 1: PayPal Navy Signature Card */}
+            <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white rounded-3xl p-5 sm:p-6 shadow-md shadow-blue-950/20 flex flex-col justify-between min-h-[160px] relative overflow-hidden group card-interactive">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-blue-100/90 tracking-normal">
-                  Total Sales Protected
+                <span className="text-xs font-semibold text-blue-100/90">
+                  Protected Volume
                 </span>
-                <span className="bg-[#FFC439] text-[#001C48] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm group-hover:scale-105 transition-transform">
+                <span className="bg-[#FFC439] text-[#001C48] font-black text-[11px] px-2.5 py-0.5 rounded-full shadow-sm">
                   Live DB
                 </span>
               </div>
 
-              <div className="my-3">
+              <div className="my-2">
                 <div className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-none">
                   {totalSalesDisplay}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-blue-100/70 pt-2 border-t border-white/10">
-                <span>{kpis.orderCount > 0 ? `${kpis.orderCount} store orders protected` : 'Synchronized volume'}</span>
-                <span className="font-semibold text-emerald-300 flex items-center gap-1">
+              <div className="flex items-center justify-between text-xs text-blue-100/80 pt-2 border-t border-white/15">
+                <span>{kpis.orderCount} store orders protected</span>
+                <span className="font-bold text-emerald-300 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                   SHA-256 Vault
                 </span>
               </div>
             </div>
 
-            {/* Card 2 (Top-Right): White Card with 3D Specular Reflection */}
-            <div className="card-3d-reflection rounded-3xl p-6 flex flex-col justify-between min-h-[175px] group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden bg-white">
+            {/* Card 2: Total Orders */}
+            <div className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive">
               <div className="flex items-center justify-between relative z-10">
-                <span className="text-xs font-semibold text-slate-600 tracking-normal">
+                <span className="text-xs font-semibold text-slate-600">
                   Total Orders
                 </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full">
                   {kpis.orderCount} Orders
                 </span>
               </div>
 
-              <div className="my-3 relative z-10">
+              <div className="my-2 relative z-10">
                 <div className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-none">
                   {totalOrdersDisplay}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-400 font-medium pt-2 border-t border-slate-100 relative z-10">
-                <span>Captured store sales</span>
+              <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
+                <span>Store transactions</span>
                 <span className="text-[#0070BA] font-bold">Verified</span>
               </div>
             </div>
 
-            {/* Card 3 (Bottom-Left): White Card with 3D Specular Reflection */}
-            <div className="card-3d-reflection rounded-3xl p-6 flex flex-col justify-between min-h-[175px] group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden bg-white">
+            {/* Card 3: Unique Customers */}
+            <div className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive">
               <div className="flex items-center justify-between relative z-10">
-                <span className="text-xs font-semibold text-slate-600 tracking-normal">
+                <span className="text-xs font-semibold text-slate-600">
                   Unique Customers
                 </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full">
                   {kpis.customerCount} Buyers
                 </span>
               </div>
 
-              <div className="my-3 relative z-10">
+              <div className="my-2 relative z-10">
                 <div className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-none">
                   {totalVisitorsDisplay}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-400 font-medium pt-2 border-t border-slate-100 relative z-10">
-                <span>Verified buyer accounts</span>
-                <span className="text-slate-600 font-semibold">Active</span>
+              <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
+                <span>Active buyer accounts</span>
+                <span className="text-emerald-600 font-bold">Protected</span>
               </div>
             </div>
 
-            {/* Card 4 (Bottom-Right): White Card with 3D Specular Reflection */}
-            <div className="card-3d-reflection rounded-3xl p-6 flex flex-col justify-between min-h-[175px] group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden bg-white">
+            {/* Card 4: Evidence Vault */}
+            <div className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive">
               <div className="flex items-center justify-between relative z-10">
-                <span className="text-xs font-semibold text-slate-600 tracking-normal">
-                  Evidence Vault Items
+                <span className="text-xs font-semibold text-slate-600">
+                  Evidence Vault
                 </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full">
                   {kpis.evidenceCount} Files
                 </span>
               </div>
 
-              <div className="my-3 relative z-10">
+              <div className="my-2 relative z-10">
                 <div className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-none">
                   {totalProductsSoldDisplay}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-400 font-medium pt-2 border-t border-slate-100 relative z-10">
-                <span>Tamper-evident audit assets</span>
+              <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
+                <span>Cryptographic proof</span>
                 <span className="text-[#0070BA] font-bold">SHA-256</span>
               </div>
             </div>
@@ -563,29 +563,23 @@ export default function DashboardPage() {
               </h3>
             </div>
 
-            {/* Overlapping Bubble Circles: 100%, 100%, 100%, 100% */}
-            <div className="py-2">
-              <div className="flex items-center">
-                {/* Bubble 1: 100% (Signature) */}
-                <div className="w-16 h-16 rounded-full bg-[#003087] text-white font-black text-xs flex flex-col items-center justify-center shadow-md ring-4 ring-white z-40 shrink-0 hover:scale-105 transition-transform" title="Webhook Signature Check: 100%">
-                  <span>100%</span>
-                  <span className="text-[8px] font-normal text-blue-200">Sig</span>
-                </div>
-                {/* Bubble 2: 100% (Replay) */}
-                <div className="w-14 h-14 rounded-full bg-[#0070BA] text-white font-bold text-[11px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-30 shrink-0 hover:scale-105 transition-transform" title="Replay Attack Defense: 100%">
-                  <span>100%</span>
-                  <span className="text-[7.5px] font-normal text-blue-100">Replay</span>
-                </div>
-                {/* Bubble 3: 100% (Gate) */}
-                <div className="w-12 h-12 rounded-full bg-[#00A6E0] text-white font-bold text-[10px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-20 shrink-0 hover:scale-105 transition-transform" title="Deterministic Code Gate: 100%">
-                  <span>100%</span>
-                  <span className="text-[7px] font-normal text-white/90">Gate</span>
-                </div>
-                {/* Bubble 4: 100% (Vault) */}
-                <div className="w-10 h-10 rounded-full bg-[#10B981] text-white font-bold text-[9px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-10 shrink-0 hover:scale-105 transition-transform" title="Evidence Vault SHA-256: 100%">
-                  <span>100%</span>
-                  <span className="text-[6.5px] font-normal text-emerald-100">Vault</span>
-                </div>
+            {/* Balanced Non-Overlapping Security Pillars */}
+            <div className="grid grid-cols-4 gap-2 py-1">
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-blue-50/70 border border-blue-200/60 text-center card-interactive">
+                <span className="text-sm font-black text-[#003087]">100%</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Signature</span>
+              </div>
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-blue-50/70 border border-blue-200/60 text-center card-interactive">
+                <span className="text-sm font-black text-[#0070BA]">100%</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Replay</span>
+              </div>
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-blue-50/70 border border-blue-200/60 text-center card-interactive">
+                <span className="text-sm font-black text-[#00A6E0]">100%</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Policy</span>
+              </div>
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 text-center card-interactive">
+                <span className="text-sm font-black text-emerald-600">100%</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Vault</span>
               </div>
             </div>
 

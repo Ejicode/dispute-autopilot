@@ -344,37 +344,37 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
 
           {/* Sorter & Tool Buttons */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider hidden lg:inline">
+            <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider hidden lg:inline">
               Triage Sort:
             </span>
             <button
               onClick={handleSortByRisk}
-              className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all btn-press"
               title="Prioritize disputes by money at risk"
             >
-              <DollarSign className="w-3 h-3 text-[#003087]" />
+              <DollarSign className="w-3.5 h-3.5 text-[#003087]" />
               <span>Money at Risk</span>
             </button>
             <button
               onClick={handleSortByDeadline}
-              className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all btn-press"
               title="Prioritize disputes expiring soonest"
             >
-              <Clock className="w-3 h-3 text-amber-600" />
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
               <span>Deadline Clock</span>
             </button>
             <button
               onClick={handleSortByStrength}
-              className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all btn-press"
               title="Sort by Evidence Strength Score"
             >
-              <FileCheck className="w-3 h-3 text-[#003087]" />
+              <FileCheck className="w-3.5 h-3.5 text-[#003087]" />
               <span>Strength</span>
             </button>
             <button
               onClick={() => setFloatingFilters(!floatingFilters)}
-              className={`p-2 rounded-full border text-xs font-semibold transition-colors ${
-                floatingFilters ? 'bg-blue-50 text-[#003087] border-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+              className={`p-2 rounded-full border text-xs font-semibold transition-all btn-press ${
+                floatingFilters ? 'bg-blue-50 text-[#003087] border-blue-200 shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
               }`}
               title="Toggle column floating filters"
             >
@@ -382,7 +382,7 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
             </button>
             <button
               onClick={handleExportCsv}
-              className="p-2 rounded-full bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition-colors"
+              className="p-2 rounded-full bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition-all btn-press"
               title="Export visible dispute queue to CSV"
             >
               <Download className="w-3.5 h-3.5" />
@@ -392,7 +392,7 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
 
         {/* Filter Preset Chips */}
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+          <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
             Quick Filters:
           </span>
           {[
@@ -405,9 +405,9 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
             <button
               key={preset.id}
               onClick={() => setActiveFilterPreset(preset.id as any)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all btn-press ${
                 activeFilterPreset === preset.id
-                  ? 'bg-[#003087] text-white shadow-sm'
+                  ? 'bg-[#003087] text-white shadow-sm font-bold'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
               }`}
             >

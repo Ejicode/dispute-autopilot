@@ -41,7 +41,17 @@ const TYPE_LABELS: Record<string, string> = {
   evidence: 'Evidence',
 };
 
-export default function SearchBar() {
+interface SearchBarProps {
+  variant?: 'light' | 'dark';
+  className?: string;
+  placeholder?: string;
+}
+
+export default function SearchBar({
+  variant = 'light',
+  className = '',
+  placeholder = 'Search transactions, disputes, items, orders…',
+}: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +60,8 @@ export default function SearchBar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
+
+  const isLight = variant === 'light';
 
   const search = useCallback(async (q: string) => {
     if (!q || q.length < 2) {
@@ -72,7 +84,7 @@ export default function SearchBar() {
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(query), 280);
+    debounceRef.current = setTimeout(() => search(query), 250);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, search]);
 
@@ -112,8 +124,6 @@ export default function SearchBar() {
   const handleSelect = (href: string) => {
     setOpen(false);
     setQuery('');
-    // Dynamic /case/<id> routes are not prerendered in the static export, so
-    // use a full page load for them instead of Next's client-side router.
     if (href.startsWith('/case/')) {
       window.location.assign(href);
       return;
@@ -129,15 +139,24 @@ export default function SearchBar() {
   }, {});
 
   return (
-    <div className="relative w-full max-w-sm" ref={dropdownRef}>
+    <div className={`relative w-full ${className}`} ref={dropdownRef}>
       {/* Search Input */}
-      <div className={`flex items-center gap-2.5 bg-white/15 backdrop-blur-sm border transition-all duration-200 rounded-xl px-3.5 py-2 ${
-        open ? 'border-white/60 bg-white/25 shadow-lg' : 'border-white/25 hover:border-white/40'
-      }`}>
+      <div
+        onClick={() => inputRef.current?.focus()}
+        className={`flex items-center gap-2.5 transition-all duration-200 rounded-full px-3.5 py-2 cursor-text ${
+          isLight
+            ? `bg-white border text-slate-800 shadow-xs card-3d-reflection ${
+                open ? 'border-[#003087] ring-2 ring-[#003087]/20 shadow-md' : 'border-slate-200/90 hover:border-slate-300'
+              }`
+            : `bg-white/15 backdrop-blur-sm border text-white ${
+                open ? 'border-white/60 bg-white/25 shadow-lg' : 'border-white/25 hover:border-white/40'
+              }`
+        }`}
+      >
         {loading ? (
-          <Loader2 className="w-4 h-4 text-white/70 shrink-0 animate-spin" />
+          <Loader2 className={`w-4 h-4 shrink-0 animate-spin ${isLight ? 'text-[#003087]' : 'text-white/70'}`} />
         ) : (
-          <Search className="w-4 h-4 text-white/70 shrink-0" />
+          <Search className={`w-4 h-4 shrink-0 ${isLight ? 'text-slate-400 group-hover:text-[#003087]' : 'text-white/70'}`} />
         )}
         <input
           ref={inputRef}
@@ -145,15 +164,30 @@ export default function SearchBar() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => { if (results.length > 0) setOpen(true); }}
-          placeholder="Search disputes, orders, products…"
-          className="bg-transparent text-white placeholder-white/50 text-xs font-medium w-full outline-none"
+          placeholder={placeholder}
+          className={`bg-transparent text-xs font-semibold w-full outline-none ${
+            isLight
+              ? 'text-slate-900 placeholder-slate-400'
+              : 'text-white placeholder-white/50'
+          }`}
         />
         {query ? (
-          <button onClick={() => { setQuery(''); setResults([]); setOpen(false); }}>
-            <X className="w-3.5 h-3.5 text-white/60 hover:text-white transition-colors" />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setQuery('');
+              setResults([]);
+              setOpen(false);
+            }}
+            className="p-0.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <X className={`w-3.5 h-3.5 ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-white/60 hover:text-white'}`} />
           </button>
         ) : (
-          <span className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/20 text-white/60 text-[9px] font-mono font-bold shrink-0">
+          <span className={`hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold shrink-0 ${
+            isLight ? 'bg-slate-100 text-slate-500 border border-slate-200' : 'bg-white/20 text-white/60'
+          }`}>
             ⌘K
           </span>
         )}
@@ -161,7 +195,7 @@ export default function SearchBar() {
 
       {/* Results Dropdown */}
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-50 card-3d-reflection animate-in fade-in slide-in-from-top-2 duration-150 min-w-[320px]">
           {results.length === 0 && !loading && query.length >= 2 ? (
             <div className="p-6 text-center text-slate-400 text-sm">
               <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />

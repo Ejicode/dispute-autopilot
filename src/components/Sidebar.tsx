@@ -64,8 +64,8 @@ export default function Sidebar({
     >
       <div className="space-y-5 overflow-y-auto custom-scrollbar pr-1">
         {/* ── Top Header: Logo + Collapse Button ── */}
-        <div className={`flex items-center pb-2 pt-1 border-b border-slate-100/80 ${collapsed ? 'justify-center' : 'justify-between px-1'}`}>
-          <Logo collapsed={collapsed} />
+        <div className={`flex items-center pb-3 pt-1 border-b border-slate-100/80 ${collapsed ? 'justify-center' : 'justify-between px-1'}`}>
+          <Logo collapsed={collapsed} size={collapsed ? 'md' : 'lg'} />
 
           {onToggleCollapse && (
             <button

@@ -505,7 +505,7 @@ export default function StorefrontPage() {
                     <button
                       onClick={() => handleBuyProduct(prod)}
                       disabled={buyingProductId !== null}
-                      className="flex-1 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
+                      className="flex-1 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 btn-press"
                       title="1-Click Demo Order & Evidence Vault Capture"
                     >
                       {buyingProductId === prod.id ? (
@@ -517,10 +517,10 @@ export default function StorefrontPage() {
                     </button>
                     <button
                       onClick={() => { setCheckoutError(null); setSelectedProduct(prod); }}
-                      className="px-3 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors text-xs font-bold shrink-0"
-                      title="View Specs & Details"
+                      className="px-3 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors text-xs font-bold shrink-0 btn-press"
+                      title="Inspect Product Specifications"
                     >
-                      <Eye className="w-3.5 h-3.5 text-[#003087]" />
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>

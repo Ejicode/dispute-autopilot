@@ -6,7 +6,7 @@ import Link from 'next/link';
 interface LogoProps {
   collapsed?: boolean;
   variant?: 'dark' | 'light';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   showSubtitle?: boolean;
   href?: string;
   className?: string;
@@ -23,12 +23,13 @@ export default function Logo({
   const isLight = variant === 'light';
 
   const sizeMap = {
-    sm: { box: 'w-8 h-8 rounded-xl', icon: 'w-4 h-4', title: 'text-sm', sub: 'text-[8px]' },
-    md: { box: 'w-10 h-10 rounded-2xl', icon: 'w-5 h-5', title: 'text-[17px]', sub: 'text-[9.5px]' },
-    lg: { box: 'w-12 h-12 rounded-2xl', icon: 'w-6 h-6', title: 'text-xl', sub: 'text-[10.5px]' },
+    sm: { box: 'w-10 h-10 rounded-xl', icon: 'w-6 h-6', title: 'text-base font-black', sub: 'text-[9.5px]' },
+    md: { box: 'w-12 h-12 rounded-2xl', icon: 'w-8 h-8', title: 'text-xl font-black', sub: 'text-[11px]' },
+    lg: { box: 'w-14 h-14 rounded-2xl', icon: 'w-9 h-9', title: 'text-2xl font-black', sub: 'text-[12px]' },
+    xl: { box: 'w-16 h-16 rounded-3xl', icon: 'w-11 h-11', title: 'text-3xl font-black', sub: 'text-[13.5px]' },
   };
 
-  const s = sizeMap[size];
+  const s = sizeMap[size] || sizeMap.md;
 
   const content = (
     <div className={`flex items-center gap-3 group select-none ${className}`}>

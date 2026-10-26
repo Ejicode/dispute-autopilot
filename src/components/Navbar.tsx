@@ -44,7 +44,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
-            <Logo variant="dark" size="md" href="/" />
+            <Logo variant="dark" size="lg" href="/" />
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] rounded-xl border border-white/[0.06] px-1.5 py-1.5">
