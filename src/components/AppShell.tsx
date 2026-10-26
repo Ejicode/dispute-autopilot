@@ -45,7 +45,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-[#F4F6F8] flex items-center justify-center">
         <div className="text-center space-y-3">
-          <Loader2 className="w-10 h-10 animate-spin text-[#0A3E29] mx-auto" />
+          <Loader2 className="w-10 h-10 animate-spin text-[#003087] mx-auto" />
           <p className="text-slate-500 text-sm font-medium">Loading Dispute Autopilot…</p>
         </div>
       </div>
@@ -56,7 +56,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (!activeUser) {
     return (
       <div className="min-h-screen bg-[#F4F6F8] flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-[#0A3E29] mx-auto" />
+        <Loader2 className="w-10 h-10 animate-spin text-[#003087] mx-auto" />
       </div>
     );
   }

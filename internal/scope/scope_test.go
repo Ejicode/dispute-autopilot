@@ -31,7 +31,7 @@ func TestWithRejectsUnscopedWorkspace(t *testing.T) {
 		}
 	}
 	// The CLI-only demo workspace and real account ids are allowed.
-	for _, id := range []string{"demo", "usr_00000000000000000000000000000000", "usr_demo_pinenmfb_admin"} {
+	for _, id := range []string{"demo", "usr_00000000000000000000000000000000", "usr_demo_da_admin"} {
 		if _, err := With(context.Background(), id, config.ModeDemo, nil); err != nil {
 			t.Fatalf("valid merchant id %q rejected: %v", id, err)
 		}

@@ -20,17 +20,17 @@ interface SearchResult {
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  shield: <ShieldCheck className="w-4 h-4 text-[#0A3E29]" />,
-  package: <Package className="w-4 h-4 text-emerald-600" />,
-  shopping: <ShoppingBag className="w-4 h-4 text-emerald-700" />,
+  shield: <ShieldCheck className="w-4 h-4 text-[#003087]" />,
+  package: <Package className="w-4 h-4 text-[#0070BA]" />,
+  shopping: <ShoppingBag className="w-4 h-4 text-[#003087]" />,
   file: <FileText className="w-4 h-4 text-amber-600" />,
 };
 
 const BADGE_COLORS: Record<string, string> = {
   amber: 'bg-amber-50 text-amber-700 border-amber-200',
   emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  blue: 'bg-emerald-50 text-[#0A3E29] border-emerald-200',
-  violet: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  blue: 'bg-blue-50 text-[#003087] border-blue-200',
+  violet: 'bg-blue-50 text-[#0070BA] border-blue-200',
   slate: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
@@ -201,7 +201,7 @@ export default function SearchBar() {
                         {result.badge?.replace(/_/g, ' ')}
                       </span>
 
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#0A3E29] transition-colors shrink-0" />
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#003087] transition-colors shrink-0" />
                     </button>
                   ))}
                 </div>

@@ -178,7 +178,7 @@ export default function DashboardPage() {
   // Product / Dispute Reason Breakdown (Solid Pie Chart from live analytics.donutCategories)
   const productStatData = useMemo(() => {
     const categories = analytics?.donutCategories;
-    const palette = ['#0A3E29', '#10B981', '#37926F', '#60B08E', '#A8E6CF'];
+    const palette = ['#003087', '#0070BA', '#00A6E0', '#FFC439', '#10B981'];
     if (Array.isArray(categories) && categories.length > 0) {
       return categories.map((c: any, idx: number) => ({
         name: c.name || c.reason,
@@ -190,16 +190,16 @@ export default function DashboardPage() {
       }));
     }
     return [
-      { name: 'Active Disputes', value: kpis.totalDisputes || 1, percentage: 100, amount: Math.round(kpis.totalAtRiskCents / 100), change: 'Live DB', color: '#0A3E29' },
+      { name: 'Active Disputes', value: kpis.totalDisputes || 1, percentage: 100, amount: Math.round(kpis.totalAtRiskCents / 100), change: 'Live DB', color: '#003087' },
     ];
   }, [analytics?.donutCategories, kpis.totalDisputes, kpis.totalAtRiskCents]);
 
   // Security Defense Coverage Telemetry
   const defenseInvariantsData = [
-    { name: 'Webhook Signature Check', metric: '100% Cryptographic', status: 'Active', percentage: 100, color: '#0A3E29' },
-    { name: 'Replay Protection (Idempotent)', metric: '100% Unique Lock', status: 'Active', percentage: 100, color: '#10B981' },
-    { name: 'Deterministic Policy Gate', metric: '100% Enforced', status: 'Active', percentage: 100, color: '#37926F' },
-    { name: 'Evidence Vault SHA-256', metric: '100% Verified', status: 'Active', percentage: 100, color: '#60B08E' },
+    { name: 'Webhook Signature Check', metric: '100% Cryptographic', status: 'Active', percentage: 100, color: '#003087' },
+    { name: 'Replay Protection (Idempotent)', metric: '100% Unique Lock', status: 'Active', percentage: 100, color: '#0070BA' },
+    { name: 'Deterministic Policy Gate', metric: '100% Enforced', status: 'Active', percentage: 100, color: '#00A6E0' },
+    { name: 'Evidence Vault SHA-256', metric: '100% Verified', status: 'Active', percentage: 100, color: '#10B981' },
   ];
 
   // Custom Tooltip for Volume Flow Chart
@@ -212,16 +212,16 @@ export default function DashboardPage() {
           </span>
           <div className="flex items-center justify-between gap-4">
             <span className="text-slate-500 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#A8E6CF]" /> At-Risk Exposure:
+              <span className="w-2.5 h-2.5 rounded-full bg-[#93C5FD]" /> At-Risk Exposure:
             </span>
             <strong className="text-slate-800 font-mono">${payload[0]?.value?.toLocaleString()}</strong>
           </div>
           {payload[1] && (
             <div className="flex items-center justify-between gap-4">
               <span className="text-slate-500 flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#0A3E29]" /> Protected Volume:
+                <span className="w-2.5 h-2.5 rounded-full bg-[#003087]" /> Protected Volume:
               </span>
-              <strong className="text-[#0A3E29] font-mono">${payload[1]?.value?.toLocaleString()}</strong>
+              <strong className="text-[#003087] font-mono">${payload[1]?.value?.toLocaleString()}</strong>
             </div>
           )}
         </div>
@@ -244,7 +244,7 @@ export default function DashboardPage() {
           {data.amount && (
             <div className="flex items-center justify-between gap-3 text-[11px]">
               <span className="text-slate-500">Amount:</span>
-              <strong className="text-[#0A3E29]">${data.amount.toLocaleString()}</strong>
+              <strong className="text-[#003087]">${data.amount.toLocaleString()}</strong>
             </div>
           )}
         </div>
@@ -257,9 +257,9 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Active Filter Clear Banner */}
       {(selectedCategory || selectedDayFilter) && (
-        <div className="bg-[#EBF5EF] border border-[#D5EDE0] p-3 rounded-2xl flex items-center justify-between text-xs text-[#0A3E29] animate-in fade-in">
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded-2xl flex items-center justify-between text-xs text-[#003087] animate-in fade-in">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-[#0A3E29]" />
+            <Filter className="w-4 h-4 text-[#003087]" />
             <span>
               Filtering queue by: 
               {selectedCategory && <strong className="ml-1">Reason ({selectedCategory})</strong>}
@@ -271,7 +271,7 @@ export default function DashboardPage() {
               setSelectedCategory(null);
               setSelectedDayFilter(null);
             }}
-            className="text-xs font-bold text-[#0A3E29] hover:underline"
+            className="text-xs font-bold text-[#0070BA] hover:underline"
           >
             Clear Filter &amp; Show All
           </button>
@@ -292,13 +292,13 @@ export default function DashboardPage() {
           {/* 2x2 Metric Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
-            {/* Card 1 (Top-Left): SOLID FOREST GREEN CARD (#0A3E29) WITH 3D SPECULAR REFLECTION */}
-            <div className="bg-[#0A3E29] text-white rounded-3xl p-6 shadow-md flex flex-col justify-between min-h-[175px] relative overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent">
+            {/* Card 1 (Top-Left): SOLID PAYPAL NAVY CARD WITH 3D SPECULAR REFLECTION */}
+            <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white rounded-3xl p-6 shadow-md shadow-blue-950/20 flex flex-col justify-between min-h-[175px] relative overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-emerald-200/90 tracking-normal">
+                <span className="text-xs font-semibold text-blue-100/90 tracking-normal">
                   Total Sales Protected
                 </span>
-                <span className="bg-[#10B981] text-[#06291B] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm group-hover:scale-105 transition-transform">
+                <span className="bg-[#FFC439] text-[#001C48] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm group-hover:scale-105 transition-transform">
                   Live DB
                 </span>
               </div>
@@ -309,7 +309,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-emerald-100/70 pt-2 border-t border-white/10">
+              <div className="flex items-center justify-between text-xs text-blue-100/70 pt-2 border-t border-white/10">
                 <span>{kpis.orderCount > 0 ? `${kpis.orderCount} store orders protected` : 'Synchronized volume'}</span>
                 <span className="font-semibold text-emerald-300 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -324,7 +324,7 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-600 tracking-normal">
                   Total Orders
                 </span>
-                <span className="bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
                   {kpis.orderCount} Orders
                 </span>
               </div>
@@ -337,7 +337,7 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between text-xs text-slate-400 font-medium pt-2 border-t border-slate-100 relative z-10">
                 <span>Captured store sales</span>
-                <span className="text-[#0A3E29] font-bold">Verified</span>
+                <span className="text-[#0070BA] font-bold">Verified</span>
               </div>
             </div>
 
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-600 tracking-normal">
                   Unique Customers
                 </span>
-                <span className="bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
                   {kpis.customerCount} Buyers
                 </span>
               </div>
@@ -370,7 +370,7 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-600 tracking-normal">
                   Evidence Vault Items
                 </span>
-                <span className="bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
                   {kpis.evidenceCount} Files
                 </span>
               </div>
@@ -383,7 +383,7 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between text-xs text-slate-400 font-medium pt-2 border-t border-slate-100 relative z-10">
                 <span>Tamper-evident audit assets</span>
-                <span className="text-[#0A3E29] font-bold">SHA-256</span>
+                <span className="text-[#0070BA] font-bold">SHA-256</span>
               </div>
             </div>
 
@@ -419,7 +419,7 @@ export default function DashboardPage() {
                             setTimeframeDropdownOpen(false);
                           }}
                           className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 transition-colors ${
-                            timeframe === opt ? 'text-[#0A3E29] font-bold bg-[#EBF5EF]' : 'text-slate-700'
+                            timeframe === opt ? 'text-[#003087] font-bold bg-blue-50' : 'text-slate-700'
                           }`}
                         >
                           {opt}
@@ -432,11 +432,11 @@ export default function DashboardPage() {
                 {/* Legend Indicators */}
                 <div className="flex items-center gap-4 text-xs font-bold text-slate-600">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#A8E6CF]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#93C5FD]" />
                     <span>At-Risk ($)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#0A3E29]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#003087]" />
                     <span>Protected ($)</span>
                   </div>
                 </div>
@@ -466,18 +466,18 @@ export default function DashboardPage() {
                     tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 500 }}
                   />
                   <Tooltip content={<CustomHabitTooltip />} />
-                  {/* Mint Capsule Bar for At-Risk Exposure */}
+                  {/* Sky Blue Capsule Bar for At-Risk Exposure */}
                   <Bar 
                     dataKey="soonProducts" 
-                    fill="#A8E6CF" 
+                    fill="#93C5FD" 
                     radius={[12, 12, 12, 12]} 
                     isAnimationActive={true}
                     animationDuration={1000}
                   />
-                  {/* Dark Forest Green Capsule Bar for Protected Volume */}
+                  {/* PayPal Deep Navy Capsule Bar for Protected Volume */}
                   <Bar 
                     dataKey="sales" 
-                    fill="#0A3E29" 
+                    fill="#003087" 
                     radius={[12, 12, 12, 12]} 
                     isAnimationActive={true}
                     animationDuration={1200}
@@ -496,10 +496,10 @@ export default function DashboardPage() {
         ───────────────────────────────────────────────────────── */}
         <div className="xl:col-span-4 space-y-6">
 
-          {/* ── Top Card: Dispute Reason Exposure (Soft Sage Gradient + Solid Pie Chart with 3D Reflection) ── */}
-          <div className="card-3d-reflection bg-gradient-to-b from-[#EBF5EF] to-[#D5EDE0] rounded-3xl p-6 border border-[#C6E4D2]/80 space-y-4 hover:-translate-y-1 transition-all duration-300">
+          {/* ── Top Card: Dispute Reason Exposure (Soft Blue Gradient + Solid Pie Chart with 3D Reflection) ── */}
+          <div className="card-3d-reflection bg-gradient-to-b from-blue-50/80 to-slate-50/80 rounded-3xl p-6 border border-blue-200/80 space-y-4 hover:-translate-y-1 transition-all duration-300">
             <div>
-              <h3 className="text-base font-black text-[#0A3E29] tracking-tight">
+              <h3 className="text-base font-black text-[#003087] tracking-tight">
                 Dispute Reason Exposure
               </h3>
             </div>
@@ -516,7 +516,7 @@ export default function DashboardPage() {
                     innerRadius={0}
                     outerRadius={72}
                     dataKey="value"
-                    stroke="#EBF5EF"
+                    stroke="#EFF6FF"
                     strokeWidth={2}
                     isAnimationActive={true}
                     animationDuration={1000}
@@ -546,7 +546,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs font-black text-slate-900">{item.value.toLocaleString()} cases</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-[#0A3E29]">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-[#003087]">
                       {item.change}
                     </span>
                   </div>
@@ -567,22 +567,22 @@ export default function DashboardPage() {
             <div className="py-2">
               <div className="flex items-center">
                 {/* Bubble 1: 100% (Signature) */}
-                <div className="w-16 h-16 rounded-full bg-[#0A3E29] text-white font-black text-xs flex flex-col items-center justify-center shadow-md ring-4 ring-white z-40 shrink-0 hover:scale-105 transition-transform" title="Webhook Signature Check: 100%">
+                <div className="w-16 h-16 rounded-full bg-[#003087] text-white font-black text-xs flex flex-col items-center justify-center shadow-md ring-4 ring-white z-40 shrink-0 hover:scale-105 transition-transform" title="Webhook Signature Check: 100%">
                   <span>100%</span>
-                  <span className="text-[8px] font-normal text-emerald-300">Sig</span>
+                  <span className="text-[8px] font-normal text-blue-200">Sig</span>
                 </div>
                 {/* Bubble 2: 100% (Replay) */}
-                <div className="w-14 h-14 rounded-full bg-[#10B981] text-white font-bold text-[11px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-30 shrink-0 hover:scale-105 transition-transform" title="Replay Attack Defense: 100%">
+                <div className="w-14 h-14 rounded-full bg-[#0070BA] text-white font-bold text-[11px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-30 shrink-0 hover:scale-105 transition-transform" title="Replay Attack Defense: 100%">
                   <span>100%</span>
-                  <span className="text-[7.5px] font-normal text-emerald-100">Replay</span>
+                  <span className="text-[7.5px] font-normal text-blue-100">Replay</span>
                 </div>
                 {/* Bubble 3: 100% (Gate) */}
-                <div className="w-12 h-12 rounded-full bg-[#37926F] text-white font-bold text-[10px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-20 shrink-0 hover:scale-105 transition-transform" title="Deterministic Code Gate: 100%">
+                <div className="w-12 h-12 rounded-full bg-[#00A6E0] text-white font-bold text-[10px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-20 shrink-0 hover:scale-105 transition-transform" title="Deterministic Code Gate: 100%">
                   <span>100%</span>
-                  <span className="text-[7px] font-normal text-emerald-100">Gate</span>
+                  <span className="text-[7px] font-normal text-white/90">Gate</span>
                 </div>
                 {/* Bubble 4: 100% (Vault) */}
-                <div className="w-10 h-10 rounded-full bg-[#60B08E] text-white font-bold text-[9px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-10 shrink-0 hover:scale-105 transition-transform" title="Evidence Vault SHA-256: 100%">
+                <div className="w-10 h-10 rounded-full bg-[#10B981] text-white font-bold text-[9px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-10 shrink-0 hover:scale-105 transition-transform" title="Evidence Vault SHA-256: 100%">
                   <span>100%</span>
                   <span className="text-[6.5px] font-normal text-emerald-100">Vault</span>
                 </div>
@@ -628,7 +628,7 @@ export default function DashboardPage() {
               <h2 className="text-lg font-black text-slate-900 tracking-tight">
                 Dispute Adjudication &amp; Live Queue
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0]">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E6F0FA] text-[#003087] border border-[#C9E0FA]">
                 {filteredDisputes.length} Cases
               </span>
             </div>
@@ -651,9 +651,9 @@ export default function DashboardPage() {
             <button
               onClick={handleSimulateDispute}
               disabled={simulating}
-              className="px-4 py-2 rounded-full bg-[#0A3E29] hover:bg-[#072d1e] text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
-              <PlusCircle className={`w-3.5 h-3.5 text-emerald-400 ${simulating ? 'animate-spin' : ''}`} />
+              <PlusCircle className={`w-3.5 h-3.5 text-[#FFC439] ${simulating ? 'animate-spin' : ''}`} />
               <span>Simulate Dispute</span>
             </button>
           </div>
@@ -662,7 +662,7 @@ export default function DashboardPage() {
         {/* AG Grid Component */}
         {loading ? (
           <div className="p-12 text-center text-slate-400">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0A3E29]" />
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#003087]" />
             <p className="text-xs font-medium">Loading real-time dispute queue...</p>
           </div>
         ) : (

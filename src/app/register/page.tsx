@@ -67,7 +67,7 @@ export default function RegisterPage() {
   if (userLoading) {
     return (
       <div className="min-h-screen bg-[#F4F6F8] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#0A3E29]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#003087]" />
       </div>
     );
   }
@@ -86,13 +86,13 @@ export default function RegisterPage() {
             Create Merchant Account
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm font-medium">
-            Join the PinenMFB merchant dispute and revenue protection network
+            Join the DA (Dispute Autopilot) merchant dispute and revenue protection network
           </p>
         </div>
 
         {/* Registration Card */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden card-3d-reflection">
-          <div className="bg-gradient-to-r from-[#06291B] to-[#0A3E29] px-6 py-4">
+          <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-6 py-4">
             <h2 className="text-white font-bold text-base">Merchant Registration</h2>
             <p className="text-white/70 text-xs mt-0.5">Secure registration with live PayPal sandbox credentials</p>
           </div>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g. Jordan Smith"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all font-medium text-slate-900"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all font-medium text-slate-900"
                 />
               </div>
             </div>
@@ -135,8 +135,8 @@ export default function RegisterPage() {
                   required
                   value={form.store_name}
                   onChange={(e) => setForm({ ...form, store_name: e.target.value })}
-                  placeholder="e.g. Apex Electronics Store"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all font-medium text-slate-900"
+                  placeholder="e.g. DA Store"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all font-medium text-slate-900"
                 />
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function RegisterPage() {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="e.g. you@yourbusiness.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all font-medium text-slate-900"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all font-medium text-slate-900"
                 />
               </div>
             </div>
@@ -165,20 +165,20 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setForm({
-                    name: 'Jordan Miller',
-                    store_name: 'Apex Electronics Store',
-                    email: `demo.${Math.floor(1000 + Math.random() * 9000)}@apexstore.com`,
+                    name: 'DA Admin',
+                    store_name: 'DA Store',
+                    email: `demo.${Math.floor(1000 + Math.random() * 9000)}@da-store.com`,
                     password: 'StrongDemoPassword2026!',
                     avatar_url: form.avatar_url,
                   })}
-                  className="text-[11px] font-bold text-[#0A3E29] hover:underline"
+                  className="text-[11px] font-bold text-[#003087] hover:underline"
                 >
                   ⚡ Auto-Fill Demo Details
                 </button>
               </div>
               <input id="form-password" type="password" required minLength={15} maxLength={128} autoComplete="new-password"
                 value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20" />
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20" />
               <p className="text-xs text-slate-500 mt-1">Use at least 15 characters.</p>
             </div>
 
@@ -191,7 +191,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setUseCustomUrl(!useCustomUrl)}
-                  className="text-[11px] font-semibold text-[#0A3E29] hover:underline"
+                  className="text-[11px] font-semibold text-[#003087] hover:underline"
                 >
                   {useCustomUrl ? 'Choose from gallery' : 'Use custom URL'}
                 </button>
@@ -207,12 +207,12 @@ export default function RegisterPage() {
                         key={i}
                         onClick={() => setForm({ ...form, avatar_url: url })}
                         className={`relative rounded-full aspect-square overflow-hidden transition-all duration-200 ${
-                          isSelected ? 'ring-4 ring-[#0A3E29] ring-offset-2 scale-105' : 'opacity-70 hover:opacity-100 hover:scale-105'
+                          isSelected ? 'ring-4 ring-[#003087] ring-offset-2 scale-105' : 'opacity-70 hover:opacity-100 hover:scale-105'
                         }`}
                       >
                         <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
                         {isSelected && (
-                          <div className="absolute inset-0 bg-[#0A3E29]/40 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-[#003087]/40 flex items-center justify-center">
                             <Check className="w-4 h-4 text-white stroke-[3]" />
                           </div>
                         )}
@@ -228,7 +228,7 @@ export default function RegisterPage() {
                     value={form.avatar_url}
                     onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
                     placeholder="https://your-photo-url.com/photo.jpg"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all font-mono text-slate-900"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all font-mono text-slate-900"
                   />
                 </div>
               )}
@@ -240,7 +240,7 @@ export default function RegisterPage() {
                 {form.avatar_url ? (
                   <img src={form.avatar_url} alt="Preview" className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm" />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-[#0A3E29] flex items-center justify-center text-white text-xl font-extrabold ring-2 ring-white shadow-sm">
+                  <div className="w-12 h-12 rounded-full bg-[#003087] flex items-center justify-center text-white text-xl font-extrabold ring-2 ring-white shadow-sm">
                     {initials}
                   </div>
                 )}
@@ -251,7 +251,7 @@ export default function RegisterPage() {
                   <span className="font-bold text-sm text-slate-900 truncate">
                     {form.name || 'Your Name'}
                   </span>
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#0A3E29] shrink-0" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#003087] shrink-0" />
                 </div>
                 <span className="text-xs text-slate-500 font-medium block truncate">
                   {form.store_name || 'Your Store'}
@@ -266,7 +266,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 px-6 rounded-xl bg-[#0A3E29] hover:bg-[#072d1e] text-white font-bold text-sm transition-all shadow-md shadow-emerald-950/20 flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-3 px-6 rounded-xl bg-[#003087] hover:bg-[#001C48] text-white font-bold text-sm transition-all shadow-md shadow-blue-950/20 flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <>
@@ -275,14 +275,14 @@ export default function RegisterPage() {
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="w-4 h-4 text-[#10B981]" />
+                  <ShieldCheck className="w-4 h-4 text-[#FFC439]" />
                   <span>Create Merchant Account &amp; Launch</span>
                 </>
               )}
             </button>
 
             <p className="text-center text-xs text-slate-500 font-medium">
-              Already have an account? <Link href="/login" className="text-[#0A3E29] font-bold underline hover:text-[#06291B]">Sign in</Link>
+              Already have an account? <Link href="/login" className="text-[#003087] font-bold underline hover:text-[#001C48]">Sign in</Link>
             </p>
           </form>
         </div>

@@ -131,9 +131,9 @@ func getMerchantSnapshot(ctx context.Context, db *store.Store, userID string) (*
 		}
 	}
 
-	merchantName := "Store Merchant"
-	storeLabel := "Protected Store"
-	email := "merchant@store.com"
+	merchantName := "Merchant Admin"
+	storeLabel := "DA Store"
+	email := "admin@disputeautopilot.com"
 	role := "MERCHANT_ADMIN"
 	if user != nil {
 		if value := stringValue(user["name"]); value != "" {
@@ -323,8 +323,8 @@ func generateDynamicDialogue(ctx context.Context, db *store.Store, snap *Merchan
 	norm := strings.NewReplacer("-", " ", "_", " ", "?", "", "!", "", ".", "", ",", "").Replace(m)
 
 	storeName := snap.StoreName
-	if storeName == "" {
-		storeName = "Your Store"
+	if storeName == "" || storeName == "Your Store" || storeName == "Protected Store" {
+		storeName = "DA Store"
 	}
 	atRisk := formatAmount(snap.TotalAtRiskCents)
 	rev := formatAmount(snap.TotalRevenueCents)
@@ -592,7 +592,7 @@ func generateDynamicDialogue(ctx context.Context, db *store.Store, snap *Merchan
 // ruleBasedResponse is a backwards-compatible wrapper for generateDynamicDialogue.
 func ruleBasedResponse(message, contextText string) string {
 	c, _ := generateDynamicDialogue(context.Background(), nil, &MerchantSnapshot{
-		StoreName:        regexStr(contextText, reStoreName, "Your Store"),
+		StoreName:        regexStr(contextText, reStoreName, "DA Store"),
 		TotalDisputes:    regexInt(contextText, reTotalDisputes),
 		TotalAtRiskCents: int64(regexInt(contextText, reActiveDisputes) * 5000),
 		EvidenceCount:    regexInt(contextText, reVaultItems),
@@ -600,11 +600,12 @@ func ruleBasedResponse(message, contextText string) string {
 	return c
 }
 
-const geminiSystemPromptPrefix = `You are the Dispute Autopilot AI Assistant — an expert autonomous agent built for the PayPal AI Hackathon 2026.
-You are embedded directly inside the merchant dashboard and have real-time access to the merchant's disputes, evidence vault, orders, and system security tests.
+const geminiSystemPromptPrefix = `You are Ava, the Dispute Autopilot (DA) AI Assistant — an expert autonomous agent built for the PayPal AI Hackathon 2026.
+You are embedded directly inside the DA merchant dashboard and have real-time access to the merchant's disputes, evidence vault, orders, and system security tests.
+DA stands for Dispute Autopilot. The merchant store is "DA Store".
 
 PROJECT REQUIREMENTS & TECHNICAL STANDARDS (PAYPAL AI HACKATHON 2026):
-1. PROBLEM & PRODUCT: Dispute Autopilot is an agentic dispute defense system that wins back disputed funds for PayPal sellers safely.
+1. PROBLEM & PRODUCT: Dispute Autopilot (DA) is an agentic dispute defense system that wins back disputed funds for PayPal sellers safely.
 2. FIVE STAND-OUT FEATURES:
    - Evidence Vault: Snapshots evidence at payment capture (PAYMENT.CAPTURE.COMPLETED) with SHA-256 hashes. Ready in 4 seconds when a dispute arrives.
    - Cited Drafts Verified by Plain Code: AI returns JSON claims citing vault evidence IDs. Pure TypeScript verifier verifies facts before human approval. Unverified claims block approval.

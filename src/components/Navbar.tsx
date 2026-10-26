@@ -57,11 +57,11 @@ export default function Navbar() {
                     href={link.href}
                     className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                       isActive
-                        ? 'bg-[#0A3E29] text-white shadow-sm'
+                        ? 'bg-[#003087] text-white shadow-sm'
                         : 'text-slate-400 hover:text-white hover:bg-white/[0.06] border border-transparent'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-300' : 'text-slate-500'}`} />
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-[#FFC439]' : 'text-slate-500'}`} />
                     {link.label}
                   </Link>
                 );

@@ -32,17 +32,17 @@ export default function Logo({
 
   const content = (
     <div className={`flex items-center gap-3 group select-none ${className}`}>
-      {/* ── Geometric Pine Vault Shield Emblem ── */}
+      {/* ── DA Aerodynamic Dispute Autopilot Shield Emblem ── */}
       <div
-        className={`${s.box} bg-gradient-to-br from-[#06291B] via-[#0A3E29] to-[#041F14] flex items-center justify-center shrink-0 relative overflow-hidden shadow-sm border border-emerald-500/25 group-hover:shadow-md group-hover:border-emerald-400/50 transition-all duration-300`}
+        className={`${s.box} bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] flex items-center justify-center shrink-0 relative overflow-hidden shadow-sm border border-blue-400/30 group-hover:shadow-md group-hover:border-blue-300/60 transition-all duration-300`}
         style={{
           boxShadow: isLight
-            ? '0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
-            : '0 4px 12px rgba(10,62,41,0.22), inset 0 1px 0 rgba(255,255,255,0.3)',
+            ? '0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25)'
+            : '0 4px 14px rgba(0,48,135,0.25), inset 0 1px 0 rgba(255,255,255,0.35)',
         }}
       >
         {/* Specular Gloss Highlight */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/25 pointer-events-none" />
 
         <svg
           viewBox="0 0 32 32"
@@ -51,42 +51,41 @@ export default function Logo({
           className={`${s.icon} relative z-10 transition-transform duration-300 group-hover:scale-105`}
         >
           <defs>
-            <linearGradient id="pinenGrad1" x1="16" y1="3" x2="16" y2="29" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#6EE7B7" />
-              <stop offset="45%" stopColor="#10B981" />
-              <stop offset="100%" stopColor="#059669" />
+            <linearGradient id="daGradWing" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="60%" stopColor="#93C5FD" />
+              <stop offset="100%" stopColor="#38BDF8" />
             </linearGradient>
-            <linearGradient id="pinenGradCore" x1="12" y1="9" x2="20" y2="22" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#A7F3D0" />
-              <stop offset="100%" stopColor="#34D399" />
+            <linearGradient id="daGradAccent" x1="10" y1="10" x2="22" y2="24" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#FFC439" />
+              <stop offset="100%" stopColor="#F59E0B" />
             </linearGradient>
           </defs>
 
-          {/* Tier 1 & 2 & 3 Evergreen Pine Silhouette */}
+          {/* Autopilot Supersonic Shield Contour */}
           <path
-            d="M16 3.5L22.5 11.5H18.5L24 18H18L21.5 23H10.5L14 18H8L13.5 11.5H9.5L16 3.5Z"
-            fill="url(#pinenGrad1)"
+            d="M16 3.5L25.5 7.5V15.5C25.5 21.5 21.4 26.8 16 28.5C10.6 26.8 6.5 21.5 6.5 15.5V7.5L16 3.5Z"
+            stroke="url(#daGradWing)"
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+            fill="none"
           />
 
-          {/* Central Faceted Core & Vault Shield Accents */}
+          {/* Stylized 'D' Left Wing */}
           <path
-            d="M16 8.5L19.2 12.5H17.2L20.2 17H16.8L18 21H14L15.2 17H11.8L14.8 12.5H12.8L16 8.5Z"
-            fill="url(#pinenGradCore)"
-            fillOpacity="0.85"
+            d="M10 11.5V20.5H13.2C15.6 20.5 17 18.8 17 16C17 13.2 15.6 11.5 13.2 11.5H10ZM12 13.3H13C14.4 13.3 15 14.3 15 16C15 17.7 14.4 18.7 13 18.7H12V13.3Z"
+            fill="#FFFFFF"
+            fillOpacity="0.95"
           />
 
-          {/* Sturdy Trunk Foundation */}
-          <rect
-            x="14.25"
-            y="23"
-            width="3.5"
-            height="5.5"
-            rx="1"
-            fill="#34D399"
+          {/* Stylized 'A' Apex & Crossbar */}
+          <path
+            d="M17.5 20.5L20.5 11.5H22.5L25.5 20.5H23.5L22.8 18.2H20.2L19.5 20.5H17.5ZM20.6 16.5H22.4L21.5 13.5L20.6 16.5Z"
+            fill="url(#daGradWing)"
           />
 
-          {/* Cryptographic Node Dot */}
-          <circle cx="16" cy="14" r="1.5" fill="#FFFFFF" />
+          {/* Autopilot Speed Thrust / Core Spark */}
+          <circle cx="16" cy="16" r="1.5" fill="url(#daGradAccent)" />
         </svg>
       </div>
 
@@ -96,26 +95,26 @@ export default function Logo({
           <div className="flex items-center gap-1.5">
             <span
               className={`${s.title} font-black tracking-tight ${
-                isLight ? 'text-white' : 'text-slate-900 group-hover:text-[#0A3E29]'
+                isLight ? 'text-white' : 'text-slate-900 group-hover:text-[#003087]'
               } transition-colors`}
             >
-              PinenMFB
+              DA
             </span>
             <span
               className={`text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
                 isLight
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-                  : 'bg-emerald-50 text-[#0A3E29] border border-emerald-200'
+                  ? 'bg-blue-500/20 text-blue-200 border border-blue-400/30'
+                  : 'bg-blue-50 text-[#003087] border border-blue-200 font-extrabold'
               }`}
             >
-              MFB
+              AUTOPILOT
             </span>
           </div>
 
           {showSubtitle && (
             <span
               className={`${s.sub} font-bold tracking-wider uppercase ${
-                isLight ? 'text-emerald-300/90' : 'text-emerald-700'
+                isLight ? 'text-blue-200/90' : 'text-[#0070BA]'
               }`}
             >
               Dispute Autopilot

@@ -44,7 +44,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
     <div className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
         <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-start gap-2">
-          <User className="w-3.5 h-3.5 text-[#0A3E29] mt-0.5 shrink-0" />
+          <User className="w-3.5 h-3.5 text-[#003087] mt-0.5 shrink-0" />
           <div>
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Customer</span>
             <span className="font-bold text-slate-800">{data.buyer_name || 'N/A'}</span>
@@ -53,7 +53,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
         </div>
 
         <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-start gap-2">
-          <CreditCard className="w-3.5 h-3.5 text-[#0A3E29] mt-0.5 shrink-0" />
+          <CreditCard className="w-3.5 h-3.5 text-[#003087] mt-0.5 shrink-0" />
           <div>
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Payment & Amount</span>
             <span className="font-bold text-emerald-600 text-sm">
@@ -65,7 +65,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
       </div>
 
       <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-start gap-2 text-xs">
-        <MapPin className="w-3.5 h-3.5 text-[#0A3E29] mt-0.5 shrink-0" />
+        <MapPin className="w-3.5 h-3.5 text-[#003087] mt-0.5 shrink-0" />
         <div>
           <span className="text-[10px] text-slate-400 font-semibold uppercase block">Verified Shipping Address</span>
           <span className="font-semibold text-slate-800">{data.shipping_address || 'Address on file'}</span>
@@ -74,7 +74,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
 
       <div className="flex items-center justify-between text-[11px] px-2 py-1 bg-emerald-50/60 rounded-lg border border-emerald-100 text-emerald-900">
         <div className="flex items-center gap-1.5">
-          <Package className="w-3.5 h-3.5 text-[#0A3E29]" />
+          <Package className="w-3.5 h-3.5 text-[#003087]" />
           <span>SKU: <strong>{data.sku || 'ITEM-DEFAULT'}</strong></span>
         </div>
         {data.transaction_id && (
@@ -90,7 +90,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
     <div className="space-y-3 overflow-hidden min-w-0">
       <div className="flex items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Truck className="w-4 h-4 text-[#0A3E29] shrink-0" />
+          <Truck className="w-4 h-4 text-[#003087] shrink-0" />
           <div className="min-w-0 flex-1">
             <span className="font-bold text-slate-800 block truncate">{data.carrier || 'USPS Priority Mail'}</span>
             <span className="font-mono text-[11px] text-slate-500 block truncate">{data.tracking_number}</span>
@@ -105,7 +105,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
         <div className="space-y-1.5 pl-2 border-l-2 border-emerald-200 ml-2">
           {data.events.map((evt: any, idx: number) => (
             <div key={idx} className="relative pl-3 text-xs flex items-start justify-between gap-2 min-w-0">
-              <span className="absolute -left-[13px] top-1 w-2.5 h-2.5 rounded-full bg-[#0A3E29] ring-2 ring-white shrink-0" />
+              <span className="absolute -left-[13px] top-1 w-2.5 h-2.5 rounded-full bg-[#003087] ring-2 ring-white shrink-0" />
               <div className="min-w-0 flex-1">
                 <span className="font-bold text-slate-800 block truncate">{evt.status?.replace(/_/g, ' ')}</span>
                 {evt.location && <span className="text-[11px] text-slate-500 block truncate">{evt.location}</span>}
@@ -166,21 +166,21 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
       id={`ev-${item.id}`}
       className={`p-4 rounded-2xl border transition-all duration-200 overflow-hidden w-full min-w-0 ${
         isHighlighted
-          ? 'bg-emerald-50/90 border-[#0A3E29] ring-2 ring-emerald-400/40 shadow-md'
+          ? 'bg-blue-50/90 border-[#003087] ring-2 ring-blue-400/40 shadow-md'
           : 'card-3d-reflection hover:border-slate-300'
       }`}
     >
       {/* Card Header */}
       <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 mb-2.5 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="w-6 h-6 rounded-lg bg-emerald-50 text-[#0A3E29] flex items-center justify-center shrink-0">
+          <div className="w-6 h-6 rounded-lg bg-blue-50 text-[#003087] flex items-center justify-center shrink-0">
             <FileText className="w-3.5 h-3.5" />
           </div>
           <span className="font-bold text-slate-900 text-xs truncate min-w-0" title={item.title}>
             {item.title}
           </span>
         </div>
-        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#0A3E29] uppercase tracking-wider shrink-0 whitespace-nowrap">
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#003087] uppercase tracking-wider shrink-0 whitespace-nowrap">
           {item.evidence_type.replace(/_/g, ' ')}
         </span>
       </div>

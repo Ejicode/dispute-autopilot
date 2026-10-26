@@ -74,7 +74,7 @@ export default function Sidebar({
               title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
               {collapsed ? (
-                <ChevronRight className="w-4 h-4 text-[#0A3E29]" />
+                <ChevronRight className="w-4 h-4 text-[#003087]" />
               ) : (
                 <ChevronLeft className="w-4 h-4 text-slate-500" />
               )}
@@ -108,7 +108,7 @@ export default function Sidebar({
                     collapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs font-semibold'
                   } ${
                     isActive
-                      ? 'bg-[#0A3E29] text-white shadow-sm font-bold'
+                      ? 'bg-[#003087] text-white shadow-sm font-bold shadow-blue-950/20'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`;
 
@@ -145,9 +145,9 @@ export default function Sidebar({
       {/* ── Bottom Card: Invariant Defense Guard Telemetry ── */}
       <div className="pt-2">
         {!collapsed ? (
-          <div className="bg-[#051C12] text-white p-4 rounded-3xl shadow-md space-y-3 relative overflow-hidden border border-emerald-500/20">
+          <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#001433] text-white p-4 rounded-3xl shadow-md space-y-3 relative overflow-hidden border border-blue-400/25">
             <div className="flex items-center justify-between">
-              <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center border border-emerald-400/30">
+              <div className="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center border border-blue-400/30">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
               </div>
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">
@@ -157,7 +157,7 @@ export default function Sidebar({
 
             <div>
               <h4 className="text-xs font-bold text-white leading-tight">Invariant Defense Guard</h4>
-              <p className="text-[10px] text-emerald-200/70 mt-1 leading-snug">
+              <p className="text-[10px] text-blue-100/70 mt-1 leading-snug">
                 6/6 penetration attacks blocked • SHA-256 vault active
               </p>
             </div>
@@ -168,7 +168,7 @@ export default function Sidebar({
                 className="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-center text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-all shadow-inner"
               >
                 <span>Run Trust Lab Suite</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-emerald-300" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-blue-200" />
               </Link>
             </div>
           </div>

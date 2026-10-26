@@ -143,10 +143,10 @@ export default function TopHeader({ title = 'Sales Report', onToggleSidebar }: T
               </div>
 
               <div className="space-y-2.5 max-h-64 overflow-y-auto">
-                <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-xs space-y-0.5">
-                  <div className="flex items-center justify-between font-bold text-[#0A3E29]">
+                <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-xs space-y-0.5">
+                  <div className="flex items-center justify-between font-bold text-[#003087]">
                     <span>Trust Lab Defense Active</span>
-                    <span className="text-[10px] text-emerald-700">100%</span>
+                    <span className="text-[10px] text-blue-700">100%</span>
                   </div>
                   <p className="text-[11px] text-slate-600">
                     All 6 penetration threat vectors successfully intercepted by security gates.
@@ -180,7 +180,7 @@ export default function TopHeader({ title = 'Sales Report', onToggleSidebar }: T
                     setHasUnread(false);
                     setNotificationsOpen(false);
                   }}
-                  className="text-xs font-bold text-[#0A3E29] hover:underline"
+                  className="text-xs font-bold text-[#0070BA] hover:underline"
                 >
                   Mark all as read
                 </button>
@@ -234,18 +234,18 @@ export default function TopHeader({ title = 'Sales Report', onToggleSidebar }: T
                 <img
                   src={avatarUrl}
                   alt={activeUser?.name || 'Merchant Admin'}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-[#0A3E29]/30 shadow-sm shrink-0"
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-[#003087]/30 shadow-sm shrink-0"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
                     <span>{activeUser?.name || 'Merchant Admin'}</span>
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#0A3E29]" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA]" />
                   </div>
                   <span className="text-xs text-slate-500 font-medium block truncate">
-                    {activeUser?.store_name || 'Apex Store'}
+                    {activeUser?.store_name || 'DA Store'}
                   </span>
                   <span className="text-[10px] text-slate-400 font-mono block truncate">
-                    {activeUser?.email || 'admin@pinenmfb.com'}
+                    {activeUser?.email || 'admin@disputeautopilot.com'}
                   </span>
                 </div>
               </div>
@@ -255,7 +255,7 @@ export default function TopHeader({ title = 'Sales Report', onToggleSidebar }: T
                 onClick={() => setDropdownOpen(false)}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors mb-1"
               >
-                <UserCheck className="w-4 h-4 text-[#0A3E29]" />
+                <UserCheck className="w-4 h-4 text-[#003087]" />
                 <span>Manage Profile &amp; Sandbox API</span>
               </Link>
 

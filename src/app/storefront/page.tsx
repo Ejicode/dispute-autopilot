@@ -235,9 +235,9 @@ export default function StorefrontPage() {
       {/* ── Top-Right Toast Notifications (Never overlaps with bottom-right voice AI) ── */}
       <div className="fixed top-6 right-6 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none">
         {checkoutSuccessToast && (
-          <div className="bg-[#0A3E29] text-white p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection">
+          <div className="bg-[#003087] text-white p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-white text-[#0A3E29] flex items-center justify-center font-bold shrink-0">
+              <div className="w-9 h-9 rounded-full bg-white text-[#003087] flex items-center justify-center font-bold shrink-0">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
@@ -279,7 +279,7 @@ export default function StorefrontPage() {
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h1 className="text-xl font-bold text-slate-900 tracking-tight">Sales &amp; Storefront Catalog</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-[#0A3E29] border border-emerald-100">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-[#003087] border border-blue-100">
                 52 Verified Products
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -291,8 +291,8 @@ export default function StorefrontPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-600 bg-emerald-50/70 border border-emerald-100 rounded-2xl px-4 py-2.5 shrink-0">
-            <ShieldCheck className="w-4 h-4 text-[#0A3E29] shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-slate-600 bg-blue-50/70 border border-blue-100 rounded-2xl px-4 py-2.5 shrink-0">
+            <ShieldCheck className="w-4 h-4 text-[#003087] shrink-0" />
             <span>Every purchase creates an immutable <strong>SHA-256 Vault record</strong></span>
           </div>
         </div>
@@ -308,7 +308,7 @@ export default function StorefrontPage() {
                 Live captured sales
               </span>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#0A3E29]">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#003087]">
               <ShoppingBag className="w-5 h-5" />
             </div>
           </div>
@@ -359,7 +359,7 @@ export default function StorefrontPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search 52+ products by name, brand, or SKU..."
-              className="w-full pl-9 pr-4 py-2 rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A3E29]/20 focus:border-[#0A3E29] transition-all"
+              className="w-full pl-9 pr-4 py-2 rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] transition-all"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -376,7 +376,7 @@ export default function StorefrontPage() {
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0A3E29]/20"
+              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#003087]/20"
             >
               <option value="featured">Featured (All 52)</option>
               <option value="price-asc">Price: Low to High</option>
@@ -396,7 +396,7 @@ export default function StorefrontPage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-[#0A3E29] text-white shadow-md shadow-emerald-950/30'
+                    ? 'bg-[#003087] text-white shadow-md shadow-blue-950/30'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
               >
@@ -425,7 +425,7 @@ export default function StorefrontPage() {
           <div className="bg-white p-12 rounded-2xl border border-slate-200/90 text-center space-y-3 card-3d-reflection">
             <Package className="w-8 h-8 text-slate-300 mx-auto" />
             <h3 className="font-bold text-slate-700 text-sm">No products found matching "{searchQuery}"</h3>
-            <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="text-xs font-bold text-[#0A3E29] hover:underline">
+            <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="text-xs font-bold text-[#003087] hover:underline">
               Clear search &amp; show all 52 products
             </button>
           </div>
@@ -456,7 +456,7 @@ export default function StorefrontPage() {
                       onClick={() => setSelectedProduct(prod)}
                       className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-white/90 hover:bg-white text-slate-800 text-[10px] font-bold shadow-md flex items-center gap-1 transition-opacity opacity-0 group-hover/img:opacity-100"
                     >
-                      <Eye className="w-3 h-3 text-[#0A3E29]" />
+                      <Eye className="w-3 h-3 text-[#003087]" />
                       <span>Quick Specs</span>
                     </button>
                   </div>
@@ -476,7 +476,7 @@ export default function StorefrontPage() {
                   {/* Title & SKU */}
                   <h3 
                     onClick={() => setSelectedProduct(prod)}
-                    className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 hover:text-[#0A3E29] cursor-pointer transition-colors"
+                    className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 hover:text-[#003087] cursor-pointer transition-colors"
                     title={prod.name}
                   >
                     {prod.name}
@@ -505,13 +505,13 @@ export default function StorefrontPage() {
                     <button
                       onClick={() => handleBuyProduct(prod)}
                       disabled={buyingProductId !== null}
-                      className="flex-1 py-2.5 rounded-full bg-[#0A3E29] hover:bg-[#06291B] text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
+                      className="flex-1 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
                       title="1-Click Demo Order & Evidence Vault Capture"
                     >
                       {buyingProductId === prod.id ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <ShoppingBag className="w-3.5 h-3.5 text-emerald-300" />
+                        <ShoppingBag className="w-3.5 h-3.5 text-[#FFC439]" />
                       )}
                       <span>1-Click Buy Demo</span>
                     </button>
@@ -520,7 +520,7 @@ export default function StorefrontPage() {
                       className="px-3 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors text-xs font-bold shrink-0"
                       title="View Specs & Details"
                     >
-                      <Eye className="w-3.5 h-3.5 text-[#0A3E29]" />
+                      <Eye className="w-3.5 h-3.5 text-[#003087]" />
                     </button>
                   </div>
                 </div>
@@ -537,7 +537,7 @@ export default function StorefrontPage() {
             {/* Modal Header */}
             <div className="flex items-start justify-between pb-4 border-b border-slate-100">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A3E29] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#003087] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
                   {selectedProduct.category}
                 </span>
                 <h2 className="text-lg font-bold text-slate-900 mt-1">{selectedProduct.name}</h2>
@@ -620,9 +620,9 @@ export default function StorefrontPage() {
                       });
                       setCheckoutError(null);
                     }}
-                    className="text-[11px] font-bold text-[#0A3E29] hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] font-bold text-[#003087] hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <UserCheck className="w-3.5 h-3.5 text-[#0A3E29]" />
+                    <UserCheck className="w-3.5 h-3.5 text-[#003087]" />
                     <span>Auto-Fill Demo Buyer</span>
                   </button>
                 </div>
@@ -639,7 +639,7 @@ export default function StorefrontPage() {
                     value={buyerForm.name}
                     onChange={(e) => { setBuyerForm({ ...buyerForm, name: e.target.value }); setCheckoutError(null); }}
                     placeholder="Your full name *"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all bg-white"
                   />
                   <input
                     type="email"
@@ -647,7 +647,7 @@ export default function StorefrontPage() {
                     value={buyerForm.email}
                     onChange={(e) => { setBuyerForm({ ...buyerForm, email: e.target.value }); setCheckoutError(null); }}
                     placeholder="Email address *"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all bg-white"
                   />
                   <input
                     type="text"
@@ -655,7 +655,7 @@ export default function StorefrontPage() {
                     value={buyerForm.address}
                     onChange={(e) => { setBuyerForm({ ...buyerForm, address: e.target.value }); setCheckoutError(null); }}
                     placeholder="Shipping address *"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all bg-white"
                   />
                 </div>
               </div>
@@ -681,12 +681,12 @@ export default function StorefrontPage() {
                 <button
                   onClick={() => handleBuyProduct(selectedProduct)}
                   disabled={buyingProductId !== null}
-                  className="px-6 py-2.5 rounded-full bg-[#0A3E29] hover:bg-[#06291B] text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/25 flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center gap-2 disabled:opacity-50"
                 >
                   {buyingProductId === selectedProduct.id ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
-                    <ShoppingBag className="w-4 h-4 text-emerald-300" />
+                    <ShoppingBag className="w-4 h-4 text-[#FFC439]" />
                   )}
                   <span>Create demo order</span>
                 </button>
@@ -700,7 +700,7 @@ export default function StorefrontPage() {
       <div className="space-y-4 pt-6 border-t border-slate-200/80">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Truck className="w-5 h-5 text-[#0A3E29]" />
+            <Truck className="w-5 h-5 text-[#003087]" />
             <h2 className="font-bold text-slate-900 text-base">Captured Orders &amp; Carrier Milestones</h2>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
               {orders.length} in Vault
@@ -714,7 +714,7 @@ export default function StorefrontPage() {
 
         {loadingOrders ? (
           <div className="bg-white p-8 rounded-2xl border border-slate-200/90 shadow-sm text-center text-slate-400 card-3d-reflection">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0A3E29]" />
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#003087]" />
             <p className="text-xs">Loading orders from database...</p>
           </div>
         ) : orders.length === 0 ? (
@@ -766,12 +766,12 @@ export default function StorefrontPage() {
                   <div>
                     <div className="flex items-center justify-between mb-2.5">
                       <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                        <Truck className="w-3.5 h-3.5 text-[#0A3E29]" /> Carrier Transit Milestones:
+                        <Truck className="w-3.5 h-3.5 text-[#003087]" /> Carrier Transit Milestones:
                       </span>
                       <button
                         onClick={() => handleAdvanceCarrier(ord.id)}
                         disabled={isDelivered || advancingOrderId === ord.id}
-                        className="text-xs font-bold text-[#0A3E29] hover:underline disabled:opacity-40 flex items-center gap-1"
+                        className="text-xs font-bold text-[#003087] hover:underline disabled:opacity-40 flex items-center gap-1"
                       >
                         {advancingOrderId === ord.id ? (
                           <RefreshCw className="w-3 h-3 animate-spin" />

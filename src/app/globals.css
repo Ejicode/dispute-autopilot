@@ -9,15 +9,14 @@
 
 :root {
   --color-canvas: #F4F6F8;
-  --color-forest: #0A3E29;
+  --color-navy: #003087;
+  --color-pp-blue: #0070BA;
+  --color-pp-dark: #001C48;
+  --color-pp-sky: #00A6E0;
+  --color-pp-gold: #FFC439;
   --color-mint: #10B981;
-  --color-sage: #EBF5EF;
   --color-sidebar: #FFFFFF;
   --color-card: #FFFFFF;
-  --color-pp-blue: #0A3E29;
-  --color-pp-dark: #06291B;
-  --color-pp-sky: #10B981;
-  --color-pp-gold: #FFC439;
 }
 
 *, *::before, *::after {
@@ -38,19 +37,19 @@ code, kbd, samp, pre {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* ─── Creative Dashboard AG Grid Styling (Clean White & Forest Mint) ─── */
+/* ─── Creative Dashboard AG Grid Styling (Clean White & PayPal Navy) ─── */
 .ag-theme-quartz {
   --ag-font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   --ag-font-size: 13px;
   --ag-background-color: #ffffff;
-  --ag-header-background-color: #f8faf9;
-  --ag-header-foreground-color: #0A3E29;
+  --ag-header-background-color: #f8fafc;
+  --ag-header-foreground-color: #003087;
   --ag-border-color: #e2e8f0;
   --ag-row-border-color: #f1f5f9;
-  --ag-row-hover-color: #f4f9f6;
+  --ag-row-hover-color: #f0f7ff;
   --ag-odd-row-background-color: #ffffff;
   --ag-foreground-color: #0f172a;
-  --ag-selected-row-background-color: #ebf5ef;
+  --ag-selected-row-background-color: #e0f0fe;
   --ag-header-column-separator-color: transparent;
   --ag-cell-horizontal-padding: 16px;
   border-radius: 1.25rem;
@@ -63,7 +62,7 @@ code, kbd, samp, pre {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 11px;
-  color: #0A3E29;
+  color: #003087;
 }
 
 .ag-theme-quartz .ag-row {
@@ -92,11 +91,11 @@ code, kbd, samp, pre {
   border: 1px solid rgba(203, 213, 225, 0.95);
   box-shadow: 
     0 2px 4px 0 rgba(15, 23, 42, 0.03),
-    0 10px 28px -4px rgba(10, 62, 41, 0.09),
-    0 24px 48px -12px rgba(15, 23, 42, 0.08),
+    0 10px 28px -4px rgba(0, 48, 135, 0.08),
+    0 24px 48px -12px rgba(15, 23, 42, 0.07),
     inset 0 1.5px 0 rgba(255, 255, 255, 1),
     inset 0 0 0 1px rgba(255, 255, 255, 0.6),
-    inset 0 -1.5px 0 rgba(10, 62, 41, 0.03);
+    inset 0 -1.5px 0 rgba(0, 48, 135, 0.02);
   position: relative;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -105,8 +104,8 @@ code, kbd, samp, pre {
   transform: translateY(-2px);
   box-shadow: 
     0 4px 12px 0 rgba(15, 23, 42, 0.05),
-    0 18px 38px -6px rgba(10, 62, 41, 0.14),
-    0 32px 64px -12px rgba(15, 23, 42, 0.11),
+    0 18px 38px -6px rgba(0, 48, 135, 0.13),
+    0 32px 64px -12px rgba(15, 23, 42, 0.09),
     inset 0 2px 0 rgba(255, 255, 255, 1),
     inset 0 0 0 1px rgba(255, 255, 255, 0.85);
   border-color: rgba(148, 163, 184, 1);

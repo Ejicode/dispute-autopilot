@@ -425,31 +425,31 @@ func EnsureDemoAccounts(ctx context.Context) error {
 		Password  string
 	}{
 		{
-			ID:        "usr_demo_pinenmfb_admin",
-			Email:     "admin@pinenmfb.com",
-			Name:      "Antonio Samuel",
-			StoreName: "PinenMFB Merchant Store",
+			ID:        "usr_demo_da_admin",
+			Email:     "admin@disputeautopilot.com",
+			Name:      "DA Admin",
+			StoreName: "DA Store",
 			Password:  "Password12345678!",
 		},
 		{
 			ID:        "usr_demo_judge_2026",
 			Email:     "judge@paypal.test",
 			Name:      "PayPal Hackathon Judge",
-			StoreName: "Apex Audio Gear",
+			StoreName: "DA Store",
 			Password:  "Password12345678!",
 		},
 		{
 			ID:        "usr_demo_sandbox_merchant",
 			Email:     "sb-n0htc53113313@business.example.com",
 			Name:      "PayPal Sandbox Merchant",
-			StoreName: "NVP SOAP Webhooks Store",
+			StoreName: "DA Store",
 			Password:  "5k8g!_0O",
 		},
 		{
 			ID:        "usr_demo_merchant_default",
 			Email:     "demo@merchant.com",
 			Name:      "Demo Merchant",
-			StoreName: "Apex Audio Gear",
+			StoreName: "DA Store",
 			Password:  "Password12345678!",
 		},
 	}

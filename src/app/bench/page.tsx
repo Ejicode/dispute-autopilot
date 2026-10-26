@@ -65,7 +65,7 @@ export default function BenchPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Dispute Bench: 40-Scenario Evaluation</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200 text-[#0A3E29] bg-emerald-50 font-mono">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-blue-200 text-[#003087] bg-blue-50 font-mono">
               make bench
             </span>
           </div>
@@ -86,9 +86,9 @@ export default function BenchPage() {
           <button
             onClick={handleRunBench}
             disabled={running}
-            className="px-5 py-2.5 rounded-full bg-[#0A3E29] hover:bg-[#06291B] text-white text-xs font-bold shadow-md shadow-emerald-950/25 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap cursor-pointer"
+            className="px-5 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold shadow-md shadow-blue-950/25 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap cursor-pointer"
           >
-            {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-emerald-300" />}
+            {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-blue-200" />}
             <span>Run 40-Scenario Benchmark</span>
           </button>
         </div>
@@ -110,7 +110,7 @@ export default function BenchPage() {
 
           <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Claims Verified</span>
-            <span className="text-2xl font-bold text-[#0A3E29] block">{summary.claimsVerifiedRate}%</span>
+            <span className="text-2xl font-bold text-[#0070BA] block">{summary.claimsVerifiedRate}%</span>
             <span className="text-[10px] text-slate-400">Code verified vs Vault</span>
           </div>
 
@@ -120,11 +120,11 @@ export default function BenchPage() {
             <span className="text-[10px] text-emerald-600 font-bold">ZERO Unsafe Actions</span>
           </div>
 
-          {/* Signature Emerald Forest Card */}
-          <div className="bg-gradient-to-br from-[#06291B] to-[#0A3E29] text-white p-4 rounded-2xl shadow-lg shadow-emerald-950/25 card-3d-reflection">
+          {/* Signature PayPal Navy & Blue Card */}
+          <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white p-4 rounded-2xl shadow-lg shadow-blue-950/25 card-3d-reflection">
             <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider block mb-1">Speedup Factor</span>
             <span className="text-2xl font-bold text-white block">~{summary.speedupFactor}x</span>
-            <span className="text-[10px] text-emerald-200">vs 6-min manual baseline</span>
+            <span className="text-[10px] text-blue-100">vs 6-min manual baseline</span>
           </div>
         </div>
       )}
@@ -132,7 +132,7 @@ export default function BenchPage() {
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden card-3d-reflection">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileCheck className="w-4 h-4 text-[#0A3E29]" />
+            <FileCheck className="w-4 h-4 text-[#003087]" />
             <h2 className="font-bold text-slate-900 text-sm">Benchmark Scenarios Roster (40 Cases)</h2>
           </div>
           {summary && <span className="text-xs font-mono text-slate-400">Batch: {summary.batchId}</span>}

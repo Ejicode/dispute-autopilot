@@ -21,7 +21,7 @@ export default function LoginPage() {
   const { login, activeUser, loading } = useUser();
   const router = useRouter();
   
-  const [email, setEmail] = useState('admin@pinenmfb.com');
+  const [email, setEmail] = useState('admin@disputeautopilot.com');
   const [password, setPassword] = useState('Password12345678!');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -60,19 +60,19 @@ export default function LoginPage() {
     <div className="h-screen w-full flex flex-col md:flex-row bg-white select-none relative overflow-hidden">
       
       {/* ═════════════════════════════════════════════════════════════
-          LEFT HALF: Deep Forest Green Hero Panel with Animated 3D Spheres
+          LEFT HALF: PayPal Deep Navy Hero Panel with Animated 3D Spheres
       ═════════════════════════════════════════════════════════════ */}
-      <div className="w-full md:w-1/2 lg:w-5/12 xl:w-1/2 h-auto md:h-full bg-gradient-to-br from-[#041F14] via-[#0A3E29] to-[#03150D] p-6 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-between relative overflow-hidden text-white shrink-0">
+      <div className="w-full md:w-1/2 lg:w-5/12 xl:w-1/2 h-auto md:h-full bg-gradient-to-br from-[#001433] via-[#001C48] to-[#003087] p-6 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-between relative overflow-hidden text-white shrink-0">
         
         {/* Animated Background Ambient Glows */}
-        <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-[#10B981]/20 blur-3xl pointer-events-none animate-pulse-soft" />
-        <div className="absolute -bottom-20 -right-20 w-80 h-80 rounded-full bg-[#34D399]/15 blur-3xl pointer-events-none animate-pulse-soft" />
+        <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-[#0070BA]/25 blur-3xl pointer-events-none animate-pulse-soft" />
+        <div className="absolute -bottom-20 -right-20 w-80 h-80 rounded-full bg-[#00CFDE]/15 blur-3xl pointer-events-none animate-pulse-soft" />
         
         {/* 1. Large 3D Sphere (Bottom-Left) */}
         <div 
           className="absolute -bottom-16 -left-16 w-56 h-56 sm:w-64 sm:h-64 rounded-full pointer-events-none animate-float-slow z-10"
           style={{
-            background: 'radial-gradient(circle at 35% 30%, #34D399 0%, #10B981 25%, #0A3E29 65%, #03150D 100%)',
+            background: 'radial-gradient(circle at 35% 30%, #38BDF8 0%, #0070BA 25%, #003087 65%, #001433 100%)',
             boxShadow: 'inset -12px -12px 28px rgba(0,0,0,0.65), inset 8px 8px 20px rgba(255,255,255,0.45), 0 24px 50px rgba(0,0,0,0.55)'
           }}
         />
@@ -81,7 +81,7 @@ export default function LoginPage() {
         <div 
           className="absolute bottom-6 left-36 sm:left-44 w-32 h-32 sm:w-40 sm:h-40 rounded-full pointer-events-none animate-float-medium z-20"
           style={{
-            background: 'radial-gradient(circle at 35% 30%, #6EE7B7 0%, #10B981 30%, #064E3B 70%, #022016 100%)',
+            background: 'radial-gradient(circle at 35% 30%, #93C5FD 0%, #0070BA 30%, #002366 70%, #000F26 100%)',
             boxShadow: 'inset -8px -8px 20px rgba(0,0,0,0.6), inset 6px 6px 16px rgba(255,255,255,0.5), 0 20px 38px rgba(0,0,0,0.5)'
           }}
         />
@@ -90,7 +90,7 @@ export default function LoginPage() {
         <div 
           className="absolute top-16 right-8 w-20 h-20 rounded-full opacity-70 pointer-events-none animate-float-fast z-10"
           style={{
-            background: 'radial-gradient(circle at 35% 30%, #34D399 0%, #10B981 35%, #0A3E29 70%, #022016 100%)',
+            background: 'radial-gradient(circle at 35% 30%, #60A5FA 0%, #0070BA 35%, #003087 70%, #001433 100%)',
             boxShadow: 'inset -4px -4px 10px rgba(0,0,0,0.5), inset 3px 3px 8px rgba(255,255,255,0.4), 0 12px 26px rgba(0,0,0,0.3)'
           }}
         />
@@ -102,15 +102,15 @@ export default function LoginPage() {
 
         {/* Center: Welcome Headline */}
         <div className="relative z-30 my-auto py-6 sm:py-8 space-y-3 max-w-sm">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] font-bold text-emerald-200">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] font-bold text-blue-200">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
             <span>PayPal AI Hackathon 2026</span>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase text-white drop-shadow-md leading-none">
             Welcome
           </h1>
-          <h2 className="text-[11px] sm:text-xs font-bold tracking-widest uppercase text-emerald-200">
-            Dispute Autopilot Platform
+          <h2 className="text-[11px] sm:text-xs font-bold tracking-widest uppercase text-blue-200">
+            Dispute Autopilot (DA) Platform
           </h2>
           <p className="text-xs text-white/80 font-normal leading-relaxed pt-0.5 max-w-xs">
             Production-grade dispute defense, carrier tracking telemetry, tamper-evident Evidence Vault, and deterministic settlement verification powered by PayPal.
@@ -139,8 +139,8 @@ export default function LoginPage() {
         <div 
           className="absolute -bottom-16 -right-16 w-44 h-44 sm:w-52 sm:h-52 rounded-full pointer-events-none animate-float-slow z-0"
           style={{
-            background: 'radial-gradient(circle at 35% 30%, #6EE7B7 0%, #10B981 30%, #0A3E29 70%, #03150D 100%)',
-            boxShadow: 'inset -8px -8px 20px rgba(0,0,0,0.35), inset 6px 6px 14px rgba(255,255,255,0.45), 0 16px 36px rgba(0,0,0,0.12)'
+            background: 'radial-gradient(circle at 35% 30%, #7DD3FC 0%, #0070BA 40%, #003087 75%, #001C48 100%)',
+            boxShadow: 'inset -8px -8px 20px rgba(0,0,0,0.35), inset 6px 6px 14px rgba(255,255,255,0.45), 0 16px 36px rgba(0,48,135,0.18)'
           }}
         />
 
@@ -188,8 +188,8 @@ export default function LoginPage() {
                   maxLength={254}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="admin@pinenmfb.com"
-                  className="w-full rounded-xl bg-slate-50/80 border border-slate-200 pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0A3E29]/20 focus:border-[#0A3E29] focus:bg-white transition-all text-slate-900 placeholder:text-slate-400"
+                  placeholder="admin@disputeautopilot.com"
+                  className="w-full rounded-xl bg-slate-50/80 border border-slate-200 pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white transition-all text-slate-900 placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -212,12 +212,12 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full rounded-xl bg-slate-50/80 border border-slate-200 pl-10 pr-16 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0A3E29]/20 focus:border-[#0A3E29] focus:bg-white transition-all text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-xl bg-slate-50/80 border border-slate-200 pl-10 pr-16 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white transition-all text-slate-900 placeholder:text-slate-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[10px] font-extrabold tracking-wider text-[#0A3E29] hover:text-[#06291B] cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[10px] font-extrabold tracking-wider text-[#0070BA] hover:text-[#003087] cursor-pointer"
                 >
                   {showPassword ? 'HIDE' : 'SHOW'}
                 </button>
@@ -231,24 +231,24 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded text-[#0A3E29] focus:ring-[#0A3E29] border-slate-300 accent-[#0A3E29]"
+                  className="w-3.5 h-3.5 rounded text-[#003087] focus:ring-[#003087] border-slate-300 accent-[#003087]"
                 />
                 <span>Remember me</span>
               </label>
               <button
                 type="button"
                 onClick={() => setShowForgotModal(true)}
-                className="text-xs font-semibold text-slate-600 hover:text-[#0A3E29] transition-colors cursor-pointer"
+                className="text-xs font-semibold text-slate-600 hover:text-[#0070BA] transition-colors cursor-pointer"
               >
                 Forgot Password?
               </button>
             </div>
 
-            {/* Primary Button: Solid Dark Green */}
+            {/* Primary Button: Solid PayPal Navy */}
             <button
               type="submit"
               disabled={submitting || loading}
-              className="w-full rounded-xl bg-[#0A3E29] hover:bg-[#06291B] active:scale-[0.99] py-3 font-bold text-white text-xs sm:text-sm tracking-wide transition-all shadow-md shadow-[#0A3E29]/25 hover:shadow-lg hover:shadow-[#0A3E29]/35 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2 relative overflow-hidden group"
+              className="w-full rounded-xl bg-[#003087] hover:bg-[#001C48] active:scale-[0.99] py-3 font-bold text-white text-xs sm:text-sm tracking-wide transition-all shadow-md shadow-[#003087]/25 hover:shadow-lg hover:shadow-[#003087]/35 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2 relative overflow-hidden group"
             >
               <span className="relative z-10 flex items-center gap-1.5">
                 {submitting ? 'Signing in…' : 'Sign in'}
@@ -268,7 +268,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowDemoModal(true)}
-              className="w-full rounded-xl bg-white border border-slate-800 hover:border-[#0A3E29] hover:bg-[#EBF5EF]/30 active:scale-[0.99] py-2.5 font-semibold text-slate-800 hover:text-[#0A3E29] text-xs sm:text-sm tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2 hover:-translate-y-0.5 shadow-2xs"
+              className="w-full rounded-xl bg-white border border-slate-300 hover:border-[#003087] hover:bg-blue-50/50 active:scale-[0.99] py-2.5 font-semibold text-slate-800 hover:text-[#003087] text-xs sm:text-sm tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2 hover:-translate-y-0.5 shadow-2xs"
             >
               <span>Sign in with other</span>
             </button>
@@ -279,7 +279,7 @@ export default function LoginPage() {
           <div className="pt-2 border-t border-slate-100">
             <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">
               <span>Quick 1-Click Access</span>
-              <span className="text-[#0A3E29] font-extrabold flex items-center gap-1">
+              <span className="text-[#0070BA] font-extrabold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                 Pre-configured
               </span>
@@ -288,28 +288,28 @@ export default function LoginPage() {
               <button
                 type="button"
                 disabled={submitting || loading}
-                onClick={() => submitWithCredentials('admin@pinenmfb.com', 'Password12345678!')}
-                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#0A3E29] hover:bg-[#EBF5EF]/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
+                onClick={() => submitWithCredentials('admin@disputeautopilot.com', 'Password12345678!')}
+                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#003087] hover:bg-blue-50/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
               >
-                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#0A3E29]">Antonio S.</span>
-                <span className="block text-[9px] text-slate-400 truncate">Admin Officer</span>
+                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#003087]">DA Admin</span>
+                <span className="block text-[9px] text-slate-400 truncate">Dispute Lead</span>
               </button>
               <button
                 type="button"
                 disabled={submitting || loading}
                 onClick={() => submitWithCredentials('judge@paypal.test', 'Password12345678!')}
-                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#0A3E29] hover:bg-[#EBF5EF]/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
+                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#003087] hover:bg-blue-50/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
               >
-                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#0A3E29]">Judge</span>
+                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#003087]">Judge</span>
                 <span className="block text-[9px] text-slate-400 truncate">Reviewer</span>
               </button>
               <button
                 type="button"
                 disabled={submitting || loading}
                 onClick={() => submitWithCredentials('sb-n0htc53113313@business.example.com', '5k8g!_0O')}
-                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#0A3E29] hover:bg-[#EBF5EF]/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
+                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#003087] hover:bg-blue-50/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
               >
-                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#0A3E29]">Sandbox</span>
+                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#003087]">Sandbox</span>
                 <span className="block text-[9px] text-slate-400 truncate">NVP SOAP</span>
               </button>
             </div>
@@ -318,7 +318,7 @@ export default function LoginPage() {
           {/* Bottom Register Link */}
           <div className="text-center text-xs text-slate-500 pt-0.5">
             <span>Don't have an account? </span>
-            <Link href="/register" className="font-bold text-slate-900 hover:text-[#0A3E29] hover:underline">
+            <Link href="/register" className="font-bold text-slate-900 hover:text-[#0070BA] hover:underline">
               Sign up
             </Link>
           </div>
@@ -351,22 +351,22 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => {
                   setShowDemoModal(false);
-                  submitWithCredentials('admin@pinenmfb.com', 'Password12345678!');
+                  submitWithCredentials('admin@disputeautopilot.com', 'Password12345678!');
                 }}
-                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#0A3E29] hover:bg-[#EBF5EF]/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
+                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#003087] hover:bg-blue-50/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
               >
                 <div className="flex items-center gap-3">
                   <img
                     src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=128&q=80"
-                    alt="Antonio Samuel"
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-[#0A3E29]/20"
+                    alt="DA Admin"
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-[#003087]/20"
                   />
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#0A3E29]">Antonio Samuel</h4>
-                    <p className="text-[11px] text-slate-500">Admin Officer · admin@pinenmfb.com</p>
+                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#003087]">DA Admin</h4>
+                    <p className="text-[11px] text-slate-500">Dispute Lead · admin@disputeautopilot.com</p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#0A3E29] opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ChevronRight className="w-4 h-4 text-[#003087] opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
 
               {/* Profile 2 */}
@@ -376,20 +376,20 @@ export default function LoginPage() {
                   setShowDemoModal(false);
                   submitWithCredentials('judge@paypal.test', 'Password12345678!');
                 }}
-                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#0A3E29] hover:bg-[#EBF5EF]/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
+                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#003087] hover:bg-blue-50/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
               >
                 <div className="flex items-center gap-3">
                   <img
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&q=80"
                     alt="Judge"
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/20"
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-500/20"
                   />
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#0A3E29]">Hackathon Judge</h4>
+                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#003087]">Hackathon Judge</h4>
                     <p className="text-[11px] text-slate-500">PayPal Reviewer · judge@paypal.test</p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#0A3E29] opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ChevronRight className="w-4 h-4 text-[#003087] opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
 
               {/* Profile 3 */}
@@ -399,18 +399,18 @@ export default function LoginPage() {
                   setShowDemoModal(false);
                   submitWithCredentials('sb-n0htc53113313@business.example.com', '5k8g!_0O');
                 }}
-                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#0A3E29] hover:bg-[#EBF5EF]/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
+                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#003087] hover:bg-blue-50/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#0A3E29] text-white flex items-center justify-center font-bold text-xs">
+                  <div className="w-10 h-10 rounded-full bg-[#003087] text-white flex items-center justify-center font-bold text-xs">
                     PP
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#0A3E29]">PayPal Sandbox Store</h4>
+                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#003087]">PayPal Sandbox Store</h4>
                     <p className="text-[11px] text-slate-500">NVP SOAP Webhooks Merchant</p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#0A3E29] opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ChevronRight className="w-4 h-4 text-[#003087] opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             </div>
           </div>
@@ -437,14 +437,14 @@ export default function LoginPage() {
             <div className="space-y-2 text-xs">
               <div 
                 onClick={() => {
-                  setEmail('admin@pinenmfb.com');
+                  setEmail('admin@disputeautopilot.com');
                   setPassword('Password12345678!');
                   setShowForgotModal(false);
                 }}
-                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0A3E29] cursor-pointer hover:-translate-y-0.5 transition-transform"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#003087] cursor-pointer hover:-translate-y-0.5 transition-transform"
               >
-                <span className="font-bold text-slate-800 block">Antonio Samuel (Admin)</span>
-                <span className="text-[11px] text-slate-500 font-mono block">admin@pinenmfb.com · Password12345678!</span>
+                <span className="font-bold text-slate-800 block">DA Admin</span>
+                <span className="text-[11px] text-slate-500 font-mono block">admin@disputeautopilot.com · Password12345678!</span>
               </div>
               <div 
                 onClick={() => {
@@ -452,7 +452,7 @@ export default function LoginPage() {
                   setPassword('Password12345678!');
                   setShowForgotModal(false);
                 }}
-                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0A3E29] cursor-pointer hover:-translate-y-0.5 transition-transform"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#003087] cursor-pointer hover:-translate-y-0.5 transition-transform"
               >
                 <span className="font-bold text-slate-800 block">PayPal Judge</span>
                 <span className="text-[11px] text-slate-500 font-mono block">judge@paypal.test · Password12345678!</span>

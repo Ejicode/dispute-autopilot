@@ -481,7 +481,7 @@ export default function AiAssistant() {
               speakText(greeting, "welcome");
             }
           }}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-[#0A3E29] hover:bg-[#06291B] shadow-xl text-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ring-4 ring-white border border-emerald-500/25 group select-none"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] hover:from-[#001433] hover:to-[#005ea6] shadow-xl text-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ring-4 ring-white border border-blue-400/30 group select-none"
           title="Open Voice Assistant"
         >
           <span className="relative flex h-2.5 w-2.5">
@@ -489,7 +489,7 @@ export default function AiAssistant() {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
           </span>
           <span className="text-xs font-bold tracking-tight text-white flex items-center gap-1">
-            <Headphones className="w-3.5 h-3.5 text-emerald-300" />
+            <Headphones className="w-3.5 h-3.5 text-blue-200" />
             Ava
           </span>
         </button>
@@ -498,24 +498,24 @@ export default function AiAssistant() {
       {open && (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[340px] sm:w-[360px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-32px)] sm:max-h-[min(540px,calc(100vh-48px))] h-auto rounded-[24px] card-3d-reflection bg-white flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in">
           
-          <div className="bg-[#0A3E29] px-4 py-2.5 flex items-center justify-between shrink-0 text-white select-none">
+          <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-4 py-2.5 flex items-center justify-between shrink-0 text-white select-none">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
-                <Headphones className="w-3.5 h-3.5 text-emerald-300" />
+                <Headphones className="w-3.5 h-3.5 text-blue-200" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <h4 className="text-white font-bold text-xs leading-none">Ava</h4>
                   {activeVoiceName && (
                     <span 
-                      className="text-[9px] text-emerald-300/90 font-mono bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-700/50 truncate max-w-[100px]" 
+                      className="text-[9px] text-blue-200 font-mono bg-blue-950/70 px-1 py-0.5 rounded border border-blue-600/50 truncate max-w-[100px]" 
                       title={`Active Voice: ${activeVoiceName}`}
                     >
                       {activeVoiceName.replace(/Google /i, "").replace(/English /i, "").replace(/\(.*?\)/g, "").trim()}
                     </span>
                   )}
                 </div>
-                <p className="text-[9.5px] text-emerald-200/80 leading-none mt-0.5 truncate">Dispute Defense Partner</p>
+                <p className="text-[9.5px] text-blue-200/80 leading-none mt-0.5 truncate">Dispute Defense Partner</p>
               </div>
             </div>
 
@@ -545,12 +545,12 @@ export default function AiAssistant() {
           <div className="p-3.5 sm:p-4 flex flex-col items-center justify-between space-y-3 bg-gradient-to-b from-slate-50/50 to-white overflow-y-auto min-h-0 flex-1">
             
             {activeAction && (
-              <div className="w-full bg-[#EBF5EF] border border-[#D5EDE0] px-3 py-1.5 rounded-xl flex items-center justify-between text-xs text-[#0A3E29] animate-in fade-in shrink-0">
+              <div className="w-full bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl flex items-center justify-between text-xs text-[#003087] animate-in fade-in shrink-0">
                 <span className="flex items-center gap-1.5 text-[11px] font-bold">
                   {activeAction.status === "running" ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0A3E29]" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#003087]" />
                   ) : (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                   )}
                   {activeAction.label}
                 </span>
@@ -560,11 +560,11 @@ export default function AiAssistant() {
             <div className="py-1 flex flex-col items-center justify-center text-center select-none relative shrink-0">
               <div className="relative flex items-center justify-center">
                 
-                <div className={`absolute w-24 h-24 rounded-full border border-emerald-400/20 transition-all duration-500 ${
+                <div className={`absolute w-24 h-24 rounded-full border border-blue-400/20 transition-all duration-500 ${
                   isSpeaking || isListening ? "scale-110 opacity-100 animate-ping" : "scale-90 opacity-0"
                 }`} />
 
-                <div className={`absolute w-20 h-20 rounded-full bg-emerald-500/10 transition-all duration-300 ${
+                <div className={`absolute w-20 h-20 rounded-full bg-blue-500/10 transition-all duration-300 ${
                   isSpeaking ? "scale-105 animate-pulse" : isListening ? "scale-110 bg-rose-500/10" : "scale-95"
                 }`} />
 
@@ -575,8 +575,8 @@ export default function AiAssistant() {
                     isListening
                       ? "bg-gradient-to-tr from-rose-600 to-amber-500 ring-4 ring-rose-300 scale-105"
                       : isSpeaking
-                      ? "bg-gradient-to-tr from-[#06291B] via-[#0A3E29] to-[#10B981] ring-4 ring-emerald-400/40 animate-orb-pulse scale-105"
-                      : "bg-gradient-to-tr from-[#06291B] via-[#0A3E29] to-[#041F14] ring-4 ring-slate-200/80 hover:ring-emerald-400/50 hover:scale-105"
+                      ? "bg-gradient-to-tr from-[#001C48] via-[#003087] to-[#0070BA] ring-4 ring-blue-400/40 animate-orb-pulse scale-105"
+                      : "bg-gradient-to-tr from-[#001433] via-[#001C48] to-[#003087] ring-4 ring-slate-200/80 hover:ring-blue-400/50 hover:scale-105"
                   }`}
                   title={isListening ? "Listening... Tap to send" : "Tap to speak with Ava"}
                 >
@@ -584,17 +584,17 @@ export default function AiAssistant() {
 
                   {isSpeaking ? (
                     <div className="flex items-center gap-0.5 h-5 z-10">
-                      <span className="w-1 bg-emerald-300 rounded-full" style={{ animation: "wave-bounce 0.8s ease-in-out infinite 0ms" }} />
+                      <span className="w-1 bg-blue-300 rounded-full" style={{ animation: "wave-bounce 0.8s ease-in-out infinite 0ms" }} />
                       <span className="w-1 bg-white rounded-full" style={{ animation: "wave-bounce 0.9s ease-in-out infinite 150ms" }} />
-                      <span className="w-1 bg-emerald-200 rounded-full" style={{ animation: "wave-bounce 0.7s ease-in-out infinite 300ms" }} />
+                      <span className="w-1 bg-blue-200 rounded-full" style={{ animation: "wave-bounce 0.7s ease-in-out infinite 300ms" }} />
                       <span className="w-1 bg-white rounded-full" style={{ animation: "wave-bounce 0.85s ease-in-out infinite 100ms" }} />
                     </div>
                   ) : isListening ? (
                     <Mic className="w-5 h-5 text-white animate-pulse z-10" />
                   ) : loading ? (
-                    <Loader2 className="w-5 h-5 text-emerald-300 animate-spin z-10" />
+                    <Loader2 className="w-5 h-5 text-blue-300 animate-spin z-10" />
                   ) : (
-                    <Headphones className="w-5 h-5 text-emerald-300 z-10" />
+                    <Headphones className="w-5 h-5 text-blue-300 z-10" />
                   )}
                 </button>
               </div>
@@ -606,7 +606,7 @@ export default function AiAssistant() {
                     Listening...
                   </span>
                 ) : isSpeaking ? (
-                  <span className="text-[#0A3E29] flex items-center justify-center gap-1">
+                  <span className="text-[#003087] flex items-center justify-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Ava speaking
                   </span>
@@ -688,7 +688,7 @@ export default function AiAssistant() {
                   type="button"
                   onClick={() => sendMessage()}
                   disabled={!input.trim() || loading}
-                  className="w-7 h-7 rounded-lg bg-[#0A3E29] hover:bg-[#06291B] text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  className="w-7 h-7 rounded-lg bg-[#003087] hover:bg-[#001C48] text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                   title="Send"
                 >
                   {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}

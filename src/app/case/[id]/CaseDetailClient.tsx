@@ -242,7 +242,7 @@ export default function CaseDetailPage() {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-[#0A3E29]" />
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-[#003087]" />
           <p className="text-slate-500 text-sm font-medium">Loading dispute telemetry &amp; vault evidence...</p>
         </div>
       </div>
@@ -253,7 +253,7 @@ export default function CaseDetailPage() {
     return (
       <div className="bg-white p-8 rounded-3xl border border-slate-200/90 shadow-sm text-center card-3d-reflection">
         <h2 className="text-lg font-bold text-slate-800">Dispute Not Found</h2>
-        <Link href="/" className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#0A3E29] font-bold hover:underline">
+        <Link href="/" className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#003087] font-bold hover:underline">
           <ArrowLeft className="w-3.5 h-3.5" /> Return to dispute queue
         </Link>
       </div>
@@ -277,7 +277,7 @@ export default function CaseDetailPage() {
       <div className="flex items-center justify-between">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#0A3E29] transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200/90 shadow-sm card-3d-reflection"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#003087] transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200/90 shadow-sm card-3d-reflection"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Dispute Dashboard</span>
@@ -291,7 +291,7 @@ export default function CaseDetailPage() {
 
       {/* ── Case Header Banner (Hero Card with Soft Slate Border & 3D Reflection) ── */}
       <div className="card-3d-reflection p-6 sm:p-7 rounded-3xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#0A3E29]/10 via-[#10B981]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#003087]/10 via-[#0070BA]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div>
@@ -313,7 +313,7 @@ export default function CaseDetailPage() {
               }`}>
                 ⚡ {dispute.recommendation}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0]">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#E6F0FA] text-[#003087] border border-[#C9E0FA]">
                 PayPal AI Verified
               </span>
             </div>
@@ -363,9 +363,9 @@ export default function CaseDetailPage() {
             <a
               href={`/api/disputes/${dispute.id}/packet`}
               download
-              className="px-4 py-3 rounded-2xl bg-[#0A3E29] hover:bg-[#072d1e] text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-emerald-950/20"
+              className="px-4 py-3 rounded-2xl bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-blue-950/20"
             >
-              <Download className="w-4 h-4 text-[#10B981]" />
+              <Download className="w-4 h-4 text-[#FFC439]" />
               <span>Evidence Packet PDF</span>
             </a>
           </div>
@@ -376,7 +376,7 @@ export default function CaseDetailPage() {
       <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-emerald-50 text-[#0A3E29]">
+            <div className="p-1.5 rounded-lg bg-blue-50 text-[#003087]">
               <Activity className="w-4 h-4" />
             </div>
             <div>
@@ -438,7 +438,7 @@ export default function CaseDetailPage() {
                 s.status === 'done'
                   ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
                   : s.status === 'active'
-                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950 ring-2 ring-emerald-300'
+                  ? 'bg-blue-50/70 border-blue-200 text-blue-950 ring-2 ring-blue-300'
                   : s.status === 'blocked'
                   ? 'bg-rose-50/70 border-rose-200 text-rose-950 ring-2 ring-rose-300'
                   : 'bg-slate-50/70 border-slate-200/80 text-slate-500'
@@ -449,7 +449,7 @@ export default function CaseDetailPage() {
                   s.status === 'done'
                     ? 'bg-emerald-600 text-white'
                     : s.status === 'active'
-                    ? 'bg-[#0A3E29] text-white'
+                    ? 'bg-[#003087] text-white'
                     : s.status === 'blocked'
                     ? 'bg-rose-600 text-white'
                     : 'bg-slate-200 text-slate-600'
@@ -460,7 +460,7 @@ export default function CaseDetailPage() {
                   s.status === 'done'
                     ? 'bg-emerald-100 text-emerald-800'
                     : s.status === 'active'
-                    ? 'bg-emerald-100 text-emerald-800'
+                    ? 'bg-blue-100 text-blue-800'
                     : s.status === 'blocked'
                     ? 'bg-rose-100 text-rose-800'
                     : 'bg-slate-200 text-slate-600'
@@ -479,7 +479,7 @@ export default function CaseDetailPage() {
       <div className="card-3d-reflection p-6 rounded-3xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-50 text-[#0A3E29]">
+            <div className="p-2 rounded-xl bg-blue-50 text-[#003087]">
               <Truck className="w-5 h-5" />
             </div>
             <div>
@@ -506,8 +506,8 @@ export default function CaseDetailPage() {
             <AreaChart data={transitVelocityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0A3E29" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#0A3E29" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="#003087" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#003087" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
@@ -534,7 +534,7 @@ export default function CaseDetailPage() {
               <Area
                 type="monotone"
                 dataKey="velocity"
-                stroke="#0A3E29"
+                stroke="#003087"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#velocityGradient)"
@@ -549,7 +549,7 @@ export default function CaseDetailPage() {
           {transitVelocityData.map((step, idx) => (
             <div
               key={idx}
-              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center space-y-1 hover:border-[#0A3E29]/50 transition-colors"
+              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center space-y-1 hover:border-[#003087]/50 transition-colors"
             >
               <div className="text-[10px] text-slate-400 font-semibold">{step.time}</div>
               <div className="text-xs font-bold text-slate-800">{step.stage}</div>
@@ -569,7 +569,7 @@ export default function CaseDetailPage() {
           <div className="card-3d-reflection p-6 rounded-3xl space-y-4 min-w-0 overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-50 text-[#0A3E29]">
+                <div className="p-2 rounded-xl bg-blue-50 text-[#003087]">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
@@ -577,7 +577,7 @@ export default function CaseDetailPage() {
                   <p className="text-xs text-slate-500 font-medium">Tamper-evident snapshot with SHA-256 integrity</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-[#0A3E29] border border-emerald-100 self-start sm:self-auto">
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-[#003087] border border-blue-100 self-start sm:self-auto">
                 {evidenceItems.length} Immutable Items
               </span>
             </div>
@@ -595,7 +595,7 @@ export default function CaseDetailPage() {
                   onClick={() => setEvidenceFilter(tab.id as any)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
                     evidenceFilter === tab.id
-                      ? 'bg-[#0A3E29] text-white shadow-sm'
+                      ? 'bg-[#003087] text-white shadow-sm'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                   }`}
                 >
@@ -612,7 +612,7 @@ export default function CaseDetailPage() {
                   id={`ev-${item.id}`}
                   className={`min-w-0 overflow-hidden transition-all duration-300 rounded-2xl ${
                     highlightedEvidenceId === item.id
-                      ? 'ring-4 ring-[#0A3E29] ring-offset-2'
+                      ? 'ring-4 ring-[#003087] ring-offset-2'
                       : ''
                   }`}
                 >
@@ -661,7 +661,7 @@ export default function CaseDetailPage() {
           <div className="card-3d-reflection p-6 rounded-3xl space-y-4 min-w-0 overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-[#0A3E29]" />
+                <ShieldCheck className="w-5 h-5 text-[#003087]" />
                 <h2 className="font-bold text-slate-900 text-sm">Evidence-Based Response</h2>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                   draft?.verified 
@@ -685,7 +685,7 @@ export default function CaseDetailPage() {
             </div>
 
             <button onClick={handleRegenerateDraft} disabled={tampering || dispute.status !== 'REQUIRED_ACTION'}
-              className="text-xs font-semibold text-[#0A3E29] hover:underline disabled:opacity-50">
+              className="text-xs font-semibold text-[#003087] hover:underline disabled:opacity-50">
               Regenerate from current evidence
             </button>
 
@@ -716,7 +716,7 @@ export default function CaseDetailPage() {
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition-all shadow-sm max-w-full min-w-0 ${
                       claim.verified === false
                         ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse ring-2 ring-rose-200'
-                        : 'bg-white border-slate-200 text-slate-700 hover:border-[#0A3E29] hover:text-[#0A3E29]'
+                        : 'bg-white border-slate-200 text-slate-700 hover:border-[#003087] hover:text-[#003087]'
                     }`}
                   >
                     {claim.verified === false ? (
@@ -725,7 +725,7 @@ export default function CaseDetailPage() {
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     )}
                     <span className="truncate">{claim.claim_type}: <strong>{claim.expected_value}</strong></span>
-                    <span className="text-[10px] text-[#0A3E29] font-bold underline ml-1 shrink-0">Cite →</span>
+                    <span className="text-[10px] text-[#003087] font-bold underline ml-1 shrink-0">Cite →</span>
                   </button>
                 ))}
               </div>
@@ -782,7 +782,7 @@ export default function CaseDetailPage() {
           <div className="card-3d-reflection p-6 rounded-3xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Lock className="w-5 h-5 text-[#0A3E29]" />
+                <Lock className="w-5 h-5 text-[#003087]" />
                 <h3 className="font-bold text-slate-900 text-sm">Human Approval Gate</h3>
               </div>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
@@ -803,7 +803,7 @@ export default function CaseDetailPage() {
               className={`w-full rounded-2xl border p-3.5 text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                 review
                   ? 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                  : 'bg-[#EBF5EF] text-[#0A3E29] border-[#D5EDE0] hover:bg-[#D5EDE0] shadow-sm'
+                  : 'bg-[#E6F0FA] text-[#003087] border-[#C9E0FA] hover:bg-[#D4E6FA] shadow-sm'
               } disabled:opacity-50`}>
               {reviewLoading ? (
                 <>
@@ -826,7 +826,7 @@ export default function CaseDetailPage() {
               <p><strong>Response deadline:</strong> {review.snapshot.response_deadline}</p>
               <p><strong>Reviewed notes:</strong> {review.snapshot.notes}</p>
               <p>{review.snapshot.evidence_ids.length} supporting vault records. This request does not upload PDF attachments.</p>
-              <details><summary className="cursor-pointer font-semibold text-[#0A3E29]">View request details JSON</summary>
+              <details><summary className="cursor-pointer font-semibold text-[#003087]">View request details JSON</summary>
                 <pre className="whitespace-pre-wrap break-all mt-2 p-2 bg-slate-100 rounded-xl font-mono text-[11px]">{JSON.stringify(review.snapshot.provider_payload, null, 2)}</pre>
               </details>
             </div>}
@@ -839,7 +839,7 @@ export default function CaseDetailPage() {
             {approvalResult && <p role="status" className="text-sm text-emerald-700 font-bold">✓ Action acknowledged by PayPal. Await final dispute outcome.</p>}
             <button onClick={handleApproveAction}
               disabled={!review || Boolean(operation) || approving || dispute.status !== 'REQUIRED_ACTION'}
-              className="w-full py-3.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-[#0A3E29] hover:bg-[#072d1e] text-white shadow-md shadow-emerald-950/25 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none">
+              className="w-full py-3.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 bg-[#003087] hover:bg-[#001C48] text-white shadow-md shadow-blue-950/25 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none">
               {approving ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

@@ -133,10 +133,10 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
           <div className="flex items-center gap-1.5 h-full">
             <Link
               href={`/case/${d.id}/`}
-              className="font-mono text-xs font-bold text-[#0A3E29] hover:underline flex items-center gap-1.5 transition-colors"
+              className="font-mono text-xs font-bold text-[#003087] hover:underline flex items-center gap-1.5 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <ShieldCheck className="w-4 h-4 text-[#0A3E29] shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-[#003087] shrink-0" />
               <span>{d.paypal_dispute_id}</span>
             </Link>
           </div>
@@ -305,11 +305,11 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
           <div className="flex items-center h-full">
             <Link
               href={`/case/${d.id}/`}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-[#0A3E29] hover:bg-[#06291B] text-white rounded-full text-xs font-bold transition-all shadow-sm hover:shadow"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-[#003087] hover:bg-[#001C48] text-white rounded-full text-xs font-bold transition-all shadow-sm hover:shadow"
               onClick={(e) => e.stopPropagation()}
             >
               <span>Review</span>
-              <ArrowRight className="w-3 h-3" />
+              <ArrowRight className="w-3 text-white" />
             </Link>
           </div>
         );
@@ -338,7 +338,7 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
               placeholder="Filter by ID, reason, amount..."
               value={quickFilterText}
               onChange={(e) => setQuickFilterText(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A3E29]/20 focus:border-[#0A3E29] transition-all"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] transition-all"
             />
           </div>
 
@@ -352,7 +352,7 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
               className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Prioritize disputes by money at risk"
             >
-              <DollarSign className="w-3 h-3 text-[#0A3E29]" />
+              <DollarSign className="w-3 h-3 text-[#003087]" />
               <span>Money at Risk</span>
             </button>
             <button
@@ -368,13 +368,13 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
               className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Sort by Evidence Strength Score"
             >
-              <FileCheck className="w-3 h-3 text-[#0A3E29]" />
+              <FileCheck className="w-3 h-3 text-[#003087]" />
               <span>Strength</span>
             </button>
             <button
               onClick={() => setFloatingFilters(!floatingFilters)}
               className={`p-2 rounded-full border text-xs font-semibold transition-colors ${
-                floatingFilters ? 'bg-emerald-50 text-[#0A3E29] border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                floatingFilters ? 'bg-blue-50 text-[#003087] border-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
               }`}
               title="Toggle column floating filters"
             >
@@ -407,7 +407,7 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
               onClick={() => setActiveFilterPreset(preset.id as any)}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                 activeFilterPreset === preset.id
-                  ? 'bg-[#0A3E29] text-white shadow-sm'
+                  ? 'bg-[#003087] text-white shadow-sm'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
               }`}
             >
@@ -437,17 +437,17 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
 
       {/* ── AG Grid Row Detail Inspector Drawer ── */}
       {selectedDispute && (
-        <div className="p-4 rounded-2xl bg-slate-50 border border-emerald-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-200">
+        <div className="p-4 rounded-2xl bg-slate-50 border border-blue-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-200">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-[#0A3E29]" />
+              <Eye className="w-4 h-4 text-[#003087]" />
               <span className="font-mono text-xs font-bold text-slate-800">
                 {selectedDispute.paypal_dispute_id}
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700">
                 Tx: {selectedDispute.transaction_id}
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#003087] border border-blue-200">
                 Recommendation: {selectedDispute.recommendation}
               </span>
             </div>
@@ -461,7 +461,7 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
           <div className="flex items-center gap-2.5 shrink-0">
             <Link
               href={`/case/${selectedDispute.id}`}
-              className="px-4 py-2 bg-[#0A3E29] hover:bg-[#072d1e] text-white rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+              className="px-4 py-2 bg-[#003087] hover:bg-[#001C48] text-white rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
             >
               <span>Inspect Case Details</span>
               <ArrowRight className="w-3.5 h-3.5" />
