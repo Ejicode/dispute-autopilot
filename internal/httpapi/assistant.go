@@ -636,8 +636,8 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 		apiKey = clientKey
 	}
 	apiKey = strings.TrimSpace(apiKey)
-	if apiKey == "" || strings.HasPrefix(apiKey, "AQ.") {
-		return "", errors.New("invalid or unsupported Gemini API key")
+	if apiKey == "" {
+		return "", errors.New("no Gemini API key configured")
 	}
 	contents := []map[string]any{}
 	start := len(history) - 8
@@ -670,8 +670,8 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 	if model == "" {
 		model = os.Getenv("AI_MODEL_NAME")
 	}
-	if model == "" || model == "DisputeAutopilot-Agent-v1" || model == "DisputeAutopilot-Deterministic-v2" {
-		model = "gemini-2.0-flash"
+	if model == "" || model == "DisputeAutopilot-Agent-v1" || model == "DisputeAutopilot-Deterministic-v2" || model == "gemini-2.0-flash" || model == "gemini-3.8-flash" {
+		model = "gemini-3.5-flash"
 	}
 	endpoint := "https://generativelanguage.googleapis.com/v1beta/models/" + url.PathEscape(model) + ":generateContent?key=" + url.QueryEscape(apiKey)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
@@ -680,7 +680,7 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("x-goog-api-key", apiKey)
-	response, err := (&http.Client{Timeout: 7 * time.Second}).Do(request)
+	response, err := (&http.Client{Timeout: 20 * time.Second}).Do(request)
 	if err != nil {
 		return "", err
 	}
