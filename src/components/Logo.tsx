@@ -41,74 +41,104 @@ export default function Logo({
             : '0 4px 14px rgba(0,48,135,0.25), inset 0 1px 0 rgba(255,255,255,0.35)',
         }}
       >
-        {/* Specular Gloss Highlight */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/25 pointer-events-none" />
+        {/* Specular Gloss Highlight & Ambient Radial Core */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/15 to-white/30 pointer-events-none" />
+        <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-[#00A6E0]/25 blur-sm pointer-events-none" />
 
         <svg
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={`${s.icon} relative z-10 transition-transform duration-300 group-hover:scale-105`}
+          className={`${s.icon} relative z-10 transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_2px_4px_rgba(0,28,72,0.4)]`}
         >
           <defs>
-            <linearGradient id="daGradWing" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+            {/* Primary DA Cyan/Sky Flight Gradient */}
+            <linearGradient id="daWingGrad" x1="4" y1="4" x2="32" y2="32" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="60%" stopColor="#93C5FD" />
-              <stop offset="100%" stopColor="#38BDF8" />
+              <stop offset="35%" stopColor="#E0F2FE" />
+              <stop offset="70%" stopColor="#38BDF8" />
+              <stop offset="100%" stopColor="#00A6E0" />
             </linearGradient>
-            <linearGradient id="daGradAccent" x1="10" y1="10" x2="22" y2="24" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#FFC439" />
+
+            {/* Deep PayPal Blue Shadow Gradient */}
+            <linearGradient id="daNavyGrad" x1="6" y1="6" x2="26" y2="30" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#0070BA" />
+              <stop offset="100%" stopColor="#001C48" />
+            </linearGradient>
+
+            {/* PayPal Gold Radar Beacon */}
+            <linearGradient id="daGoldGrad" x1="16" y1="12" x2="28" y2="24" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#FFF176" />
+              <stop offset="40%" stopColor="#FFC439" />
               <stop offset="100%" stopColor="#F59E0B" />
             </linearGradient>
+
+            <filter id="daGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#00A6E0" floodOpacity="0.4" />
+            </filter>
           </defs>
 
-          {/* Autopilot Supersonic Shield Contour */}
+          {/* ── Outer Supersonic Wing: Stylized 'D' Defense Arc ── */}
           <path
-            d="M16 3.5L25.5 7.5V15.5C25.5 21.5 21.4 26.8 16 28.5C10.6 26.8 6.5 21.5 6.5 15.5V7.5L16 3.5Z"
-            stroke="url(#daGradWing)"
-            strokeWidth="1.75"
-            strokeLinejoin="round"
-            fill="none"
+            d="M 7 6 C 7 4.9 7.9 4 9 4 L 18 4 C 24.6 4 29 8.4 29 15 C 29 21.6 24.6 26 18 26 L 12 26 L 12 31 C 12 31.6 11.6 32 11 32 L 8 32 C 7.4 32 7 31.6 7 31 Z"
+            fill="url(#daNavyGrad)"
+          />
+          {/* Inner D Counter Sheen */}
+          <path
+            d="M 12 9 L 17.5 9 C 21.5 9 24 11.4 24 15 C 24 18.6 21.5 21 17.5 21 L 12 21 Z"
+            fill="#002566"
+            fillOpacity="0.85"
           />
 
-          {/* Stylized 'D' Left Wing */}
+          {/* ── Interlocking Forward 'A' Autopilot Supersonic Delta ── */}
           <path
-            d="M10 11.5V20.5H13.2C15.6 20.5 17 18.8 17 16C17 13.2 15.6 11.5 13.2 11.5H10ZM12 13.3H13C14.4 13.3 15 14.3 15 16C15 17.7 14.4 18.7 13 18.7H12V13.3Z"
-            fill="#FFFFFF"
-            fillOpacity="0.95"
+            d="M 13 32 L 21 10 C 21.3 9.2 22.1 8.8 22.9 9.1 C 23.3 9.2 23.6 9.5 23.8 10 L 30 25 C 30.4 26 29.8 27 28.7 27 L 25.5 27 L 24 23 L 18 23 L 15.5 31.5 C 15.3 32.2 14.6 32.5 13.9 32.3 C 13.3 32.1 12.9 31.5 13 32 Z"
+            fill="url(#daWingGrad)"
+            filter="url(#daGlow)"
           />
 
-          {/* Stylized 'A' Apex & Crossbar */}
-          <path
-            d="M17.5 20.5L20.5 11.5H22.5L25.5 20.5H23.5L22.8 18.2H20.2L19.5 20.5H17.5ZM20.6 16.5H22.4L21.5 13.5L20.6 16.5Z"
-            fill="url(#daGradWing)"
+          {/* Inner 'A' Supersonic Delta Window */}
+          <polygon
+            points="22.5,13.8 19.5,20.5 25.2,20.5"
+            fill="#001C48"
+            fillOpacity="0.9"
           />
 
-          {/* Autopilot Speed Thrust / Core Spark */}
-          <circle cx="16" cy="16" r="1.5" fill="url(#daGradAccent)" />
+          {/* ── Active Autopilot Beacon / Gold Radar Sensor Core ── */}
+          <circle cx="22.5" cy="18.5" r="2.2" fill="url(#daGoldGrad)" />
+          <circle cx="22.5" cy="18.5" r="3.2" stroke="#FFC439" strokeWidth="0.8" strokeOpacity="0.6" fill="none" />
+          
+          {/* Speed Chevron Accent */}
+          <path
+            d="M 8 15 L 11 15 L 14 18 L 11 21 L 8 21 L 10.5 18 Z"
+            fill="url(#daGoldGrad)"
+          />
         </svg>
       </div>
 
       {/* ── Brand Typography ── */}
       {!collapsed && (
         <div className="flex flex-col leading-tight">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <span
               className={`${s.title} font-black tracking-tight ${
                 isLight ? 'text-white' : 'text-slate-900 group-hover:text-[#003087]'
-              } transition-colors`}
+              } transition-colors flex items-center gap-1`}
             >
               DA
             </span>
-            <span
-              className={`text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                isLight
-                  ? 'bg-blue-500/20 text-blue-200 border border-blue-400/30'
-                  : 'bg-blue-50 text-[#003087] border border-blue-200 font-extrabold'
-              }`}
-            >
-              AUTOPILOT
-            </span>
+            <div className="flex items-center gap-1">
+              <span
+                className={`text-[8.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                  isLight
+                    ? 'bg-blue-500/25 text-blue-200 border border-blue-400/40'
+                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 text-[#003087] border border-blue-200/90 font-extrabold shadow-xs'
+                }`}
+              >
+                AUTOPILOT
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Autonomous Agent Active" />
+            </div>
           </div>
 
           {showSubtitle && (

@@ -418,7 +418,7 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
       </div>
 
       {/* ── AG Grid Table ── */}
-      <div className="ag-theme-quartz w-full h-[450px] rounded-xl overflow-hidden border border-slate-200/80">
+      <div className="ag-theme-quartz w-full h-[450px] rounded-xl overflow-hidden border border-slate-200/80 custom-scrollbar">
         <AgGridReact<Dispute>
           ref={gridRef}
           rowData={filteredRowData}

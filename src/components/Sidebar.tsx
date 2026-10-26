@@ -62,7 +62,7 @@ export default function Sidebar({
         collapsed ? 'w-20 p-3' : 'w-64 p-5'
       }`}
     >
-      <div className="space-y-5 overflow-y-auto no-scrollbar">
+      <div className="space-y-5 overflow-y-auto custom-scrollbar pr-1">
         {/* ── Top Header: Logo + Collapse Button ── */}
         <div className={`flex items-center pb-2 pt-1 border-b border-slate-100/80 ${collapsed ? 'justify-center' : 'justify-between px-1'}`}>
           <Logo collapsed={collapsed} />

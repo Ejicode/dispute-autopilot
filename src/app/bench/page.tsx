@@ -138,7 +138,7 @@ export default function BenchPage() {
           {summary && <span className="text-xs font-mono text-slate-400">Batch: {summary.batchId}</span>}
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar pb-2">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-100">
               <tr>

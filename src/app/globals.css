@@ -69,46 +69,117 @@ code, kbd, samp, pre {
   transition: background-color 0.15s ease;
 }
 
-/* Custom dark scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+/* ─── Global Tactile & High-Visibility Fintech Scrollbars ─── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #003087 rgba(226, 232, 240, 0.85);
 }
 
-/* ─── 3D Specular Reflection & Elevated Card Visibility ─── */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.7);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb {
+  background: #003087;
+  border-radius: 9999px;
+  border: 2px solid rgba(226, 232, 240, 0.7);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0070BA;
+}
+
+/* Explicit Custom Scrollbar Utility for Main Workspace & Panels */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #003087 rgba(226, 232, 240, 0.85);
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.75);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #003087;
+  border-radius: 9999px;
+  border: 2px solid rgba(226, 232, 240, 0.75);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #0070BA;
+}
+
+/* AG Grid High-Contrast Visible Scrollbars */
+.ag-theme-quartz ::-webkit-scrollbar {
+  width: 9px !important;
+  height: 9px !important;
+}
+.ag-theme-quartz ::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 6px !important;
+}
+.ag-theme-quartz ::-webkit-scrollbar-thumb {
+  background: #003087 !important;
+  border-radius: 6px !important;
+  border: 2px solid #f1f5f9 !important;
+}
+.ag-theme-quartz ::-webkit-scrollbar-thumb:hover {
+  background: #0070BA !important;
+}
+
+/* ─── 3D Specular Reflection & Elevated Card Translucency ─── */
 .card-3d-reflection {
-  background: #ffffff;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.90) 100%);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid rgba(203, 213, 225, 0.95);
   box-shadow: 
-    0 2px 4px 0 rgba(15, 23, 42, 0.03),
-    0 10px 28px -4px rgba(0, 48, 135, 0.08),
+    0 1px 3px 0 rgba(15, 23, 42, 0.04),
+    0 10px 28px -4px rgba(0, 48, 135, 0.09),
     0 24px 48px -12px rgba(15, 23, 42, 0.07),
     inset 0 1.5px 0 rgba(255, 255, 255, 1),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
-    inset 0 -1.5px 0 rgba(0, 48, 135, 0.02);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    inset 0 -1.5px 0 rgba(0, 48, 135, 0.03);
   position: relative;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Ambient Ground Mirror Sheen underneath floating elements */
+.card-3d-reflection::after {
+  content: '';
+  position: absolute;
+  inset-x: 4%;
+  bottom: -6px;
+  height: 14px;
+  background: radial-gradient(ellipse at center, rgba(0, 48, 135, 0.09) 0%, rgba(0, 112, 186, 0.03) 60%, transparent 100%);
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 50%;
+  transition: all 0.3s ease;
 }
 
 .card-3d-reflection:hover {
   transform: translateY(-2px);
   box-shadow: 
     0 4px 12px 0 rgba(15, 23, 42, 0.05),
-    0 18px 38px -6px rgba(0, 48, 135, 0.13),
-    0 32px 64px -12px rgba(15, 23, 42, 0.09),
+    0 18px 42px -6px rgba(0, 48, 135, 0.16),
+    0 32px 64px -12px rgba(15, 23, 42, 0.10),
     inset 0 2px 0 rgba(255, 255, 255, 1),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9);
   border-color: rgba(148, 163, 184, 1);
+}
+
+.card-3d-reflection:hover::after {
+  bottom: -9px;
+  height: 18px;
+  background: radial-gradient(ellipse at center, rgba(0, 48, 135, 0.16) 0%, rgba(0, 112, 186, 0.06) 60%, transparent 100%);
+  filter: blur(8px);
 }
 
 /* Specular top-edge shine highlight */
@@ -129,11 +200,11 @@ code, kbd, samp, pre {
 @keyframes orb-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45), 0 0 35px rgba(10, 62, 41, 0.35);
+    box-shadow: 0 0 0 0 rgba(0, 112, 186, 0.45), 0 0 35px rgba(0, 48, 135, 0.35);
   }
   50% {
     transform: scale(1.05);
-    box-shadow: 0 0 0 20px rgba(16, 185, 129, 0), 0 0 65px rgba(16, 185, 129, 0.55);
+    box-shadow: 0 0 0 20px rgba(0, 166, 224, 0), 0 0 65px rgba(0, 166, 224, 0.55);
   }
 }
 

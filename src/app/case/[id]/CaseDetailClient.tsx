@@ -631,7 +631,7 @@ export default function CaseDetailPage() {
               <Clock className="w-4 h-4 text-slate-400" />
               <h2 className="font-bold text-slate-900 text-sm">Activity Audit Trail</h2>
             </div>
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
               {auditLogs.map((log) => (
                 <div
                   key={log.id}
