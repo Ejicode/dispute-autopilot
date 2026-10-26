@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400;1,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,12 +8,15 @@
 @import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 :root {
-  --color-canvas: #EDF2F7;
-  --color-sidebar: #0B0F19;
+  --color-canvas: #F4F6F8;
+  --color-forest: #0A3E29;
+  --color-mint: #10B981;
+  --color-sage: #EBF5EF;
+  --color-sidebar: #FFFFFF;
   --color-card: #FFFFFF;
-  --color-pp-blue: #0070BA;
-  --color-pp-dark: #003087;
-  --color-pp-sky: #009CDE;
+  --color-pp-blue: #0A3E29;
+  --color-pp-dark: #06291B;
+  --color-pp-sky: #10B981;
   --color-pp-gold: #FFC439;
 }
 
@@ -22,12 +25,11 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   color: #0F172A;
-  background-color: #EDF2F7;
+  background-color: #F4F6F8;
   min-height: 100vh;
-  letter-spacing: -0.012em;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -36,22 +38,22 @@ code, kbd, samp, pre {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* ─── Creative Dashboard AG Grid Styling (Clean White & Slate) ─── */
+/* ─── Creative Dashboard AG Grid Styling (Clean White & Forest Mint) ─── */
 .ag-theme-quartz {
-  --ag-font-family: 'Plus Jakarta Sans', inherit;
+  --ag-font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   --ag-font-size: 13px;
   --ag-background-color: #ffffff;
-  --ag-header-background-color: #f8fafc;
-  --ag-header-foreground-color: #475569;
+  --ag-header-background-color: #f8faf9;
+  --ag-header-foreground-color: #0A3E29;
   --ag-border-color: #e2e8f0;
   --ag-row-border-color: #f1f5f9;
-  --ag-row-hover-color: #f0f7ff;
+  --ag-row-hover-color: #f4f9f6;
   --ag-odd-row-background-color: #ffffff;
   --ag-foreground-color: #0f172a;
-  --ag-selected-row-background-color: #e0f2fe;
+  --ag-selected-row-background-color: #ebf5ef;
   --ag-header-column-separator-color: transparent;
   --ag-cell-horizontal-padding: 16px;
-  border-radius: 1rem;
+  border-radius: 1.25rem;
   overflow: hidden;
   border: 1px solid #e2e8f0;
 }
@@ -61,7 +63,7 @@ code, kbd, samp, pre {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 11px;
-  color: #64748b;
+  color: #0A3E29;
 }
 
 .ag-theme-quartz .ag-row {
@@ -83,3 +85,139 @@ code, kbd, samp, pre {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ─── 3D Specular Reflection & Elevated Card Visibility ─── */
+.card-3d-reflection {
+  background: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  box-shadow: 
+    0 2px 4px 0 rgba(15, 23, 42, 0.03),
+    0 10px 28px -4px rgba(10, 62, 41, 0.09),
+    0 24px 48px -12px rgba(15, 23, 42, 0.08),
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+    inset 0 -1.5px 0 rgba(10, 62, 41, 0.03);
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-3d-reflection:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 12px 0 rgba(15, 23, 42, 0.05),
+    0 18px 38px -6px rgba(10, 62, 41, 0.14),
+    0 32px 64px -12px rgba(15, 23, 42, 0.11),
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+  border-color: rgba(148, 163, 184, 1);
+}
+
+/* Specular top-edge shine highlight */
+.card-3d-reflection::before {
+  content: '';
+  position: absolute;
+  inset-x: 0;
+  top: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 4%, rgba(255, 255, 255, 1) 20%, rgba(255, 255, 255, 1) 80%, transparent 96%);
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ─── Muse AI Voice Orb & Wave Animations ─── */
+@keyframes orb-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45), 0 0 35px rgba(10, 62, 41, 0.35);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(16, 185, 129, 0), 0 0 65px rgba(16, 185, 129, 0.55);
+  }
+}
+
+@keyframes wave-bounce {
+  0%, 100% {
+    height: 6px;
+    opacity: 0.6;
+  }
+  50% {
+    height: 32px;
+    opacity: 1;
+  }
+}
+
+.animate-orb-pulse {
+  animation: orb-pulse 2.8s ease-in-out infinite;
+}
+
+/* ─── Smooth Floating & Breathing Animations ─── */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(2deg);
+  }
+}
+
+@keyframes float-medium {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.03);
+  }
+}
+
+@keyframes float-fast {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(-8px) translateX(4px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.18;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes shimmer-glow {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 5s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-fast 4s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 6s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer-glow 2.5s infinite;
+}
+

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, Building2, User, Mail, Sparkles, ShieldCheck, Image as ImageIcon } from 'lucide-react';
+import { X, Check, Building2, User, Mail, ShieldCheck, Image as ImageIcon } from 'lucide-react';
 import { useUser, CURATED_AVATARS } from './UserContext';
 
 export default function CreateAccountModal() {
@@ -53,19 +53,19 @@ export default function CreateAccountModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 card-3d-reflection"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header (PayPal Blue Gradient) */}
-        <div className="bg-gradient-to-r from-[#003087] via-[#0070BA] to-[#009CDE] p-6 text-white relative">
+        {/* Modal Header */}
+        <div className="bg-gradient-to-r from-[#06291B] via-[#0A3E29] to-[#166544] p-6 text-white relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-white/15 backdrop-blur-sm">
-                <Sparkles className="w-5 h-5 text-[#FFC439]" />
+                <ShieldCheck className="w-5 h-5 text-emerald-300" />
               </div>
               <div>
                 <h3 className="text-lg font-bold">Create Merchant Account</h3>
-                <p className="text-xs text-white/80">Add your store to DisputeAI defense network</p>
+                <p className="text-xs text-white/80">Add your store to PinenMFB merchant network</p>
               </div>
             </div>
             <button
@@ -100,7 +100,7 @@ export default function CreateAccountModal() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Alex Morgan"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all font-medium"
                 />
               </div>
             </div>
@@ -117,7 +117,7 @@ export default function CreateAccountModal() {
                   value={formData.store_name}
                   onChange={(e) => setFormData({ ...formData, store_name: e.target.value })}
                   placeholder="e.g. Horizon Audio & Gear"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all font-medium"
                 />
               </div>
             </div>
@@ -134,7 +134,7 @@ export default function CreateAccountModal() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="e.g. alex@horizonaudio.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all font-medium"
                 />
               </div>
             </div>
@@ -143,7 +143,7 @@ export default function CreateAccountModal() {
               <label htmlFor="formData-password" className="block text-xs font-bold text-slate-700 mb-1.5">Password</label>
               <input id="formData-password" type="password" required minLength={15} maxLength={128} autoComplete="new-password"
                 value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm" />
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20" />
               <p className="text-xs text-slate-500 mt-1">Use at least 15 characters.</p>
             </div>
 
@@ -156,7 +156,7 @@ export default function CreateAccountModal() {
                 <button
                   type="button"
                   onClick={() => setUseCustomUrl(!useCustomUrl)}
-                  className="text-[11px] font-semibold text-[#0070BA] hover:underline"
+                  className="text-[11px] font-semibold text-[#0A3E29] hover:underline"
                 >
                   {useCustomUrl ? 'Choose from portraits' : 'Use custom photo URL'}
                 </button>
@@ -173,14 +173,14 @@ export default function CreateAccountModal() {
                         onClick={() => setFormData({ ...formData, avatar_url: url })}
                         className={`relative rounded-full aspect-square overflow-hidden group transition-all duration-200 ${
                           isSelected
-                            ? 'ring-4 ring-[#0070BA] ring-offset-2 scale-105'
+                            ? 'ring-4 ring-[#0A3E29] ring-offset-2 scale-105'
                             : 'opacity-70 hover:opacity-100 hover:scale-105'
                         }`}
                         title={`Photo ${i + 1}`}
                       >
                         <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
                         {isSelected && (
-                          <div className="absolute inset-0 bg-[#0070BA]/30 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-[#0A3E29]/40 flex items-center justify-center">
                             <Check className="w-4 h-4 text-white stroke-[3]" />
                           </div>
                         )}
@@ -196,7 +196,7 @@ export default function CreateAccountModal() {
                     value={formData.avatar_url}
                     onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
                     placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all font-mono"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all font-mono"
                   />
                 </div>
               )}
@@ -217,7 +217,7 @@ export default function CreateAccountModal() {
                   <span className="font-bold text-sm text-slate-900 truncate">
                     {formData.name || 'New Merchant'}
                   </span>
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA] shrink-0" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#0A3E29] shrink-0" />
                 </div>
                 <span className="text-xs text-slate-500 font-medium block truncate">
                   {formData.store_name || 'Store Name Preview'}
@@ -241,13 +241,13 @@ export default function CreateAccountModal() {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#003087] to-[#0070BA] hover:from-[#002566] hover:to-[#005a96] text-white text-xs font-bold transition-all shadow-md shadow-blue-800/25 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-[#0A3E29] hover:bg-[#06291B] text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/25 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
                 <span>Registering Store...</span>
               ) : (
                 <>
-                  <ShieldCheck className="w-4 h-4 text-[#FFC439]" />
+                  <ShieldCheck className="w-4 h-4 text-emerald-300" />
                   <span>Create &amp; Activate Account</span>
                 </>
               )}

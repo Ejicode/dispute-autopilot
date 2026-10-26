@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Ejicode/dispute-autopilot/internal/bench"
+	"github.com/Ejicode/dispute-autopilot/internal/demo"
 	"github.com/Ejicode/dispute-autopilot/internal/httpx"
 	"github.com/Ejicode/dispute-autopilot/internal/runtime"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
@@ -67,3 +68,15 @@ func (a *API) benchRun(w http.ResponseWriter, r *http.Request, _ *types.UserAcco
 	httpx.JSON(w, http.StatusOK, summary)
 	return nil
 }
+
+func (a *API) demoSeed(w http.ResponseWriter, r *http.Request, _ *types.UserAccount) error {
+	if err := runtime.RequireDemo(r.Context()); err != nil {
+		return err
+	}
+	if err := demo.SeedWorkspace(r.Context()); err != nil {
+		return &rawResponse{status: http.StatusInternalServerError, body: map[string]any{"error": err.Error()}}
+	}
+	httpx.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "Demo workspace seeded with realistic disputes."})
+	return nil
+}
+

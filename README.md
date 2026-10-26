@@ -107,7 +107,7 @@ Ran against 40 scripted dispute scenarios on Oct 19, 2026:
 - **Unsafe Actions Executed**: **0** (Strict zero-tolerance violation check)
 - **Median Automated Time**: < 1 ms
 - **Hand-Timed Human Baseline**: 360 seconds (6.0 minutes per dispute)
-- **Speedup Factor**: > 30,000x faster evidence assembly and drafting
+- **Speedup Factor**: ~360,000x faster evidence assembly and drafting
 
 ---
 
@@ -157,10 +157,13 @@ The Go server loads `.env.<NODE_ENV>.local`, `.env.local`, `.env.<NODE_ENV>`, th
 
 ### 4. Register & Run
 ```bash
-# Build (if needed) and run the server on http://localhost:3000
+# 1-Click Automated Startup (verifies env, compiles if needed, and launches on :3000):
+./run
+
+# Or build and run via make:
 make dev
 
-# or run the compiled binary directly
+# Or run the compiled binary directly:
 ./bin/server
 ```
 The server reads `PORT` (default `3000`) and `WEB_DIR` (default `./out`, the static frontend directory). Open [http://localhost:3000](http://localhost:3000), register a merchant account with a password of at least 15 characters, and sign in. Each account starts with an empty, isolated workspace. Use the demo storefront and dispute simulator to create that account's sample data.

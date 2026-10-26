@@ -118,10 +118,29 @@ func AssertSameOrigin(r *http.Request) error {
 		return httpx.Errorf(http.StatusServiceUnavailable, "APP_ORIGIN must be configured.")
 	}
 	expectedOrigin := parsed.Scheme + "://" + parsed.Host
-	if r.Header.Get("Origin") != expectedOrigin {
+	origin := r.Header.Get("Origin")
+	if origin != expectedOrigin {
+		if !config.Production() && isLoopbackEquivalent(origin, expectedOrigin) {
+			return nil
+		}
 		return httpx.Errorf(http.StatusForbidden, "Request origin is not allowed.")
 	}
 	return nil
+}
+
+func isLoopbackEquivalent(a, b string) bool {
+	uA, errA := url.Parse(a)
+	uB, errB := url.Parse(b)
+	if errA != nil || errB != nil {
+		return false
+	}
+	if uA.Scheme != uB.Scheme || uA.Port() != uB.Port() {
+		return false
+	}
+	isLoopback := func(h string) bool {
+		return h == "localhost" || h == "127.0.0.1" || h == "::1"
+	}
+	return isLoopback(uA.Hostname()) && isLoopback(uB.Hostname())
 }
 
 func requestOrigin(r *http.Request) string {

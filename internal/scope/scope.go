@@ -20,6 +20,7 @@ type Scope struct {
 }
 
 var merchantIDPattern = regexp.MustCompile(`^usr_[a-f0-9]{32}$`)
+var demoMerchantIDPattern = regexp.MustCompile(`^usr_demo_[a-z0-9_]{3,32}$`)
 
 type ctxKey struct{}
 
@@ -28,7 +29,7 @@ var ErrNoScope = errors.New("merchant context is required for business data acce
 
 // With validates and attaches a scope to a context.
 func With(ctx context.Context, merchantID string, mode config.Mode, user *types.UserAccount) (context.Context, error) {
-	if !merchantIDPattern.MatchString(merchantID) && merchantID != "demo" {
+	if !merchantIDPattern.MatchString(merchantID) && !demoMerchantIDPattern.MatchString(merchantID) && merchantID != "demo" {
 		return nil, errors.New("invalid merchant workspace")
 	}
 	return context.WithValue(ctx, ctxKey{}, Scope{MerchantID: merchantID, Mode: mode, User: user}), nil

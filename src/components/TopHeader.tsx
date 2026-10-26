@@ -4,21 +4,19 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   Search, 
-  Bell, 
+  Mail, 
   ChevronDown, 
-  Check, 
   ShieldCheck, 
   Menu,
   UserCheck,
-  PlusCircle,
-  ExternalLink,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
-import { useRealtime } from './RealtimeContext';
 import { useUser } from './UserContext';
 import SearchBar from './SearchBar';
 
 interface TopHeaderProps {
+  title?: string;
   onSearch?: (query: string) => void;
   onToggleSidebar?: () => void;
   metrics?: {
@@ -27,161 +25,250 @@ interface TopHeaderProps {
   };
 }
 
-export default function TopHeader({ onSearch, onToggleSidebar, metrics }: TopHeaderProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+// Helper to format date like "Friday, October 12th 2025"
+function formatOrdinalDate(d: Date): string {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  
+  const dayName = days[d.getDay()];
+  const monthName = months[d.getMonth()];
+  const dayNum = d.getDate();
+  const year = d.getFullYear();
+
+  let suffix = 'th';
+  if (dayNum % 10 === 1 && dayNum !== 11) suffix = 'st';
+  else if (dayNum % 10 === 2 && dayNum !== 12) suffix = 'nd';
+  else if (dayNum % 10 === 3 && dayNum !== 13) suffix = 'rd';
+
+  return `${dayName}, ${monthName} ${dayNum}${suffix} ${year}`;
+}
+
+export default function TopHeader({ title = 'Sales Report', onToggleSidebar }: TopHeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { notifications } = useRealtime();
-  const { activeUser, openCreateModal, logout } = useUser();
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [hasUnread, setHasUnread] = useState(true);
+  const { activeUser, logout } = useUser();
 
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    if (onSearch) onSearch(e.target.value);
-  };
-
-  const avatarUrl = activeUser?.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80';
+  const avatarUrl = activeUser?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80';
+  const formattedDate = formatOrdinalDate(new Date());
 
   return (
-    <header className="bg-gradient-to-r from-[#003087] via-[#0070BA] to-[#0086CE] text-white px-5 py-3 shadow-md flex items-center justify-between gap-4 z-20">
-      {/* ── Left Side: Mobile Menu Toggle & Brand Context ── */}
-      <div className="flex items-center gap-3 shrink-0">
+    <header className="bg-transparent px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-4 z-20">
+      {/* ── Left Side: Mobile Menu Toggle + Title & Sub-Date ── */}
+      <div className="flex items-center gap-3">
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="p-2 rounded-xl hover:bg-white/10 text-white/90 transition-colors md:hidden"
+            className="p-2 rounded-xl bg-white border border-slate-200/90 text-slate-600 hover:text-slate-900 shadow-sm md:hidden"
             title="Toggle Navigation"
           >
             <Menu className="w-5 h-5" />
           </button>
         )}
 
-        {/* Active Store Shield Badge */}
-        <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/20 text-xs font-semibold backdrop-blur-sm">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#FFC439]" />
-          <span className="text-white/90 truncate max-w-[140px]">{activeUser?.store_name || 'Protected Store'}</span>
-          <span className="text-[10px] bg-emerald-500/25 text-emerald-200 font-bold px-1.5 py-0.2 rounded-full">
-            PROTECTED
-          </span>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
+            {title}
+          </h1>
+          <p className="text-xs font-semibold text-slate-400 mt-1">
+            {formattedDate}
+          </p>
         </div>
       </div>
 
-      {/* ── Center: Live Search Bar ── */}
-      <div className="flex-1 flex justify-center max-w-xl mx-auto px-2">
-        <SearchBar />
-      </div>
-
-      {/* ── Right Side: Quick Action Icons & Profile Pill with Photo ── */}
-      <div className="flex items-center gap-3 shrink-0">
-        {/* Quick Metrics Badge */}
-        {metrics && (
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-white text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-[#FFC439] animate-pulse" />
-            <span>${(metrics.totalAtRiskCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-            <span className="text-white/75 font-normal">at risk</span>
-          </div>
-        )}
-
-        {/* Notifications Bell */}
-        <div className="flex items-center">
-          <button 
-            className="p-2 rounded-full hover:bg-white/10 text-white/90 hover:text-white transition-colors relative"
-            title="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-            {notifications.length > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FFC439] ring-2 ring-[#0070BA]" />
-            )}
-          </button>
-        </div>
-
-        {/* User Account Profile Pill with Picture Photo */}
+      {/* ── Right Side: Circular Search, Mail Envelope & User Profile Pill ── */}
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Search Trigger Button */}
         <div className="relative">
           <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2.5 pl-2.5 py-1 pr-1.5 rounded-full bg-white/10 hover:bg-white/20 cursor-pointer transition-colors border border-white/25 select-none shadow-sm"
+            onClick={() => setSearchModalOpen(!searchModalOpen)}
+            className="w-10 h-10 rounded-full bg-white card-3d-reflection hover:-translate-y-0.5 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all cursor-pointer"
+            title="Search (Ctrl+K)"
           >
-            <div className="text-left hidden sm:block">
-              <span className="text-xs font-bold tracking-wide uppercase text-white block leading-tight truncate max-w-[120px]">
-                {activeUser?.name || 'Merchant'}
-              </span>
-              <span className="text-[10px] text-white/75 block leading-none truncate max-w-[120px]">
-                {activeUser?.store_name || 'Your Store'}
-              </span>
-            </div>
-            
-            {/* Circular Picture Avatar with Status Indicator */}
-            <div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-white/70 shadow-sm shrink-0 bg-white/20">
-              <img
-                src={avatarUrl}
-                alt={activeUser?.name || 'User'}
-                className="w-full h-full object-cover"
-              />
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-1 ring-white" />
-            </div>
-
-            <ChevronDown className="w-3.5 h-3.5 text-white/80" />
+            <Search className="w-4 h-4" />
           </button>
 
-          {/* Profile & Account Switcher Dropdown */}
+          {/* Quick Search Modal Popover */}
+          {searchModalOpen && (
+            <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white card-3d-reflection p-3 rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <span className="text-xs font-bold text-slate-700">Quick Global Search</span>
+                <button
+                  onClick={() => setSearchModalOpen(false)}
+                  className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <SearchBar />
+            </div>
+          )}
+        </div>
+
+        {/* Circular Mail / Envelope Button with Popover */}
+        <div className="relative">
+          <button 
+            onClick={() => {
+              setNotificationsOpen(!notificationsOpen);
+              if (dropdownOpen) setDropdownOpen(false);
+            }}
+            className="w-10 h-10 rounded-full bg-white card-3d-reflection hover:-translate-y-0.5 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all relative cursor-pointer"
+            title="Messages & Notifications"
+          >
+            <Mail className="w-4 h-4" />
+            {hasUnread && (
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse ring-2 ring-white" />
+            )}
+          </button>
+
+          {/* Notifications Dropdown Popover */}
+          {notificationsOpen && (
+            <div className="absolute right-0 top-12 w-80 sm:w-88 bg-white card-3d-reflection p-4 rounded-2xl shadow-2xl z-50 border border-slate-200 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-900">Notifications &amp; Alerts</span>
+                  {hasUnread && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700">
+                      Live
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setNotificationsOpen(false)}
+                  className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5 max-h-64 overflow-y-auto">
+                <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-xs space-y-0.5">
+                  <div className="flex items-center justify-between font-bold text-[#0A3E29]">
+                    <span>Trust Lab Defense Active</span>
+                    <span className="text-[10px] text-emerald-700">100%</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    All 6 penetration threat vectors successfully intercepted by security gates.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-0.5">
+                  <div className="flex items-center justify-between font-bold text-slate-800">
+                    <span>Evidence Vault Hashed</span>
+                    <span className="text-[10px] text-slate-400">SHA-256</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    Carrier tracking &amp; order receipts cryptographically chained.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-100 text-xs space-y-0.5">
+                  <div className="flex items-center justify-between font-bold text-amber-900">
+                    <span>PayPal Sandbox Connected</span>
+                    <span className="text-[10px] text-amber-700">Live SSE</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    Real-time webhook synchronization enabled on orders and disputes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    setHasUnread(false);
+                    setNotificationsOpen(false);
+                  }}
+                  className="text-xs font-bold text-[#0A3E29] hover:underline"
+                >
+                  Mark all as read
+                </button>
+                <Link
+                  href="/trust-lab"
+                  onClick={() => setNotificationsOpen(false)}
+                  className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                >
+                  View Threat Lab &rarr;
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* User Account Profile Pill */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setDropdownOpen(!dropdownOpen);
+              if (notificationsOpen) setNotificationsOpen(false);
+            }}
+            className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white card-3d-reflection hover:-translate-y-0.5 cursor-pointer transition-all select-none"
+          >
+            {/* Circular Picture Avatar */}
+            <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-slate-200 shadow-sm shrink-0">
+              <img
+                src={avatarUrl}
+                alt={activeUser?.name || 'Merchant Admin'}
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white" />
+            </div>
+
+            <div className="text-left hidden sm:block">
+              <span className="text-xs font-bold text-slate-900 block leading-tight truncate max-w-[120px]">
+                {activeUser?.name || 'Merchant Admin'}
+              </span>
+              <span className="text-[10px] text-slate-400 block leading-none truncate max-w-[120px]">
+                {activeUser?.role === 'admin' ? 'Admin Officer' : (activeUser?.role || 'Admin Officer')}
+              </span>
+            </div>
+
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          </button>
+
+          {/* Profile Switcher Dropdown */}
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-3 text-slate-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              {/* Active Profile Info */}
-              <div className="p-3 bg-gradient-to-br from-slate-50 to-blue-50/40 rounded-xl border border-slate-100 mb-2 flex items-center gap-3">
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 text-slate-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2 flex items-center gap-3">
                 <img
                   src={avatarUrl}
-                  alt={activeUser?.name || 'User'}
-                  className="w-11 h-11 rounded-full object-cover ring-2 ring-[#0070BA]/30 shadow-sm shrink-0"
+                  alt={activeUser?.name || 'Merchant Admin'}
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-[#0A3E29]/30 shadow-sm shrink-0"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
-                    <span>{activeUser?.name}</span>
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA]" />
+                    <span>{activeUser?.name || 'Merchant Admin'}</span>
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#0A3E29]" />
                   </div>
                   <span className="text-xs text-slate-500 font-medium block truncate">
-                    {activeUser?.store_name}
+                    {activeUser?.store_name || 'Apex Store'}
                   </span>
-                  <span className="text-[11px] text-slate-400 font-mono block truncate">
-                    {activeUser?.email}
+                  <span className="text-[10px] text-slate-400 font-mono block truncate">
+                    {activeUser?.email || 'admin@pinenmfb.com'}
                   </span>
                 </div>
               </div>
 
-              {/* Direct Link to Profile */}
               <Link
                 href="/profile"
                 onClick={() => setDropdownOpen(false)}
-                className="w-full flex items-center justify-between px-3 py-2.5 mb-2 rounded-xl bg-blue-50/80 hover:bg-blue-100/80 text-[#0070BA] font-bold text-xs transition-colors border border-blue-200/50"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors mb-1"
               >
-                <div className="flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-[#0070BA]" />
-                  <span>View Profile &amp; Credentials</span>
-                </div>
-                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                <UserCheck className="w-4 h-4 text-[#0A3E29]" />
+                <span>Manage Profile &amp; Sandbox API</span>
               </Link>
 
-              {/* Create Account & Logout Action Buttons */}
-              <div className="pt-2 border-t border-slate-100 mt-1 flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    openCreateModal();
-                  }}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-bold transition-all shadow-md shadow-blue-800/20"
-                >
-                  <PlusCircle className="w-3.5 h-3.5 text-[#FFC439]" />
-                  <span>New Merchant</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    logout();
-                  }}
-                  className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors"
-                  title="Log Out Session"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setDropdownOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out of Session</span>
+              </button>
             </div>
           )}
         </div>

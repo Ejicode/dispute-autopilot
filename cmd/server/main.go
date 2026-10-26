@@ -14,6 +14,7 @@ import (
 
 	"github.com/Ejicode/dispute-autopilot/internal/auth"
 	"github.com/Ejicode/dispute-autopilot/internal/config"
+	"github.com/Ejicode/dispute-autopilot/internal/demo"
 	"github.com/Ejicode/dispute-autopilot/internal/httpapi"
 	"github.com/Ejicode/dispute-autopilot/internal/paypal"
 	"github.com/Ejicode/dispute-autopilot/internal/scope"
@@ -26,6 +27,12 @@ func main() {
 	mode, err := config.ApplicationMode()
 	if err != nil {
 		log.Fatalf("startup: %v", err)
+	}
+
+	if mode == config.ModeDemo {
+		if err := demo.EnsureDemoAccounts(context.Background()); err != nil {
+			log.Printf("demo seed: %v", err)
+		}
 	}
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -43,9 +43,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Show loading spinner while determining user session
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-[#EDF2F7] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F4F6F8] flex items-center justify-center">
         <div className="text-center space-y-3">
-          <Loader2 className="w-10 h-10 animate-spin text-[#0070BA] mx-auto" />
+          <Loader2 className="w-10 h-10 animate-spin text-[#0A3E29] mx-auto" />
           <p className="text-slate-500 text-sm font-medium">Loading Dispute Autopilot…</p>
         </div>
       </div>
@@ -55,22 +55,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Keep protected content unmounted while redirecting to sign-in.
   if (!activeUser) {
     return (
-      <div className="min-h-screen bg-[#EDF2F7] flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-[#0070BA] mx-auto" />
+      <div className="min-h-screen bg-[#F4F6F8] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-[#0A3E29] mx-auto" />
       </div>
     );
   }
 
   return (
-    <div className="h-full flex overflow-hidden w-full">
-      {/* Adjustable Left Sidebar */}
-      <Sidebar collapsed={collapsed} onToggleCollapse={handleToggle} />
+    <div className="h-full flex overflow-hidden w-full bg-[#F4F6F8]">
+      {/* Floating Left Sidebar Container */}
+      <div className="p-3 pr-1 flex shrink-0 h-full">
+        <Sidebar collapsed={collapsed} onToggleCollapse={handleToggle} />
+      </div>
 
       {/* Main App Container */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#EDF2F7] transition-all duration-300">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#F4F6F8] transition-all duration-300">
         <TopHeader onToggleSidebar={handleToggle} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 pb-6">
+          <div className="max-w-[1600px] mx-auto">
             {sessionError && <p role="alert" className="mb-4 text-sm text-rose-700">{sessionError}</p>}
             {children}
           </div>

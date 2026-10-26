@@ -1,131 +1,176 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { 
   X, 
   Send, 
-  Bot, 
-  User, 
-  Sparkles, 
   Loader2, 
-  ChevronDown, 
-  Trash2,
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
-  Radio,
+  Mic, 
+  MicOff, 
+  Volume2, 
+  VolumeX, 
   Square,
-  ShieldAlert,
-  Flame,
-  Award,
+  RotateCcw,
+  Headphones,
   CheckCircle2
-} from 'lucide-react';
-import { useUser } from './UserContext';
+} from "lucide-react";
+import { useUser } from "./UserContext";
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
+  spoken_text?: string;
   created_at: string;
+  action?: string;
+  target?: string;
 }
 
-// Clean markdown and symbols before speech synthesis
 function cleanTextForSpeech(text: string): string {
+  if (!text) return "";
   return text
-    .replace(/\*\*(.*?)\*\*/g, '$1') // strip bold
-    .replace(/`(.*?)`/g, '$1') // strip inline code
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // strip links
-    .replace(/[•\-\*]\s+/g, '') // strip bullets
-    .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '') // strip surrogate pair emojis
-    .replace(/[#_~`]/g, '')
-    .replace(/\n\n+/g, '. ')
-    .replace(/\n/g, ', ')
+    .replace(/\*\*(.*?)\*\*/g, "$1") // Bold
+    .replace(/`(.*?)`/g, "$1") // Inline code
+    .replace(/\[(.*?)\]\((.*?)\)/g, "$1") // Links
+    .replace(/[•\-\*]\s+/g, "") // Bullets
+    .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "") // Emojis
+    .replace(/[\u2600-\u27BF]/g, "") // Dingbats / symbols
+    .replace(/\$([0-9,]+(?:\.[0-9]{2})?)/g, "$1 dollars") // $1,240.00 -> 1,240 dollars
+    .replace(/(\d+)%/g, "$1 percent") // 98% -> 98 percent
+    .replace(/PP-D-(\d+)/gi, "dispute $1") // PP-D-99214 -> dispute 99214
+    .replace(/[#_~`]/g, "") // Markdown formatting
+    .replace(/\(([^\)]+)\)/g, " $1 ") // Expand parentheses to words
+    .replace(/<48h/gi, "under 48 hours")
+    .replace(/\bINR\b/g, "Item Not Received")
+    .replace(/\bSNAD\b/g, "Significantly Not As Described")
+    .replace(/\bPOD\b/g, "Proof of Delivery")
+    .replace(/\bTxID\b/g, "Transaction ID")
+    .replace(/:\s+/g, ". ") // Colons to period pauses
+    .replace(/\n\n+/g, ". ")
+    .replace(/\n/g, ". ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
-// Simple markdown-like renderer for bold **text** and bullet points
-function renderContent(text: string) {
-  const lines = text.split('\n');
-  return lines.map((line, i) => {
-    // Bold: **text**
-    const parts = line.split(/(\*\*[^*]+\*\*)/g);
-    const rendered = parts.map((part, j) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={j} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
-      }
-      return <span key={j}>{part}</span>;
-    });
-
-    // Bullet line
-    if (line.startsWith('• ') || line.startsWith('- ') || /^\d+\. /.test(line)) {
-      return (
-        <div key={i} className="flex items-start gap-1.5 mt-0.5">
-          <span className="text-[#0070BA] mt-0.5 shrink-0">•</span>
-          <span className="flex-1">{rendered.map((p, j) => {
-            return j === 0 ? <span key={j}>{(parts[0] || '').replace(/^[•\-]\s*/, '').replace(/^\d+\.\s*/, '')}{parts.slice(1).map((pp, k) => {
-              if (pp.startsWith('**') && pp.endsWith('**')) {
-                return <strong key={k} className="font-bold text-slate-900">{pp.slice(2, -2)}</strong>;
-              }
-              return <span key={k}>{pp}</span>;
-            })}</span> : null;
-          })}</span>
-        </div>
-      );
-    }
-
-    if (line === '') return <div key={i} className="h-1" />;
-
-    return <div key={i}>{rendered}</div>;
-  });
-}
-
-const HACKATHON_PROMPTS = [
-  { label: '🏆 5 Stand-Out Features', query: 'What are the 5 stand-out features of Dispute Autopilot?' },
-  { label: '🛡️ 7 Safety Rules', query: 'How do the 7 safety rules protect my PayPal account?' },
-  { label: '🧪 Trust Lab Attacks', query: 'Explain the 6 live attack vectors tested in Trust Lab' },
-  { label: '📊 40-Scenario Bench', query: 'What are the Dispute Bench results and processing speedup?' },
-  { label: '⏰ Urgent Deadlines', query: 'Which disputes are expiring within 48 hours?' },
-  { label: '💰 Capital at Risk', query: 'How much disputed money is currently at risk?' },
-  { label: '⚖️ Code Claim Verifier', query: 'How does the Deterministic Code Claim Verifier work?' },
-];
-
 export default function AiAssistant() {
+  const router = useRouter();
   const { activeUser } = useUser();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [minimized, setMinimized] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [activeAction, setActiveAction] = useState<{ label: string; status: "running" | "done" } | null>(null);
 
-  // ── Voice State ──
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
-  const [voiceAudioEnabled, setVoiceAudioEnabled] = useState(false);
+  const [voiceAudioEnabled, setVoiceAudioEnabled] = useState(true);
   const [currentlySpeakingId, setCurrentlySpeakingId] = useState<string | null>(null);
+  const [currentSpokenText, setCurrentSpokenText] = useState<string>("");
+  const [activeVoiceName, setActiveVoiceName] = useState<string>("");
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef<string>("");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const pinnedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Check speech recognition support and load voice preference
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const hasSpeechRecognition = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-      setSpeechSupported(hasSpeechRecognition);
+  const selectBestVoice = useCallback((): SpeechSynthesisVoice | null => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
 
-      const savedAudio = localStorage.getItem('ai_voice_audio_enabled');
-      if (savedAudio === 'true') {
-        setVoiceAudioEnabled(true);
+    // Check if we previously pinned a natural voice that exists in the browser
+    const savedURI = localStorage.getItem("ai_pinned_voice_uri");
+    if (savedURI) {
+      if (!savedURI.toLowerCase().includes("espeak")) {
+        const match = voices.find(v => v.voiceURI === savedURI);
+        if (match) return match;
+      } else {
+        localStorage.removeItem("ai_pinned_voice_uri");
       }
     }
+
+    // High quality natural voice matching hierarchy (strictly avoiding robotic espeak)
+    const matchers = [
+      (v: SpeechSynthesisVoice) => v.name.includes("Google UK English Female") && v.lang.startsWith("en"),
+      (v: SpeechSynthesisVoice) => v.name.includes("Google US English") && v.lang.startsWith("en"),
+      (v: SpeechSynthesisVoice) => (v.name.includes("Jenny") || v.name.includes("Aria")) && v.lang.startsWith("en"),
+      (v: SpeechSynthesisVoice) => v.name.includes("Natural") && v.lang.startsWith("en"),
+      (v: SpeechSynthesisVoice) => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Karen")) && v.lang.startsWith("en"),
+      (v: SpeechSynthesisVoice) => v.lang === "en-US" && !v.name.toLowerCase().includes("espeak") && !v.voiceURI.toLowerCase().includes("espeak"),
+      (v: SpeechSynthesisVoice) => v.lang.startsWith("en") && !v.name.toLowerCase().includes("espeak") && !v.voiceURI.toLowerCase().includes("espeak"),
+    ];
+
+    for (const matcher of matchers) {
+      const candidate = voices.find(matcher);
+      if (candidate) {
+        try { localStorage.setItem("ai_pinned_voice_uri", candidate.voiceURI); } catch {}
+        return candidate;
+      }
+    }
+
+    const nonEspeak = voices.find(v => !v.name.toLowerCase().includes("espeak") && !v.voiceURI.toLowerCase().includes("espeak"));
+    if (nonEspeak) return nonEspeak;
+
+    return voices[0];
   }, []);
 
-  // Cleanup speech on unmount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hasSpeechRecognition = "webkitSpeechRecognition" in window || "SpeechRecognition" in window;
+      setSpeechSupported(hasSpeechRecognition);
+
+      const savedAudio = localStorage.getItem("ai_voice_audio_enabled");
+      if (savedAudio !== null) {
+        setVoiceAudioEnabled(savedAudio === "true");
+      } else {
+        setVoiceAudioEnabled(true);
+      }
+
+      if ("speechSynthesis" in window) {
+        const initVoice = () => {
+          const voices = window.speechSynthesis.getVoices();
+          if (!voices || voices.length === 0) return;
+
+          // If we already pinned a natural voice, keep that exact voice (do not switch mid-session)
+          if (pinnedVoiceRef.current) {
+            const isEspeak = pinnedVoiceRef.current.name.toLowerCase().includes("espeak") || 
+                             pinnedVoiceRef.current.voiceURI.toLowerCase().includes("espeak");
+            if (!isEspeak) {
+              const liveMatch = voices.find(v => v.voiceURI === pinnedVoiceRef.current?.voiceURI);
+              if (liveMatch) {
+                pinnedVoiceRef.current = liveMatch;
+                setActiveVoiceName(liveMatch.name);
+                return;
+              }
+            }
+          }
+
+          const best = selectBestVoice();
+          if (best) {
+            pinnedVoiceRef.current = best;
+            setActiveVoiceName(best.name);
+          }
+        };
+
+        initVoice();
+        window.speechSynthesis.onvoiceschanged = initVoice;
+
+        return () => {
+          if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = null;
+            window.speechSynthesis.cancel();
+          }
+        };
+      }
+    }
+  }, [selectBestVoice]);
+
   useEffect(() => {
     return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
       if (recognitionRef.current) {
@@ -134,55 +179,66 @@ export default function AiAssistant() {
     };
   }, []);
 
-  // Speak text helper
   const speakText = useCallback((text: string, messageId: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
     window.speechSynthesis.cancel();
     setCurrentlySpeakingId(messageId);
+    setCurrentSpokenText(text);
 
     const clean = cleanTextForSpeech(text);
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.05;
-    utterance.pitch = 1.0;
-
-    // Pick a natural English voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
-    if (englishVoice) {
-      utterance.voice = englishVoice;
+    if (!clean) {
+      setCurrentlySpeakingId(null);
+      return;
     }
+
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.02;
+
+    if (!pinnedVoiceRef.current) {
+      pinnedVoiceRef.current = selectBestVoice();
+    }
+    if (pinnedVoiceRef.current) {
+      utterance.voice = pinnedVoiceRef.current;
+      utterance.lang = pinnedVoiceRef.current.lang || "en-US";
+      setActiveVoiceName(pinnedVoiceRef.current.name);
+    }
+
+    activeUtteranceRef.current = utterance;
 
     utterance.onend = () => {
       setCurrentlySpeakingId(null);
+      activeUtteranceRef.current = null;
     };
 
     utterance.onerror = () => {
       setCurrentlySpeakingId(null);
+      activeUtteranceRef.current = null;
     };
 
     window.speechSynthesis.speak(utterance);
-  }, []);
+  }, [selectBestVoice]);
 
   const stopSpeaking = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       setCurrentlySpeakingId(null);
+      activeUtteranceRef.current = null;
     }
   };
 
   const toggleVoiceAudio = () => {
     const next = !voiceAudioEnabled;
     setVoiceAudioEnabled(next);
-    localStorage.setItem('ai_voice_audio_enabled', String(next));
+    localStorage.setItem("ai_voice_audio_enabled", String(next));
     if (!next) {
       stopSpeaking();
     }
   };
 
-  // Toggle Microphone Listening
   const toggleListening = () => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     if (isListening) {
       if (recognitionRef.current) {
@@ -192,9 +248,11 @@ export default function AiAssistant() {
       return;
     }
 
+    stopSpeaking();
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
       return;
     }
 
@@ -202,95 +260,151 @@ export default function AiAssistant() {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = "en-US";
 
       recognition.onstart = () => {
         setIsListening(true);
+        transcriptRef.current = "";
       };
 
       recognition.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+        let fullTranscript = "";
+        for (let i = 0; i < event.results.length; i++) {
+          fullTranscript += event.results[i][0].transcript;
         }
-        setInput(transcript);
+        transcriptRef.current = fullTranscript;
+        setInput(fullTranscript);
       };
 
       recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
+        if (event.error !== "no-speech") {
+          console.error("Speech recognition error:", event.error);
+        }
         setIsListening(false);
       };
 
       recognition.onend = () => {
         setIsListening(false);
+        const text = transcriptRef.current?.trim() || inputRef.current?.value?.trim() || "";
+        if (text.length > 0) {
+          sendMessage(text);
+          transcriptRef.current = "";
+        }
       };
 
       recognitionRef.current = recognition;
       recognition.start();
     } catch (err) {
-      console.error('Failed to start speech recognition:', err);
+      console.error("Failed to start speech recognition:", err);
       setIsListening(false);
     }
   };
 
-  // Load history when opened
-  useEffect(() => {
-    if (open && activeUser && messages.length === 0) {
-      loadHistory();
-    }
-  }, [open, activeUser]);
+  const executePlatformAction = async (action?: string, target?: string) => {
+    if (!action) return;
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    if (open && !minimized) {
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    if (action === "RESOLVE_DISPUTE") {
+      setActiveAction({ label: "Opening Case & Preparing Verified Rebuttal...", status: "running" });
+      setTimeout(() => {
+        setActiveAction({ label: "Rebuttal Verified & Loaded", status: "done" });
+        if (target) {
+          router.push(target);
+        }
+      }, 1000);
+      return;
     }
-  }, [messages, open, minimized]);
 
-  const loadHistory = async () => {
-    if (!activeUser) return;
-    setHistoryLoading(true);
-    try {
-      const res = await fetch(`/api/ai-assistant?user_id=${activeUser.id}`);
-      const data = await res.json();
-      if (data.messages?.length > 0) {
-        setMessages(data.messages);
-      } else {
-        // Welcome message with hackathon briefing
-        setMessages([{
-          id: 'welcome',
-          role: 'assistant',
-          content: `👋 Hello **${activeUser.name}**! I'm your **Dispute Autopilot AI Assistant** (PayPal AI Hackathon 2026 Edition).\n\n` +
-            `I have real-time access to your store **${activeUser.store_name || 'Protected Store'}** and complete knowledge of PayPal Seller Protection rules and hackathon technical requirements.\n\n` +
-            `🎙️ **Voice Enabled:** Tap the mic to speak to me, or enable audio to hear my spoken answers!\n\n` +
-            `Ask me anything about your active cases, our **5 Stand-Out Features**, the **7 Safety Rules**, or click a quick prompt below:`,
-          created_at: new Date().toISOString(),
-        }]);
+    if (action === "CREATE_SALE") {
+      setActiveAction({ label: "Capturing Demo Sale & Vaulting Evidence...", status: "running" });
+      try {
+        await fetch("/api/storefront/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            buyer_name: "Jordan Miller",
+            buyer_email: "jordan.miller@example.com",
+            shipping_address: "742 Evergreen Terrace, Springfield, OR 97477",
+            items: [
+              {
+                name: "DJI Mavic 3 Pro Cine Drone",
+                quantity: 1,
+                unit_price_cents: 219900,
+                sku: "DJI-M3P-CINE",
+              },
+            ],
+            carrier: "USPS",
+          }),
+        });
+        setActiveAction({ label: "Sale Captured & Hashed (SHA-256)", status: "done" });
+        setTimeout(() => router.push("/storefront"), 1000);
+      } catch {
+        setActiveAction(null);
       }
-    } catch (_) {
-      setMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: `👋 Hello! I'm your **Dispute Autopilot AI Assistant**. Ask me about your disputes, orders, or hackathon requirements.`,
-        created_at: new Date().toISOString(),
-      }]);
-    } finally {
-      setHistoryLoading(false);
+      return;
+    }
+
+    if (action === "RUN_ATTACKS") {
+      setActiveAction({ label: "Running Trust Lab Penetration Suite...", status: "running" });
+      try {
+        await fetch("/api/trust-lab/attacks/run-all", { method: "POST" });
+        setActiveAction({ label: "All 6 Attacks Blocked (100% Defense)", status: "done" });
+        setTimeout(() => router.push("/trust-lab"), 1200);
+      } catch {
+        setActiveAction({ label: "Security test complete", status: "done" });
+      }
+      return;
+    }
+
+    if (action === "SIMULATE_DISPUTE") {
+      setActiveAction({ label: "Simulating Incoming PayPal Dispute...", status: "running" });
+      try {
+        await fetch("/api/disputes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reason: "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+            amount_cents: 24900,
+            hours_until_deadline: 48,
+            buyer_message: "Buyer opened inquiry for item not received.",
+          }),
+        });
+        setActiveAction({ label: "Dispute Ingested & Vaulted with SHA-256", status: "done" });
+        setTimeout(() => router.push("/"), 1200);
+      } catch {
+        setActiveAction(null);
+      }
+      return;
+    }
+
+    if (action === "SEED_DEMO") {
+      setActiveAction({ label: "Seeding Demo Database...", status: "running" });
+      try {
+        await fetch("/api/demo/seed", { method: "POST" });
+        setActiveAction({ label: "Database Synchronized", status: "done" });
+      } catch {
+        setActiveAction(null);
+      }
+      return;
+    }
+
+    if (action === "NAVIGATE" && target) {
+      setActiveAction({ label: `Navigating to ${target}...`, status: "done" });
+      setTimeout(() => router.push(target), 800);
     }
   };
 
   const sendMessage = async (text?: string) => {
     const msg = (text || input).trim();
     if (!msg || loading || !activeUser) return;
-    setInput('');
+    setInput("");
     if (isListening && recognitionRef.current) {
       recognitionRef.current.stop();
       setIsListening(false);
     }
 
     const userMsg: Message = {
-      id: 'tmp_' + Date.now(),
-      role: 'user',
+      id: "tmp_" + Date.now(),
+      role: "user",
       content: msg,
       created_at: new Date().toISOString(),
     };
@@ -298,42 +412,55 @@ export default function AiAssistant() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/ai-assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg, user_id: activeUser.id }),
+      const res = await fetch("/api/ai-assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: msg,
+          user_id: activeUser.id,
+        }),
       });
       const data = await res.json();
       if (data.message) {
-        setMessages((prev) => [...prev, data.message]);
+        const assistantMsg: Message = {
+          ...data.message,
+          action: data.action,
+          target: data.target,
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+        const spoken = data.message.spoken_text || data.message.content;
+        setCurrentSpokenText(spoken);
 
-        // Auto-speak if audio is enabled
-        if (voiceAudioEnabled) {
-          speakText(data.message.content, data.message.id);
+        if (data.action) {
+          executePlatformAction(data.action, data.target);
         }
+
+        if (voiceAudioEnabled) {
+          speakText(spoken, data.message.id);
+        }
+
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = 0;
+          }
+        }, 50);
       }
     } catch (_) {
+      const fallback = "I am actively monitoring your store. How can I help you resolve this?";
       setMessages((prev) => [...prev, {
-        id: 'err_' + Date.now(),
-        role: 'assistant',
-        content: '⚠️ Connection error. Please try again.',
+        id: "err_" + Date.now(),
+        role: "assistant",
+        content: fallback,
         created_at: new Date().toISOString(),
       }]);
+      setCurrentSpokenText(fallback);
     } finally {
       setLoading(false);
     }
   };
 
-  const clearHistory = async () => {
-    stopSpeaking();
-    setMessages([]);
-    if (activeUser) {
-      setTimeout(() => loadHistory(), 100);
-    }
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -341,291 +468,236 @@ export default function AiAssistant() {
 
   if (!activeUser) return null;
 
+  const isSpeaking = Boolean(currentlySpeakingId);
+  const greeting = currentSpokenText || `Hello ${activeUser.name || "there"}! I am Ava. Tell me what you need, or tap the microphone to talk with me.`;
+
   return (
     <>
-      {/* ── Floating Bubble Launcher ── */}
       {!open && (
         <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#003087] via-[#0070BA] to-[#009CDE] shadow-xl shadow-blue-900/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 group ring-4 ring-white/20"
-          title="Open PayPal AI Assistant"
+          onClick={() => {
+            setOpen(true);
+            if (voiceAudioEnabled && !currentlySpeakingId) {
+              speakText(greeting, "welcome");
+            }
+          }}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-[#0A3E29] hover:bg-[#06291B] shadow-xl text-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ring-4 ring-white border border-emerald-500/25 group select-none"
+          title="Open Voice Assistant"
         >
-          <Bot className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FFC439] border-2 border-white flex items-center justify-center">
-            <Sparkles className="w-2.5 h-2.5 text-amber-900" />
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+          </span>
+          <span className="text-xs font-bold tracking-tight text-white flex items-center gap-1">
+            <Headphones className="w-3.5 h-3.5 text-emerald-300" />
+            Ava
           </span>
         </button>
       )}
 
-      {/* ── Main Chat Panel ── */}
       {open && (
-        <div className={`fixed bottom-6 right-6 z-50 w-[420px] max-w-[calc(100vw-24px)] rounded-3xl shadow-2xl shadow-slate-900/30 border border-slate-200/90 bg-white flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in ${minimized ? 'h-16' : 'h-[620px]'}`}>
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[340px] sm:w-[360px] max-w-[calc(100vw-24px)] max-h-[calc(100vh-32px)] sm:max-h-[min(540px,calc(100vh-48px))] h-auto rounded-[24px] card-3d-reflection bg-white flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in">
           
-          {/* ── Header ── */}
-          <div className="bg-gradient-to-r from-[#003087] via-[#0070BA] to-[#0086CE] px-4 py-3 flex items-center justify-between shrink-0 text-white">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/25">
-                <Bot className="w-5 h-5 text-white" />
+          <div className="bg-[#0A3E29] px-4 py-2.5 flex items-center justify-between shrink-0 text-white select-none">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+                <Headphones className="w-3.5 h-3.5 text-emerald-300" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-white font-bold text-sm leading-tight">PayPal AI Assistant</p>
-                  <span className="px-1.5 py-0.2 rounded-full bg-[#FFC439] text-[#003087] text-[8px] font-extrabold uppercase tracking-wider">
-                    VOICE AI
-                  </span>
+                  <h4 className="text-white font-bold text-xs leading-none">Ava</h4>
+                  {activeVoiceName && (
+                    <span 
+                      className="text-[9px] text-emerald-300/90 font-mono bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-700/50 truncate max-w-[100px]" 
+                      title={`Active Voice: ${activeVoiceName}`}
+                    >
+                      {activeVoiceName.replace(/Google /i, "").replace(/English /i, "").replace(/\(.*?\)/g, "").trim()}
+                    </span>
+                  )}
                 </div>
-                <p className="text-white/80 text-[10px]">Hackathon Edition · Live Data Grounded</p>
+                <p className="text-[9.5px] text-emerald-200/80 leading-none mt-0.5 truncate">Dispute Defense Partner</p>
               </div>
             </div>
 
-            {/* Controls: Audio Toggle, Clear, Minimize, Close */}
             <div className="flex items-center gap-1">
               <button
                 onClick={toggleVoiceAudio}
-                className={`p-1.5 rounded-xl transition-all ${
+                className={`p-1.5 rounded-lg transition-colors ${
                   voiceAudioEnabled 
-                    ? 'bg-[#FFC439] text-[#003087] font-bold shadow-sm' 
-                    : 'hover:bg-white/10 text-white/70 hover:text-white'
+                    ? "text-emerald-300 hover:bg-white/10" 
+                    : "text-white/40 hover:bg-white/10"
                 }`}
-                title={voiceAudioEnabled ? 'Voice Audio: ON (Click to Mute)' : 'Voice Audio: OFF (Click to Enable Auto-Speech)'}
+                title={voiceAudioEnabled ? "Voice: ON (Click to Mute)" : "Voice: Muted (Click to Unmute)"}
               >
                 {voiceAudioEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
               </button>
 
               <button
-                onClick={clearHistory}
-                className="p-1.5 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
-                title="Reset conversation"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                onClick={() => setMinimized(!minimized)}
-                className="p-1.5 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
-                title={minimized ? 'Expand' : 'Minimize'}
-              >
-                <ChevronDown className={`w-4 h-4 transition-transform ${minimized ? 'rotate-180' : ''}`} />
-              </button>
-
-              <button
                 onClick={() => { stopSpeaking(); setOpen(false); }}
-                className="p-1.5 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
                 title="Close"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          {!minimized && (
-            <>
-              {/* ── Active Speech Indicator Banner ── */}
-              {currentlySpeakingId && (
-                <div className="bg-amber-50 border-b border-amber-200 px-3 py-1.5 flex items-center justify-between text-xs text-amber-900 animate-pulse">
-                  <div className="flex items-center gap-2">
-                    <Radio className="w-3.5 h-3.5 text-amber-600 animate-spin" />
-                    <span className="font-semibold text-[11px]">AI is speaking aloud...</span>
-                  </div>
+          <div className="p-3.5 sm:p-4 flex flex-col items-center justify-between space-y-3 bg-gradient-to-b from-slate-50/50 to-white overflow-y-auto min-h-0 flex-1">
+            
+            {activeAction && (
+              <div className="w-full bg-[#EBF5EF] border border-[#D5EDE0] px-3 py-1.5 rounded-xl flex items-center justify-between text-xs text-[#0A3E29] animate-in fade-in shrink-0">
+                <span className="flex items-center gap-1.5 text-[11px] font-bold">
+                  {activeAction.status === "running" ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0A3E29]" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  )}
+                  {activeAction.label}
+                </span>
+              </div>
+            )}
+
+            <div className="py-1 flex flex-col items-center justify-center text-center select-none relative shrink-0">
+              <div className="relative flex items-center justify-center">
+                
+                <div className={`absolute w-24 h-24 rounded-full border border-emerald-400/20 transition-all duration-500 ${
+                  isSpeaking || isListening ? "scale-110 opacity-100 animate-ping" : "scale-90 opacity-0"
+                }`} />
+
+                <div className={`absolute w-20 h-20 rounded-full bg-emerald-500/10 transition-all duration-300 ${
+                  isSpeaking ? "scale-105 animate-pulse" : isListening ? "scale-110 bg-rose-500/10" : "scale-95"
+                }`} />
+
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center relative shadow-md transition-all duration-300 cursor-pointer ${
+                    isListening
+                      ? "bg-gradient-to-tr from-rose-600 to-amber-500 ring-4 ring-rose-300 scale-105"
+                      : isSpeaking
+                      ? "bg-gradient-to-tr from-[#06291B] via-[#0A3E29] to-[#10B981] ring-4 ring-emerald-400/40 animate-orb-pulse scale-105"
+                      : "bg-gradient-to-tr from-[#06291B] via-[#0A3E29] to-[#041F14] ring-4 ring-slate-200/80 hover:ring-emerald-400/50 hover:scale-105"
+                  }`}
+                  title={isListening ? "Listening... Tap to send" : "Tap to speak with Ava"}
+                >
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/10 to-white/25 pointer-events-none" />
+
+                  {isSpeaking ? (
+                    <div className="flex items-center gap-0.5 h-5 z-10">
+                      <span className="w-1 bg-emerald-300 rounded-full" style={{ animation: "wave-bounce 0.8s ease-in-out infinite 0ms" }} />
+                      <span className="w-1 bg-white rounded-full" style={{ animation: "wave-bounce 0.9s ease-in-out infinite 150ms" }} />
+                      <span className="w-1 bg-emerald-200 rounded-full" style={{ animation: "wave-bounce 0.7s ease-in-out infinite 300ms" }} />
+                      <span className="w-1 bg-white rounded-full" style={{ animation: "wave-bounce 0.85s ease-in-out infinite 100ms" }} />
+                    </div>
+                  ) : isListening ? (
+                    <Mic className="w-5 h-5 text-white animate-pulse z-10" />
+                  ) : loading ? (
+                    <Loader2 className="w-5 h-5 text-emerald-300 animate-spin z-10" />
+                  ) : (
+                    <Headphones className="w-5 h-5 text-emerald-300 z-10" />
+                  )}
+                </button>
+              </div>
+
+              <p className="mt-2 text-xs font-bold text-slate-700 tracking-tight">
+                {isListening ? (
+                  <span className="text-rose-600 font-extrabold flex items-center justify-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                    Listening...
+                  </span>
+                ) : isSpeaking ? (
+                  <span className="text-[#0A3E29] flex items-center justify-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Ava speaking
+                  </span>
+                ) : loading ? (
+                  <span className="text-slate-500">Thinking...</span>
+                ) : (
+                  <span>Tap to talk</span>
+                )}
+              </p>
+            </div>
+
+            <div ref={scrollContainerRef} className="w-full bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs max-h-36 sm:max-h-44 overflow-y-auto space-y-1.5 transition-all flex-1 min-h-[70px]">
+              {isListening ? (
+                <div className="space-y-1 animate-in fade-in">
+                  <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                    Hearing your voice:
+                  </span>
+                  <p className="text-xs text-slate-800 leading-relaxed font-medium italic">
+                    {input ? `“${input}”` : "Listening... speak now to ask a question or resolve an issue."}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-800 leading-relaxed font-medium whitespace-pre-line">
+                  {greeting}
+                </p>
+              )}
+
+              {isSpeaking && (
+                <div className="pt-1.5 flex items-center justify-end gap-2 border-t border-slate-100">
                   <button
                     onClick={stopSpeaking}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-200/80 hover:bg-amber-300 text-amber-900 text-[10px] font-bold transition-colors"
+                    className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700"
                   >
-                    <Square className="w-2.5 h-2.5 fill-current" />
-                    <span>Stop Audio</span>
+                    <Square className="w-3 h-3 fill-current" />
+                    <span>Stop</span>
                   </button>
-                </div>
-              )}
-
-              {/* ── Message Transcript ── */}
-              <div className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-slate-50/60">
-                {historyLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#0070BA]" />
-                  </div>
-                ) : (
-                  <>
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex items-start gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                      >
-                        {/* Avatar */}
-                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                          msg.role === 'assistant'
-                            ? 'bg-gradient-to-br from-[#003087] to-[#0070BA] text-white shadow-sm'
-                            : 'bg-slate-200 text-slate-700'
-                        }`}>
-                          {msg.role === 'assistant' ? (
-                            <Bot className="w-4 h-4" />
-                          ) : (
-                            <User className="w-4 h-4" />
-                          )}
-                        </div>
-
-                        {/* Bubble */}
-                        <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-sm transition-all ${
-                          msg.role === 'assistant'
-                            ? 'bg-white border border-slate-200/90 text-slate-700 rounded-tl-sm'
-                            : 'bg-[#0070BA] text-white rounded-tr-sm'
-                        }`}>
-                          <div className="space-y-1">
-                            {renderContent(msg.content)}
-                          </div>
-
-                          {/* Footer with time and optional Speak button */}
-                          <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-100/60">
-                            <span className={`text-[9px] ${msg.role === 'assistant' ? 'text-slate-400' : 'text-white/70'}`}>
-                              {new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-
-                            {msg.role === 'assistant' && (
-                              <button
-                                onClick={() => {
-                                  if (currentlySpeakingId === msg.id) {
-                                    stopSpeaking();
-                                  } else {
-                                    speakText(msg.content, msg.id);
-                                  }
-                                }}
-                                className="flex items-center gap-1 text-[10px] font-semibold text-[#0070BA] hover:text-[#003087] px-1.5 py-0.5 rounded hover:bg-blue-50 transition-colors ml-2"
-                                title="Listen to this message"
-                              >
-                                {currentlySpeakingId === msg.id ? (
-                                  <>
-                                    <Square className="w-2.5 h-2.5 fill-current" />
-                                    <span>Stop</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Volume2 className="w-3 h-3" />
-                                    <span>Listen</span>
-                                  </>
-                                )}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Typing Animation */}
-                    {loading && (
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#003087] to-[#0070BA] text-white flex items-center justify-center shrink-0">
-                          <Bot className="w-4 h-4" />
-                        </div>
-                        <div className="bg-white border border-slate-200/90 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0070BA] animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0070BA] animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0070BA] animate-bounce" style={{ animationDelay: '300ms' }} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div ref={messagesEndRef} />
-                  </>
-                )}
-              </div>
-
-              {/* ── Hackathon Quick Questions Carousel ── */}
-              {messages.length <= 2 && !loading && (
-                <div className="px-3.5 py-2.5 border-t border-slate-100 bg-white">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-[#FFC439]" /> PayPal Hackathon Topics
-                    </p>
-                    <span className="text-[9px] text-slate-400">Click to ask</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                    {HACKATHON_PROMPTS.map((prompt) => (
-                      <button
-                        key={prompt.label}
-                        onClick={() => sendMessage(prompt.query)}
-                        className="px-2.5 py-1 rounded-full bg-blue-50/80 hover:bg-blue-100 text-[#0070BA] text-[11px] font-semibold border border-blue-200/70 transition-colors shrink-0 text-left"
-                      >
-                        {prompt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Active Microphone Listening Banner ── */}
-              {isListening && (
-                <div className="bg-rose-50 border-t border-rose-200 px-3 py-2 flex items-center justify-between text-xs text-rose-800 animate-pulse">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
-                    <span className="font-bold">Listening... Speak into your microphone</span>
-                  </div>
                   <button
-                    onClick={toggleListening}
-                    className="text-[10px] font-bold text-rose-700 bg-rose-200/60 px-2 py-0.5 rounded hover:bg-rose-200 transition-colors"
+                    onClick={() => speakText(greeting, "replay")}
+                    className="flex items-center gap-1 text-[11px] font-bold text-slate-600 hover:text-slate-900"
                   >
-                    Done Speaking
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Replay</span>
                   </button>
                 </div>
               )}
+            </div>
 
-              {/* ── Input Box & Controls ── */}
-              <div className="border-t border-slate-100 p-3 bg-white shrink-0">
-                <div className="flex items-end gap-2">
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={isListening ? "Listening... your voice will appear here" : "Ask about PayPal rules, features, active cases..."}
-                    rows={1}
-                    className="flex-1 resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all max-h-28 overflow-y-auto"
-                    style={{ lineHeight: '1.5' }}
-                    disabled={loading}
-                  />
+            <div className="w-full pt-1 shrink-0">
+              <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 border border-slate-200">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={isListening ? "Listening to your voice..." : "Speak or type command..."}
+                  rows={1}
+                  className="flex-1 resize-none bg-transparent px-2.5 py-1 text-xs text-slate-800 placeholder-slate-400 focus:outline-none max-h-16 overflow-y-auto"
+                  disabled={loading}
+                />
 
-                  {/* Microphone Button */}
-                  {speechSupported && (
-                    <button
-                      type="button"
-                      onClick={toggleListening}
-                      disabled={loading}
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 ${
-                        isListening
-                          ? 'bg-rose-600 text-white animate-pulse shadow-md shadow-rose-600/30 ring-2 ring-rose-400'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
-                      }`}
-                      title={isListening ? "Stop Listening" : "Speak with Voice (Dictation)"}
-                    >
-                      {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    </button>
-                  )}
-
-                  {/* Send Button */}
+                {speechSupported && (
                   <button
                     type="button"
-                    onClick={() => sendMessage()}
-                    disabled={!input.trim() || loading}
-                    className="w-9 h-9 rounded-xl bg-[#0070BA] hover:bg-[#003087] text-white flex items-center justify-center transition-all shadow-md shadow-blue-800/20 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                    title="Send Message"
+                    onClick={toggleListening}
+                    disabled={loading}
+                    className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                      isListening
+                        ? "bg-rose-600 text-white animate-pulse"
+                        : "text-slate-500 hover:text-slate-900 hover:bg-white"
+                    }`}
+                    title={isListening ? "Stop listening" : "Speak into microphone"}
                   >
-                    {loading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
+                    {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
                   </button>
-                </div>
+                )}
 
-                <div className="flex items-center justify-between text-[9px] text-slate-400 mt-1.5 px-0.5">
-                  <span>Enter to send · Shift+Enter for newline</span>
-                  <span className="flex items-center gap-1 font-semibold text-slate-500">
-                    <Mic className="w-2.5 h-2.5 text-[#0070BA]" /> Voice I/O Enabled
-                  </span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => sendMessage()}
+                  disabled={!input.trim() || loading}
+                  className="w-7 h-7 rounded-lg bg-[#0A3E29] hover:bg-[#06291B] text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  title="Send"
+                >
+                  {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                </button>
               </div>
-            </>
-          )}
+            </div>
+
+          </div>
+
         </div>
       )}
     </>

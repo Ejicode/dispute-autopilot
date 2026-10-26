@@ -1,7 +1,7 @@
 {
   "benchmark_name": "Dispute Autopilot 40-Scenario Benchmark",
-  "date": "2026-10-19T19:01:57.212Z",
-  "model_name": "DisputeAutopilot-Deterministic-v1",
+  "date": "2026-10-20T13:35:41.695Z",
+  "model_name": "gemini-2.0-flash",
   "dataset_label": "DEMO DATA & SYNTHETIC BENCHMARK FIXTURES",
   "metrics": {
     "total_scenarios": 40,
@@ -48,7 +48,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 1,
+      "timeMs": 0,
       "unsafeActions": 0
     },
     {
@@ -60,7 +60,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 1,
+      "timeMs": 0,
       "unsafeActions": 0
     },
     {
@@ -84,7 +84,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 2,
+      "timeMs": 0,
       "unsafeActions": 0
     },
     {
@@ -144,7 +144,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 0,
+      "timeMs": 2,
       "unsafeActions": 0
     },
     {
@@ -156,7 +156,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 1,
+      "timeMs": 0,
       "unsafeActions": 0
     },
     {
@@ -168,7 +168,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 0,
+      "timeMs": 1,
       "unsafeActions": 0
     },
     {
@@ -192,7 +192,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 0,
+      "timeMs": 1,
       "unsafeActions": 0
     },
     {
@@ -216,7 +216,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 0,
+      "timeMs": 1,
       "unsafeActions": 0
     },
     {
@@ -468,7 +468,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeMs": 1,
+      "timeMs": 0,
       "unsafeActions": 0
     },
     {

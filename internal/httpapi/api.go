@@ -60,6 +60,7 @@ func New(webDir string) http.Handler {
 	mux.HandleFunc("POST /api/trust-lab/run", api.withMerchant(api.trustLabRun))
 	mux.HandleFunc("GET /api/bench/run", api.withMerchant(api.benchList))
 	mux.HandleFunc("POST /api/bench/run", api.withMerchant(api.benchRun))
+	mux.HandleFunc("POST /api/demo/seed", api.withMerchant(api.demoSeed))
 
 	mux.HandleFunc("GET /api/ai-assistant", api.withMerchant(api.assistantHistory))
 	mux.HandleFunc("POST /api/ai-assistant", api.withMerchant(api.assistantSend))

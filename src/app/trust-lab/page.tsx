@@ -36,9 +36,27 @@ const NUMS = ['01', '02', '03', '04', '05', '06'];
 export default function TrustLabPage() {
   const { lastEvent } = useRealtime();
   const [running, setRunning] = useState(false);
+  const [testingVectorId, setTestingVectorId] = useState<string | null>(null);
   const [results, setResults] = useState<AttackResult[] | null>(null);
   const [expandedVector, setExpandedVector] = useState<string | null>(null);
   const [copiedRef, setCopiedRef] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchLatestAttacks = async () => {
+      try {
+        const res = await fetch("/api/trust-lab/run");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.results) && data.results.length > 0) {
+            setResults(data.results);
+          }
+        }
+      } catch (err) {
+        // Fallback
+      }
+    };
+    fetchLatestAttacks();
+  }, []);
 
   const handleRunAttacks = async () => {
     setRunning(true);
@@ -50,6 +68,19 @@ export default function TrustLabPage() {
       }
     } finally {
       setRunning(false);
+    }
+  };
+
+  const handleTestVector = async (vecId: string) => {
+    setTestingVectorId(vecId);
+    try {
+      const res = await fetch("/api/trust-lab/run", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setResults(data.results);
+      }
+    } finally {
+      setTestingVectorId(null);
     }
   };
 
@@ -140,7 +171,7 @@ export default function TrustLabPage() {
   return (
     <div className="space-y-6">
       {/* ── Top Header Card ── */}
-      <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5 card-3d-reflection">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
@@ -151,7 +182,7 @@ export default function TrustLabPage() {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
-            Live automated penetration harness testing defenses against webhook signature forgeries, event replays, buyer prompt injections, amount tampering, expired submissions, and concurrent race conditions.
+            Automated penetration suite validating signature verification, replay protection, prompt isolation, and transactional idempotency.
           </p>
         </div>
 
@@ -168,8 +199,8 @@ export default function TrustLabPage() {
 
           <button
             onClick={handleRunAttacks}
-            disabled={running}
-            className="px-5 py-2.5 rounded-full bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-bold shadow-md shadow-blue-700/30 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap"
+            disabled={running || testingVectorId !== null}
+            className="px-5 py-2.5 rounded-full bg-[#0A3E29] hover:bg-[#072d1e] text-white text-xs font-bold shadow-md shadow-emerald-950/20 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap"
           >
             {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Activity className="w-3.5 h-3.5" />}
             <span>Execute Attack Suite (Live)</span>
@@ -191,7 +222,7 @@ export default function TrustLabPage() {
                 {allBlocked ? '6 OF 6 ATTACKS VERIFIED BLOCKED' : 'SOME ATTACKS WERE NOT BLOCKED'}
               </h3>
               <p className="text-xs text-slate-600 mt-0.5">
-                Every penetration vector was intercepted by cryptographic verification, schema validation, and deterministic policy gates. Zero unauthorized actions executed.
+                All 6 penetration vectors blocked by cryptographic verification and deterministic policy gates.
               </p>
             </div>
           </div>
@@ -211,7 +242,7 @@ export default function TrustLabPage() {
           return (
             <div
               key={vec.id}
-              className={`p-6 rounded-3xl border transition-all duration-200 ${
+              className={`p-6 rounded-3xl border transition-all duration-200 card-3d-reflection ${
                 runResult
                   ? isBlocked
                     ? 'bg-white border-emerald-200 shadow-sm ring-1 ring-emerald-200'
@@ -256,7 +287,7 @@ export default function TrustLabPage() {
                       <span>Audit: {runResult.audit_ref}</span>
                       <button
                         onClick={() => handleCopyAuditRef(runResult.audit_ref!)}
-                        className="text-[#0070BA] hover:underline flex items-center gap-1 text-[10px]"
+                        className="text-[#0A3E29] hover:underline flex items-center gap-1 text-[10px]"
                       >
                         {copiedRef === runResult.audit_ref ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedRef === runResult.audit_ref ? 'Copied' : 'Copy'}</span>
@@ -266,23 +297,39 @@ export default function TrustLabPage() {
                 </div>
               )}
 
-              {/* Technical Defense Inspection Toggle */}
-              <button
-                onClick={() => setExpandedVector(isExpanded ? null : vec.id)}
-                className="w-full pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500 hover:text-[#0070BA] transition-colors"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Code className="w-3.5 h-3.5" />
-                  <span>Technical Defense Architecture</span>
-                </div>
-                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </button>
+              {/* Technical Defense Inspection Toggle & Individual Test Button */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                <button
+                  onClick={() => setExpandedVector(isExpanded ? null : vec.id)}
+                  className="flex-1 flex items-center justify-between text-[11px] font-semibold text-slate-500 hover:text-[#0A3E29] transition-colors py-1 cursor-pointer"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Code className="w-3.5 h-3.5" />
+                    <span>Technical Architecture</span>
+                  </div>
+                  {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+
+                <button
+                  onClick={() => handleTestVector(vec.id)}
+                  disabled={testingVectorId !== null || running}
+                  className="px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#0A3E29] border border-emerald-200 text-[10px] font-bold flex items-center gap-1 transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                  title={`Run isolated test for ${vec.name}`}
+                >
+                  {testingVectorId === vec.id ? (
+                    <RefreshCw className="w-3 h-3 animate-spin text-[#0A3E29]" />
+                  ) : (
+                    <Zap className="w-3 h-3 text-emerald-600" />
+                  )}
+                  <span>{testingVectorId === vec.id ? 'Testing…' : 'Test Vector'}</span>
+                </button>
+              </div>
 
               {isExpanded && (
-                <div className="mt-3 p-3.5 rounded-2xl bg-blue-50/60 border border-blue-200 text-xs space-y-2 animate-in fade-in duration-150">
+                <div className="mt-3 p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 text-xs space-y-2 animate-in fade-in duration-150">
                   <div className="flex justify-between items-center text-slate-600">
                     <span className="font-semibold">Target Route:</span>
-                    <code className="font-mono text-[11px] text-[#0070BA] font-bold">{vec.endpoint}</code>
+                    <code className="font-mono text-[11px] text-[#0A3E29] font-bold">{vec.endpoint}</code>
                   </div>
                   <div className="flex justify-between items-center text-slate-600">
                     <span className="font-semibold">Expected HTTP Code:</span>

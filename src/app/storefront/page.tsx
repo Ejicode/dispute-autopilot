@@ -20,7 +20,7 @@ import {
   ArrowUpDown, 
   SlidersHorizontal,
   ChevronRight,
-  Sparkles
+  UserCheck
 } from 'lucide-react';
 import { DemoOrder } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
@@ -44,10 +44,33 @@ export default function StorefrontPage() {
   const [advancingOrderId, setAdvancingOrderId] = useState<string | null>(null);
   const [disputingOrderId, setDisputingOrderId] = useState<string | null>(null);
   const [checkoutSuccessToast, setCheckoutSuccessToast] = useState<{ name: string; orderNumber: string } | null>(null);
+  const [disputeToast, setDisputeToast] = useState<{ disputeId: string; orderNumber: string } | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  // Buyer checkout form fields — collected before each purchase
-  const [buyerForm, setBuyerForm] = useState({ name: '', email: '', address: '' });
+  // Buyer checkout form fields — prefilled with verified demo buyer
+  const [buyerForm, setBuyerForm] = useState({
+    name: 'Jordan Miller',
+    email: 'jordan.miller@example.com',
+    address: '742 Evergreen Terrace, Springfield, OR 97477',
+  });
+
+  // Computed live sales stats
+  const stats = useMemo(() => {
+    let totalCents = 0;
+    let delivered = 0;
+    let inTransit = 0;
+    for (const o of orders) {
+      totalCents += o.total_cents;
+      if (o.delivery_status === "DELIVERED") delivered++;
+      else inTransit++;
+    }
+    return {
+      totalRevenue: (totalCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 }),
+      totalOrders: orders.length,
+      delivered,
+      inTransit,
+    };
+  }, [orders]);
 
   // Fetch captured orders from SQLite
   const fetchOrders = async () => {
@@ -196,7 +219,11 @@ export default function StorefrontPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        alert(`Dispute ${data.dispute.paypal_dispute_id} created! Evidence items from this order automatically linked in Vault.`);
+        setDisputeToast({
+          disputeId: data.dispute.paypal_dispute_id,
+          orderNumber: order.order_number,
+        });
+        setTimeout(() => setDisputeToast(null), 6000);
       }
     } finally {
       setDisputingOrderId(null);
@@ -205,49 +232,124 @@ export default function StorefrontPage() {
 
   return (
     <div className="space-y-6">
-      {/* ── Checkout Toast Notification ── */}
-      {checkoutSuccessToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0070BA] text-white p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200 max-w-md">
-          <div className="w-9 h-9 rounded-full bg-white text-[#0070BA] flex items-center justify-center font-bold shrink-0">
-            <CheckCircle2 className="w-5 h-5" />
+      {/* ── Top-Right Toast Notifications (Never overlaps with bottom-right voice AI) ── */}
+      <div className="fixed top-6 right-6 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none">
+        {checkoutSuccessToast && (
+          <div className="bg-[#0A3E29] text-white p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-white text-[#0A3E29] flex items-center justify-center font-bold shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="font-extrabold text-sm block">Payment Captured &amp; Vaulted!</span>
+                <span className="text-xs text-white/90 block">
+                  {checkoutSuccessToast.orderNumber}: {checkoutSuccessToast.name} has been snapshot into Evidence Vault with SHA-256 integrity.
+                </span>
+              </div>
+            </div>
+            <button onClick={() => setCheckoutSuccessToast(null)} className="p-1 hover:bg-white/10 rounded-full text-white/70 hover:text-white shrink-0">
+              <X className="w-4 h-4" />
+            </button>
           </div>
+        )}
+
+        {disputeToast && (
+          <div className="bg-rose-900 text-white p-4 rounded-2xl shadow-2xl border border-rose-700/50 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-white text-rose-800 flex items-center justify-center font-bold shrink-0">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="font-extrabold text-sm block">Simulated Dispute Ingested!</span>
+                <span className="text-xs text-white/90 block">
+                  Dispute {disputeToast.disputeId} created for order {disputeToast.orderNumber}. Evidence linked to SHA-256 vault.
+                </span>
+              </div>
+            </div>
+            <button onClick={() => setDisputeToast(null)} className="p-1 hover:bg-white/10 rounded-full text-white/70 hover:text-white shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Page Header Banner & Stat Cards ── */}
+      <div className="space-y-4">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 card-3d-reflection">
           <div>
-            <span className="font-extrabold text-sm block">Payment Captured &amp; Vaulted!</span>
-            <span className="text-xs text-white/90 block">
-              {checkoutSuccessToast.orderNumber}: {checkoutSuccessToast.name} has been snapshot into Evidence Vault with SHA-256 integrity.
-            </span>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Sales &amp; Storefront Catalog</h1>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-[#0A3E29] border border-emerald-100">
+                52 Verified Products
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                SHA-256 Evidence Vaulting Active
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Verified catalog with automated checkout evidence hashing and carrier dispatch.
+            </p>
           </div>
-          <button onClick={() => setCheckoutSuccessToast(null)} className="p-1 hover:bg-white/10 rounded-full">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
-      {/* ── Page Header Banner ── */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Storefront Catalog</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-[#0070BA] border border-blue-100">
-              52 Live Products
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-              SHA-256 Vaulted
-            </span>
+          <div className="flex items-center gap-2 text-xs text-slate-600 bg-emerald-50/70 border border-emerald-100 rounded-2xl px-4 py-2.5 shrink-0">
+            <ShieldCheck className="w-4 h-4 text-[#0A3E29] shrink-0" />
+            <span>Every purchase creates an immutable <strong>SHA-256 Vault record</strong></span>
           </div>
-          <p className="text-xs text-slate-500">
-            Real products with verified photography and specs. Buying any item snapshots the receipt into the Evidence Vault before a dispute is ever filed.
-          </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-slate-600 bg-blue-50/70 border border-blue-100 rounded-2xl px-4 py-2.5 shrink-0">
-          <ShieldCheck className="w-4 h-4 text-[#0070BA] shrink-0" />
-          <span>Every checkout creates an immutable <strong>SHA-256 Vault record</strong></span>
+        {/* ── 4 Executive Sales KPI Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Gross Revenue</span>
+              <span className="text-xl font-extrabold text-slate-900 block mt-0.5">${stats.totalRevenue}</span>
+              <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Live captured sales
+              </span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#0A3E29]">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Captured Orders</span>
+              <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{stats.totalOrders} Orders</span>
+              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">Hashed at payment capture</span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+              <Package className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Evidence Protection</span>
+              <span className="text-xl font-extrabold text-emerald-700 block mt-0.5">100% Vaulted</span>
+              <span className="text-[10px] text-emerald-600 font-medium block mt-0.5">Zero unhashed sales</span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Fulfillment Status</span>
+              <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{stats.delivered} Delivered</span>
+              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{stats.inTransit} In Transit with GPS</span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+              <Truck className="w-5 h-5" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ── Search & Filter Controls ── */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3 card-3d-reflection">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Live Search Input */}
           <div className="relative w-full sm:w-80">
@@ -257,7 +359,7 @@ export default function StorefrontPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search 52+ products by name, brand, or SKU..."
-              className="w-full pl-9 pr-4 py-2 rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0070BA]/20 focus:border-[#0070BA] transition-all"
+              className="w-full pl-9 pr-4 py-2 rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A3E29]/20 focus:border-[#0A3E29] transition-all"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -274,7 +376,7 @@ export default function StorefrontPage() {
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0070BA]/20"
+              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0A3E29]/20"
             >
               <option value="featured">Featured (All 52)</option>
               <option value="price-asc">Price: Low to High</option>
@@ -294,7 +396,7 @@ export default function StorefrontPage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-[#0070BA] text-white shadow-md shadow-blue-800/30'
+                    ? 'bg-[#0A3E29] text-white shadow-md shadow-emerald-950/30'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
               >
@@ -320,10 +422,10 @@ export default function StorefrontPage() {
         </div>
 
         {displayedProducts.length === 0 ? (
-          <div className="bg-white p-12 rounded-2xl border border-slate-200/90 text-center space-y-3">
+          <div className="bg-white p-12 rounded-2xl border border-slate-200/90 text-center space-y-3 card-3d-reflection">
             <Package className="w-8 h-8 text-slate-300 mx-auto" />
             <h3 className="font-bold text-slate-700 text-sm">No products found matching "{searchQuery}"</h3>
-            <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="text-xs font-bold text-[#0070BA] hover:underline">
+            <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="text-xs font-bold text-[#0A3E29] hover:underline">
               Clear search &amp; show all 52 products
             </button>
           </div>
@@ -332,7 +434,7 @@ export default function StorefrontPage() {
             {displayedProducts.map((prod) => (
               <div
                 key={prod.id}
-                className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm hover:shadow-xl transition-all duration-200 flex flex-col justify-between group"
+                className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm hover:shadow-xl transition-all duration-200 flex flex-col justify-between group card-3d-reflection"
               >
                 <div>
                   {/* Product Image with Quick View overlay */}
@@ -354,7 +456,7 @@ export default function StorefrontPage() {
                       onClick={() => setSelectedProduct(prod)}
                       className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-white/90 hover:bg-white text-slate-800 text-[10px] font-bold shadow-md flex items-center gap-1 transition-opacity opacity-0 group-hover/img:opacity-100"
                     >
-                      <Eye className="w-3 h-3 text-[#0070BA]" />
+                      <Eye className="w-3 h-3 text-[#0A3E29]" />
                       <span>Quick Specs</span>
                     </button>
                   </div>
@@ -374,7 +476,7 @@ export default function StorefrontPage() {
                   {/* Title & SKU */}
                   <h3 
                     onClick={() => setSelectedProduct(prod)}
-                    className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 hover:text-[#0070BA] cursor-pointer transition-colors"
+                    className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 hover:text-[#0A3E29] cursor-pointer transition-colors"
                     title={prod.name}
                   >
                     {prod.name}
@@ -399,18 +501,28 @@ export default function StorefrontPage() {
                     <span className="text-[10px] text-slate-400 font-medium">Free 2-Day Shipping</span>
                   </div>
 
-                  <button
-                    onClick={() => { setCheckoutError(null); setSelectedProduct(prod); }}
-                    disabled={buyingProductId !== null}
-                    className="w-full py-2.5 rounded-full bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-bold transition-all shadow-md shadow-blue-800/30 flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    {buyingProductId === prod.id ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <ShoppingBag className="w-3.5 h-3.5 text-[#FFC439]" />
-                    )}
-                    <span>Create demo order</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleBuyProduct(prod)}
+                      disabled={buyingProductId !== null}
+                      className="flex-1 py-2.5 rounded-full bg-[#0A3E29] hover:bg-[#06291B] text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
+                      title="1-Click Demo Order & Evidence Vault Capture"
+                    >
+                      {buyingProductId === prod.id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <ShoppingBag className="w-3.5 h-3.5 text-emerald-300" />
+                      )}
+                      <span>1-Click Buy Demo</span>
+                    </button>
+                    <button
+                      onClick={() => { setCheckoutError(null); setSelectedProduct(prod); }}
+                      className="px-3 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors text-xs font-bold shrink-0"
+                      title="View Specs & Details"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-[#0A3E29]" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -421,11 +533,11 @@ export default function StorefrontPage() {
       {/* ── Product Quick-View & Detailed Specs Modal ── */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto card-3d-reflection">
             {/* Modal Header */}
             <div className="flex items-start justify-between pb-4 border-b border-slate-100">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0070BA] bg-blue-50 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A3E29] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
                   {selectedProduct.category}
                 </span>
                 <h2 className="text-lg font-bold text-slate-900 mt-1">{selectedProduct.name}</h2>
@@ -496,8 +608,25 @@ export default function StorefrontPage() {
 
               {/* Buyer Checkout Form — required fields */}
               <div className="border border-slate-200 rounded-2xl p-4 space-y-3 bg-slate-50">
-                <h4 className="font-bold text-xs uppercase text-slate-500 tracking-wider">Buyer Details (Required)</h4>
-                <p className="text-xs text-slate-600">This creates a simulated order in demo mode. No PayPal payment is collected.</p>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-xs uppercase text-slate-500 tracking-wider">Buyer Details (Required)</h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBuyerForm({
+                        name: 'Jordan Miller',
+                        email: 'jordan.miller@example.com',
+                        address: '742 Evergreen Terrace, Springfield, OR 97477',
+                      });
+                      setCheckoutError(null);
+                    }}
+                    className="text-[11px] font-bold text-[#0A3E29] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <UserCheck className="w-3.5 h-3.5 text-[#0A3E29]" />
+                    <span>Auto-Fill Demo Buyer</span>
+                  </button>
+                </div>
+                <p className="text-xs text-slate-600">Simulated checkout in demo mode. Automatically hashed into Evidence Vault upon purchase.</p>
                 {checkoutError && (
                   <div role="alert" className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
                     <span>⚠</span><span>{checkoutError}</span>
@@ -510,7 +639,7 @@ export default function StorefrontPage() {
                     value={buyerForm.name}
                     onChange={(e) => { setBuyerForm({ ...buyerForm, name: e.target.value }); setCheckoutError(null); }}
                     placeholder="Your full name *"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all bg-white"
                   />
                   <input
                     type="email"
@@ -518,7 +647,7 @@ export default function StorefrontPage() {
                     value={buyerForm.email}
                     onChange={(e) => { setBuyerForm({ ...buyerForm, email: e.target.value }); setCheckoutError(null); }}
                     placeholder="Email address *"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all bg-white"
                   />
                   <input
                     type="text"
@@ -526,7 +655,7 @@ export default function StorefrontPage() {
                     value={buyerForm.address}
                     onChange={(e) => { setBuyerForm({ ...buyerForm, address: e.target.value }); setCheckoutError(null); }}
                     placeholder="Shipping address *"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0070BA] focus:ring-2 focus:ring-[#0070BA]/20 transition-all bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0A3E29] focus:ring-2 focus:ring-[#0A3E29]/20 transition-all bg-white"
                   />
                 </div>
               </div>
@@ -552,12 +681,12 @@ export default function StorefrontPage() {
                 <button
                   onClick={() => handleBuyProduct(selectedProduct)}
                   disabled={buyingProductId !== null}
-                  className="px-6 py-2.5 rounded-full bg-[#0070BA] hover:bg-[#003087] text-white text-xs font-bold transition-all shadow-md shadow-blue-800/30 flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-full bg-[#0A3E29] hover:bg-[#06291B] text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/25 flex items-center gap-2 disabled:opacity-50"
                 >
                   {buyingProductId === selectedProduct.id ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
-                    <ShoppingBag className="w-4 h-4 text-[#FFC439]" />
+                    <ShoppingBag className="w-4 h-4 text-emerald-300" />
                   )}
                   <span>Create demo order</span>
                 </button>
@@ -571,7 +700,7 @@ export default function StorefrontPage() {
       <div className="space-y-4 pt-6 border-t border-slate-200/80">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Truck className="w-5 h-5 text-[#0070BA]" />
+            <Truck className="w-5 h-5 text-[#0A3E29]" />
             <h2 className="font-bold text-slate-900 text-base">Captured Orders &amp; Carrier Milestones</h2>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
               {orders.length} in Vault
@@ -584,12 +713,12 @@ export default function StorefrontPage() {
         </div>
 
         {loadingOrders ? (
-          <div className="bg-white p-8 rounded-2xl border border-slate-200/90 shadow-sm text-center text-slate-400">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0070BA]" />
+          <div className="bg-white p-8 rounded-2xl border border-slate-200/90 shadow-sm text-center text-slate-400 card-3d-reflection">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0A3E29]" />
             <p className="text-xs">Loading orders from database...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="bg-white p-8 rounded-2xl border border-slate-200/90 shadow-sm text-center text-slate-500 text-xs">
+          <div className="bg-white p-8 rounded-2xl border border-slate-200/90 shadow-sm text-center text-slate-500 text-xs card-3d-reflection">
             No orders captured yet. Click "Create demo order" on any product above to generate an order and evidence hash.
           </div>
         ) : (
@@ -599,7 +728,7 @@ export default function StorefrontPage() {
               const isDelivered = ord.delivery_status === "DELIVERED";
 
               return (
-                <div key={ord.id} className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+                <div key={ord.id} className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4 card-3d-reflection">
                   {/* Order Top Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div>
@@ -637,12 +766,12 @@ export default function StorefrontPage() {
                   <div>
                     <div className="flex items-center justify-between mb-2.5">
                       <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                        <Truck className="w-3.5 h-3.5 text-[#0070BA]" /> Carrier Transit Milestones:
+                        <Truck className="w-3.5 h-3.5 text-[#0A3E29]" /> Carrier Transit Milestones:
                       </span>
                       <button
                         onClick={() => handleAdvanceCarrier(ord.id)}
                         disabled={isDelivered || advancingOrderId === ord.id}
-                        className="text-xs font-bold text-[#0070BA] hover:underline disabled:opacity-40 flex items-center gap-1"
+                        className="text-xs font-bold text-[#0A3E29] hover:underline disabled:opacity-40 flex items-center gap-1"
                       >
                         {advancingOrderId === ord.id ? (
                           <RefreshCw className="w-3 h-3 animate-spin" />

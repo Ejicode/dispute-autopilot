@@ -37,3 +37,5 @@ Thumbs.db
 *.log
 pdf_text.txt
 scratch/
+cookies.txt
+/server

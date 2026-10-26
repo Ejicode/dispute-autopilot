@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Shield, ShieldCheck, Radio, AlertTriangle, Clock, ShoppingCart, Activity, FileCheck, X } from 'lucide-react';
 import { useRealtime } from './RealtimeContext';
+import Logo from './Logo';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { isConnected, notifications, dismissNotification, lastEvent } = useRealtime();
-  const [metrics, setMetrics] = useState({ totalAtRiskCents: 142500, expiring48hCount: 2 });
+  const [metrics, setMetrics] = useState({ totalAtRiskCents: 0, expiring48hCount: 0 });
 
   useEffect(() => {
     async function fetchMetrics() {
@@ -43,20 +44,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#003087] to-[#0070BA] flex items-center justify-center shadow-[0_4px_12px_rgba(0,112,186,0.4)] group-hover:shadow-[0_4px_20px_rgba(0,112,186,0.6)] transition-all">
-                <ShieldCheck className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-[15px] text-white tracking-tight">Dispute Autopilot</span>
-                  <span className="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-[#FFC439]/15 text-[#FFC439] border border-[#FFC439]/25">
-                    PayPal AI
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-500 block leading-none mt-0.5">Tamper-evident agentic dispute defense</span>
-              </div>
-            </Link>
+            <Logo variant="dark" size="md" href="/" />
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] rounded-xl border border-white/[0.06] px-1.5 py-1.5">
@@ -69,11 +57,11 @@ export default function Navbar() {
                     href={link.href}
                     className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                       isActive
-                        ? 'bg-[#0070BA]/20 text-[#0070BA] border border-[#0070BA]/30 shadow-[0_0_12px_rgba(0,112,186,0.15)]'
+                        ? 'bg-[#0A3E29] text-white shadow-sm'
                         : 'text-slate-400 hover:text-white hover:bg-white/[0.06] border border-transparent'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-[#0070BA]' : 'text-slate-500'}`} />
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-300' : 'text-slate-500'}`} />
                     {link.label}
                   </Link>
                 );

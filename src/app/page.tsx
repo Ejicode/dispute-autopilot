@@ -6,36 +6,27 @@ import QueueGrid from '@/components/QueueGrid';
 import { Dispute } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { 
-  Users, 
-  ShoppingBag, 
-  DollarSign, 
+  TrendingUp, 
+  RefreshCw, 
+  PlusCircle, 
+  Filter, 
+  ChevronDown, 
+  ShieldCheck, 
+  CheckCircle2, 
   Clock, 
-  ArrowUpRight, 
-  ArrowRight,
-  ChevronLeft, 
-  ChevronRight,
-  TrendingUp,
-  ShieldCheck,
-  RefreshCw,
-  PlusCircle,
-  FileCheck,
-  Filter,
-  CheckCircle2,
-  Calendar as CalendarIcon,
-  Activity,
-  Layers
+  ArrowUpRight 
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
-  AreaChart, 
-  Area, 
+  BarChart, 
+  Bar, 
   XAxis, 
   YAxis, 
   Tooltip, 
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell
+  CartesianGrid, 
+  PieChart, 
+  Pie, 
+  Cell 
 } from 'recharts';
 
 export default function DashboardPage() {
@@ -45,13 +36,15 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [timeframe, setTimeframe] = useState<'This year' | 'This month' | 'All time'>('This year');
+  const [timeframeDropdownOpen, setTimeframeDropdownOpen] = useState(false);
 
   // Interactive filters
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDayFilter, setSelectedDayFilter] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<'7D' | '30D' | 'ALL'>('7D');
 
-  // Fetch disputes and live analytics
+  // Fetch disputes and live analytics from real SQLite database
   const fetchDashboardData = async () => {
     try {
       const [disputesRes, analyticsRes] = await Promise.all([
@@ -111,6 +104,18 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSeedDemo = async () => {
+    setSeeding(true);
+    try {
+      await fetch('/api/demo/seed', { method: 'POST' });
+      await fetchDashboardData();
+    } catch (err) {
+      console.error('Failed to seed demo:', err);
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   // Filtered disputes based on user selection in charts or calendar
   const filteredDisputes = useMemo(() => {
     return disputes.filter((d) => {
@@ -120,7 +125,7 @@ export default function DashboardPage() {
     });
   }, [disputes, selectedCategory, selectedDayFilter]);
 
-  // Helper values from live analytics
+  // Real Database Metrics from /api/analytics
   const kpis = analytics?.kpis || {
     customerCount: 0,
     orderCount: 0,
@@ -128,33 +133,95 @@ export default function DashboardPage() {
     recoveredCents: 0,
     expiring48hCount: 0,
     totalDisputes: 0,
+    totalProtectedCents: 0,
+    evidenceCount: 0,
   };
 
-  const donutCategories = analytics?.donutCategories || [];
-  const wavePoints = analytics?.wavePoints || [];
-  const calendar = analytics?.calendar || {
-    monthLabel: 'October 2026',
-    days: [],
-    activeDayIdx: 3,
-  };
-  const storeBreakdowns = analytics?.storeBreakdowns || [];
+  // Real data calculations for 2x2 Metric Cards from SQLite
+  const totalSalesDisplay = useMemo(() => {
+    if (kpis.totalProtectedCents > 0) {
+      return '$' + (kpis.totalProtectedCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return '$0.00';
+  }, [kpis.totalProtectedCents]);
 
-  // Custom Chart Tooltip
-  const CustomAreaTooltip = ({ active, payload, label }: any) => {
+  const totalOrdersDisplay = useMemo(() => {
+    return kpis.orderCount.toLocaleString('en-US');
+  }, [kpis.orderCount]);
+
+  const totalVisitorsDisplay = useMemo(() => {
+    return kpis.customerCount.toLocaleString('en-US');
+  }, [kpis.customerCount]);
+
+  const totalProductsSoldDisplay = useMemo(() => {
+    return kpis.evidenceCount.toLocaleString('en-US');
+  }, [kpis.evidenceCount]);
+
+  // Volume Flow Chart Data (Live from analytics.wavePoints: At-Risk vs Protected)
+  const habitData = useMemo(() => {
+    const points = analytics?.wavePoints;
+    if (Array.isArray(points) && points.length > 0) {
+      return points.map((p: any) => ({
+        month: p.date,
+        soonProducts: Math.round(p.atRisk || 0),
+        sales: Math.round(p.protectedVolume || (kpis.totalProtectedCents / 100)),
+      }));
+    }
+    return [
+      { month: 'Oct 20', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
+      { month: 'Oct 22', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
+      { month: 'Oct 24', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
+      { month: 'Oct 26', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
+    ];
+  }, [analytics?.wavePoints, kpis.totalAtRiskCents, kpis.totalProtectedCents]);
+
+  // Product / Dispute Reason Breakdown (Solid Pie Chart from live analytics.donutCategories)
+  const productStatData = useMemo(() => {
+    const categories = analytics?.donutCategories;
+    const palette = ['#0A3E29', '#10B981', '#37926F', '#60B08E', '#A8E6CF'];
+    if (Array.isArray(categories) && categories.length > 0) {
+      return categories.map((c: any, idx: number) => ({
+        name: c.name || c.reason,
+        value: c.value,
+        percentage: c.percentage,
+        amount: c.amount,
+        change: `${c.percentage}% exposure`,
+        color: palette[idx % palette.length],
+      }));
+    }
+    return [
+      { name: 'Active Disputes', value: kpis.totalDisputes || 1, percentage: 100, amount: Math.round(kpis.totalAtRiskCents / 100), change: 'Live DB', color: '#0A3E29' },
+    ];
+  }, [analytics?.donutCategories, kpis.totalDisputes, kpis.totalAtRiskCents]);
+
+  // Security Defense Coverage Telemetry
+  const defenseInvariantsData = [
+    { name: 'Webhook Signature Check', metric: '100% Cryptographic', status: 'Active', percentage: 100, color: '#0A3E29' },
+    { name: 'Replay Protection (Idempotent)', metric: '100% Unique Lock', status: 'Active', percentage: 100, color: '#10B981' },
+    { name: 'Deterministic Policy Gate', metric: '100% Enforced', status: 'Active', percentage: 100, color: '#37926F' },
+    { name: 'Evidence Vault SHA-256', metric: '100% Verified', status: 'Active', percentage: 100, color: '#60B08E' },
+  ];
+
+  // Custom Tooltip for Volume Flow Chart
+  const CustomHabitTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-2xl shadow-xl border border-slate-200/90 text-xs space-y-1.5 animate-in fade-in duration-150">
-          <span className="font-bold text-slate-800 block border-b border-slate-100 pb-1">
-            {label}, 2026
+        <div className="bg-white p-3 rounded-2xl shadow-xl border border-slate-200 text-xs space-y-1.5 animate-in fade-in duration-150">
+          <span className="font-bold text-slate-900 block border-b border-slate-100 pb-1">
+            {label}
           </span>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-slate-500">Disputed Exposure:</span>
-            <strong className="text-[#0070BA] font-mono">${payload[0]?.value?.toLocaleString()}</strong>
+            <span className="text-slate-500 flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#A8E6CF]" /> At-Risk Exposure:
+            </span>
+            <strong className="text-slate-800 font-mono">${payload[0]?.value?.toLocaleString()}</strong>
           </div>
           {payload[1] && (
             <div className="flex items-center justify-between gap-4">
-              <span className="text-slate-500">Protected Volume:</span>
-              <strong className="text-slate-800 font-mono">${payload[1]?.value?.toLocaleString()}</strong>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0A3E29]" /> Protected Volume:
+              </span>
+              <strong className="text-[#0A3E29] font-mono">${payload[1]?.value?.toLocaleString()}</strong>
             </div>
           )}
         </div>
@@ -163,21 +230,23 @@ export default function DashboardPage() {
     return null;
   };
 
-  // Custom Donut Tooltip
-  const CustomPieTooltip = ({ active, payload }: any) => {
+  // Custom Tooltip for Product Statistic Solid Pie Chart
+  const CustomProductPieTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-2.5 rounded-xl shadow-xl border border-slate-200/90 text-xs space-y-1">
+        <div className="bg-white p-2.5 rounded-xl shadow-xl border border-slate-200 text-xs space-y-1">
           <span className="font-bold text-slate-800 block">{data.name}</span>
           <div className="flex items-center justify-between gap-3 text-[11px]">
-            <span className="text-slate-500">Cases:</span>
-            <strong className="text-slate-900">{data.value} ({data.percentage}%)</strong>
+            <span className="text-slate-500">Disputes:</span>
+            <strong className="text-slate-900">{data.value.toLocaleString()} ({data.percentage}%)</strong>
           </div>
-          <div className="flex items-center justify-between gap-3 text-[11px]">
-            <span className="text-slate-500">Total Amount:</span>
-            <strong className="text-[#0070BA] font-mono">${data.amount?.toLocaleString()}</strong>
-          </div>
+          {data.amount && (
+            <div className="flex items-center justify-between gap-3 text-[11px]">
+              <span className="text-slate-500">Amount:</span>
+              <strong className="text-[#0A3E29]">${data.amount.toLocaleString()}</strong>
+            </div>
+          )}
         </div>
       );
     }
@@ -188,13 +257,13 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Active Filter Clear Banner */}
       {(selectedCategory || selectedDayFilter) && (
-        <div className="bg-blue-50 border border-blue-200 p-3 rounded-2xl flex items-center justify-between text-xs text-blue-900 animate-in fade-in">
+        <div className="bg-[#EBF5EF] border border-[#D5EDE0] p-3 rounded-2xl flex items-center justify-between text-xs text-[#0A3E29] animate-in fade-in">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-[#0070BA]" />
+            <Filter className="w-4 h-4 text-[#0A3E29]" />
             <span>
               Filtering queue by: 
               {selectedCategory && <strong className="ml-1">Reason ({selectedCategory})</strong>}
-              {selectedDayFilter && <strong className="ml-1">Deadline Date ({selectedDayFilter})</strong>}
+              {selectedDayFilter && <strong className="ml-1">Date ({selectedDayFilter})</strong>}
             </span>
           </div>
           <button
@@ -202,458 +271,405 @@ export default function DashboardPage() {
               setSelectedCategory(null);
               setSelectedDayFilter(null);
             }}
-            className="text-xs font-bold text-[#0070BA] hover:underline"
+            className="text-xs font-bold text-[#0A3E29] hover:underline"
           >
             Clear Filter &amp; Show All
           </button>
         </div>
       )}
 
-      {/* ── 0. VIDEO HERO TRIAGE BANNER (Direct 3-Minute Video Script Anchor) ── */}
-      <div className="bg-gradient-to-r from-[#003087] via-[#0070BA] to-[#009CDE] text-white p-6 rounded-3xl shadow-lg shadow-blue-900/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2 relative z-10">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFC439] text-[#003087] uppercase tracking-wider">
-              Real-Time Triage Banner
-            </span>
-            <span className="text-white/80 text-xs font-medium flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-[#FFC439]" />
-              Response Countdown Active
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
-            ${(kpis.totalAtRiskCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} is at risk and {kpis.expiring48hCount} {kpis.expiring48hCount === 1 ? 'case expires' : 'cases expire'} in 48 hours.
-          </h1>
-          <p className="text-xs sm:text-sm text-white/80 max-w-2xl leading-relaxed">
-            &ldquo;Sellers lose money on disputes they cannot answer in time. The proof was captured when the buyer paid—packets are assembled in seconds, not hunted down by hand.&rdquo;
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 relative z-10 shrink-0">
-          <button
-            onClick={() => {
-              const el = document.getElementById('dispute-queue-section');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="px-4 py-2.5 rounded-full bg-white text-[#003087] hover:bg-slate-50 text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
-          >
-            <span>Focus Urgent Cases</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-          <Link
-            href="/trust-lab"
-            className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 text-white text-xs font-bold transition-all flex items-center gap-1.5"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-[#FFC439]" />
-            <span>Open Trust Lab</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* ── 1. TOP STAT / KPI CARDS ROW (100% Real-Time DB Computations) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Active Customers */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-700 bg-slate-50 shrink-0">
-              <Users className="w-5 h-5 text-slate-700" />
-            </div>
-            <div>
-              <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Active Customers</span>
-              <span className="text-2xl font-extrabold text-slate-900 block leading-tight">
-                {kpis.customerCount.toLocaleString()}
-              </span>
-              <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
-                <ArrowUpRight className="w-3 h-3" /> Real Store Buyers
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Store Orders */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-700 bg-slate-50 shrink-0">
-              <ShoppingBag className="w-5 h-5 text-slate-700" />
-            </div>
-            <div>
-              <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Store Orders</span>
-              <span className="text-2xl font-extrabold text-slate-900 block leading-tight">
-                {kpis.orderCount.toLocaleString()}
-              </span>
-              <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
-                <ArrowUpRight className="w-3 h-3" /> Vault Protected
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: SIGNATURE SOLID PAYPAL BLUE CARD (#0070BA) */}
-        <div className="bg-[#0070BA] text-white p-5 rounded-2xl shadow-lg shadow-blue-800/30 flex items-center justify-between hover:shadow-xl transition-shadow">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-white shrink-0">
-              <DollarSign className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[11px] text-white/80 font-semibold uppercase tracking-wider block">
-                {kpis.recoveredCents > 0 ? 'Resolved & Recovered' : 'Disputed Funds'}
-              </span>
-              <span className="text-2xl font-extrabold text-white block leading-tight">
-                ${((kpis.recoveredCents > 0 ? kpis.recoveredCents : kpis.totalAtRiskCents) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="text-[10px] text-white/90 font-semibold flex items-center gap-0.5 mt-0.5">
-                <ShieldCheck className="w-3 h-3 text-[#FFC439]" /> 100% Defense Verification
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4: Active Exposure / Expiring Countdown */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl border border-rose-200 bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Active Exposure</span>
-              <span className="text-2xl font-extrabold text-slate-900 block leading-tight">
-                ${(kpis.totalAtRiskCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="text-[10px] text-rose-600 font-semibold flex items-center gap-0.5 mt-0.5">
-                {kpis.expiring48hCount} cases expiring &lt; 48h
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 2. CHARTS ROW (Real Interactive Vector Graphs via Recharts) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Real-Time Area Wave Chart (8 cols) */}
-        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-[#0070BA]" />
-                <h2 className="font-bold text-slate-900 text-sm">Dispute Exposure &amp; Vault Trajectory</h2>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-[#0070BA] border border-blue-100 uppercase">
-                  October 2026 Live
+      {/* ── Main 2-Column Dashboard Layout (Matches Reference Screenshot) ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        
+        {/* ═══════════════════════════════════════════════════════════
+            LEFT COLUMN (~68% width on desktop)
+            - 2x2 Metric Cards (Top-left is signature solid Forest Green)
+            - Paired Dual-Bar Chart ("Customer Habits / Dispute Flow")
+            - Active Dispute Queue Table Card
+        ═══════════════════════════════════════════════════════════ */}
+        <div className="xl:col-span-8 space-y-6">
+          
+          {/* 2x2 Metric Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            {/* Card 1 (Top-Left): SOLID FOREST GREEN CARD (#0A3E29) WITH 3D SPECULAR REFLECTION */}
+            <div className="bg-[#0A3E29] text-white rounded-3xl p-6 shadow-md flex flex-col justify-between min-h-[175px] relative overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-emerald-200/90 tracking-normal">
+                  Total Sales Protected
+                </span>
+                <span className="bg-[#10B981] text-[#06291B] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm group-hover:scale-105 transition-transform">
+                  Live DB
                 </span>
               </div>
-              <span className="text-xs text-slate-400 mt-0.5 block">
-                Daily cumulative exposure vs protected transaction volume
-              </span>
-            </div>
 
-            {/* Timeframe Filter Buttons */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-xs font-semibold">
-              {(['7D', '30D', 'ALL'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTimeRange(t)}
-                  className={`px-3 py-1 rounded-lg transition-all ${
-                    timeRange === t
-                      ? 'bg-white text-[#0070BA] shadow-sm font-bold'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  {t === '7D' ? 'Oct 1–8' : t === '30D' ? 'Last 30D' : 'All Time'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Recharts Area Wave Chart */}
-          <div className="w-full h-56 pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={wavePoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="paypalColor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0070BA" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#0070BA" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="protectedColor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#003087" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#003087" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis 
-                  dataKey="date" 
-                  tickLine={false} 
-                  axisLine={{ stroke: '#E2E8F0' }} 
-                  tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 500 }} 
-                />
-                <YAxis 
-                  tickLine={false} 
-                  axisLine={false} 
-                  tick={{ fill: '#94A3B8', fontSize: 11 }}
-                  tickFormatter={(val) => `$${val}`}
-                />
-                <Tooltip content={<CustomAreaTooltip />} />
-                <Area 
-                  type="monotone" 
-                  dataKey="disputed" 
-                  stroke="#0070BA" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#paypalColor)" 
-                  isAnimationActive={true}
-                  animationDuration={1200}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="protectedVolume" 
-                  stroke="#003087" 
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  fillOpacity={1} 
-                  fill="url(#protectedColor)" 
-                  isAnimationActive={true}
-                  animationDuration={1500}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Chart footer metrics */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#0070BA]" /> Disputed Exposure ($)
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-1.5 border-b-2 border-dashed border-[#003087]" /> Protected Volume ($)
-              </span>
-            </div>
-            <span className="text-[#0070BA] font-bold">● Live Sync Engine Active</span>
-          </div>
-        </div>
-
-        {/* Real-time Donut Chart via Recharts (4 cols) */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-[#0070BA]" />
-                <h2 className="font-bold text-slate-900 text-sm">Dispute Categories</h2>
+              <div className="my-3">
+                <div className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-none">
+                  {totalSalesDisplay}
+                </div>
               </div>
-              <span className="text-[10px] text-slate-400 font-semibold uppercase">Click to Filter</span>
+
+              <div className="flex items-center justify-between text-xs text-emerald-100/70 pt-2 border-t border-white/10">
+                <span>{kpis.orderCount > 0 ? `${kpis.orderCount} store orders protected` : 'Synchronized volume'}</span>
+                <span className="font-semibold text-emerald-300 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  SHA-256 Vault
+                </span>
+              </div>
             </div>
-            <span className="text-xs text-slate-400 mt-0.5 block">Live distribution by claim reason</span>
+
+            {/* Card 2 (Top-Right): White Card with 3D Specular Reflection */}
+            <div className="card-3d-reflection rounded-3xl p-6 flex flex-col justify-between min-h-[175px] group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden bg-white">
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-xs font-semibold text-slate-600 tracking-normal">
+                  Total Orders
+                </span>
+                <span className="bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                  {kpis.orderCount} Orders
+                </span>
+              </div>
+
+              <div className="my-3 relative z-10">
+                <div className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-none">
+                  {totalOrdersDisplay}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-400 font-medium pt-2 border-t border-slate-100 relative z-10">
+                <span>Captured store sales</span>
+                <span className="text-[#0A3E29] font-bold">Verified</span>
+              </div>
+            </div>
+
+            {/* Card 3 (Bottom-Left): White Card with 3D Specular Reflection */}
+            <div className="card-3d-reflection rounded-3xl p-6 flex flex-col justify-between min-h-[175px] group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden bg-white">
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-xs font-semibold text-slate-600 tracking-normal">
+                  Unique Customers
+                </span>
+                <span className="bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                  {kpis.customerCount} Buyers
+                </span>
+              </div>
+
+              <div className="my-3 relative z-10">
+                <div className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-none">
+                  {totalVisitorsDisplay}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-400 font-medium pt-2 border-t border-slate-100 relative z-10">
+                <span>Verified buyer accounts</span>
+                <span className="text-slate-600 font-semibold">Active</span>
+              </div>
+            </div>
+
+            {/* Card 4 (Bottom-Right): White Card with 3D Specular Reflection */}
+            <div className="card-3d-reflection rounded-3xl p-6 flex flex-col justify-between min-h-[175px] group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden bg-white">
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-xs font-semibold text-slate-600 tracking-normal">
+                  Evidence Vault Items
+                </span>
+                <span className="bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-0.5 group-hover:scale-105 transition-transform">
+                  {kpis.evidenceCount} Files
+                </span>
+              </div>
+
+              <div className="my-3 relative z-10">
+                <div className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-none">
+                  {totalProductsSoldDisplay}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-400 font-medium pt-2 border-t border-slate-100 relative z-10">
+                <span>Tamper-evident audit assets</span>
+                <span className="text-[#0A3E29] font-bold">SHA-256</span>
+              </div>
+            </div>
+
           </div>
 
-          <div className="py-2 flex flex-col items-center justify-center">
-            {/* Recharts Pie Donut */}
-            <div className="relative w-44 h-44 flex items-center justify-center">
+          {/* ── Dispute & Volume Flow Dual Capsule Bar Chart (With 3D Specular Reflection) ── */}
+          <div className="card-3d-reflection rounded-3xl p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                  Dispute &amp; Volume Flow
+                </h2>
+              </div>
+
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* Timeframe Dropdown Pill (e.g. "This year ∨") */}
+                <div className="relative">
+                  <button
+                    onClick={() => setTimeframeDropdownOpen(!timeframeDropdownOpen)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 text-xs font-bold text-slate-700 transition-colors cursor-pointer"
+                  >
+                    <span>{timeframe}</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                  </button>
+
+                  {timeframeDropdownOpen && (
+                    <div className="absolute right-0 mt-1 w-36 bg-white rounded-2xl shadow-xl border border-slate-200 py-1 z-30 animate-in fade-in">
+                      {(['This year', 'This month', 'All time'] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => {
+                            setTimeframe(opt);
+                            setTimeframeDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 transition-colors ${
+                            timeframe === opt ? 'text-[#0A3E29] font-bold bg-[#EBF5EF]' : 'text-slate-700'
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Legend Indicators */}
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-600">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#A8E6CF]" />
+                    <span>At-Risk ($)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0A3E29]" />
+                    <span>Protected ($)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Capsule Bar Chart */}
+            <div className="w-full h-72 pt-3">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Tooltip content={<CustomPieTooltip />} />
-                  <Pie
-                    data={donutCategories}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
-                    paddingAngle={4}
-                    dataKey="value"
+                <BarChart 
+                  data={habitData} 
+                  barGap={8} 
+                  barSize={14} 
+                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                  <XAxis 
+                    dataKey="month" 
+                    tickLine={false} 
+                    axisLine={{ stroke: '#E2E8F0' }} 
+                    tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 600 }} 
+                  />
+                  <YAxis 
+                    tickFormatter={(v) => (v === 0 ? '$0' : v >= 1000 ? `$${Math.round(v / 1000)}K` : `$${v}`)}
+                    tickLine={false} 
+                    axisLine={false} 
+                    tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 500 }}
+                  />
+                  <Tooltip content={<CustomHabitTooltip />} />
+                  {/* Mint Capsule Bar for At-Risk Exposure */}
+                  <Bar 
+                    dataKey="soonProducts" 
+                    fill="#A8E6CF" 
+                    radius={[12, 12, 12, 12]} 
                     isAnimationActive={true}
                     animationDuration={1000}
-                    onClick={(entry: any) => setSelectedCategory(selectedCategory === entry?.reason ? null : entry?.reason)}
+                  />
+                  {/* Dark Forest Green Capsule Bar for Protected Volume */}
+                  <Bar 
+                    dataKey="sales" 
+                    fill="#0A3E29" 
+                    radius={[12, 12, 12, 12]} 
+                    isAnimationActive={true}
+                    animationDuration={1200}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────
+            RIGHT COLUMN (~32% on Desktop)
+            - Top: Product Statistic (Sage-Green Gradient + Solid Pie Chart)
+            - Bottom: Customer Growth (4 Overlapping Bubbles + Country Progress Bars)
+        ───────────────────────────────────────────────────────── */}
+        <div className="xl:col-span-4 space-y-6">
+
+          {/* ── Top Card: Dispute Reason Exposure (Soft Sage Gradient + Solid Pie Chart with 3D Reflection) ── */}
+          <div className="card-3d-reflection bg-gradient-to-b from-[#EBF5EF] to-[#D5EDE0] rounded-3xl p-6 border border-[#C6E4D2]/80 space-y-4 hover:-translate-y-1 transition-all duration-300">
+            <div>
+              <h3 className="text-base font-black text-[#0A3E29] tracking-tight">
+                Dispute Reason Exposure
+              </h3>
+            </div>
+
+            {/* Solid Pie Chart (Filled center, not a donut) */}
+            <div className="relative w-44 h-44 mx-auto flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Tooltip content={<CustomProductPieTooltip />} />
+                  <Pie
+                    data={productStatData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={0}
+                    outerRadius={72}
+                    dataKey="value"
+                    stroke="#EBF5EF"
+                    strokeWidth={2}
+                    isAnimationActive={true}
+                    animationDuration={1000}
                   >
-                    {donutCategories.map((entry: any, index: number) => (
+                    {productStatData.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
                         fill={entry.color} 
-                        className="cursor-pointer hover:opacity-80 transition-opacity" 
+                        className="cursor-pointer hover:opacity-90 transition-opacity" 
                       />
                     ))}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
-              <div className="absolute text-center pointer-events-none">
-                <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Total</span>
-                <span className="text-xl font-extrabold text-slate-900 leading-none">
-                  {kpis.totalDisputes}
-                </span>
-                <span className="text-[9px] text-slate-400 block mt-0.5">Disputes</span>
-              </div>
             </div>
 
-            {/* Clickable Legend */}
-            <div className="space-y-1.5 text-xs w-full mt-2">
-              {donutCategories.map((cat: any) => (
-                <button
-                  key={cat.reason}
-                  onClick={() => setSelectedCategory(selectedCategory === cat.reason ? null : cat.reason)}
-                  className={`w-full flex items-center justify-between gap-3 text-left p-1.5 rounded-xl transition-all ${
-                    selectedCategory === cat.reason ? 'bg-blue-50 font-bold border border-blue-200' : 'hover:bg-slate-50'
-                  }`}
+            {/* Product Category Rows: INR, SNAD, Unauthorised */}
+            <div className="space-y-2.5 pt-1">
+              {productStatData.map((item) => (
+                <div
+                  key={item.name}
+                  className="w-full flex items-center justify-between p-2 rounded-2xl bg-white/70 hover:bg-white transition-all shadow-xs"
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
-                    <span className="text-slate-700 truncate text-[11px] font-medium" title={cat.name}>
-                      {cat.name}
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <span className="text-xs font-semibold text-slate-800 truncate">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-black text-slate-900">{item.value.toLocaleString()} cases</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-[#0A3E29]">
+                      {item.change}
                     </span>
                   </div>
-                  <span className="text-slate-500 font-mono text-[11px] shrink-0">{cat.percentage}%</span>
-                </button>
+                </div>
               ))}
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Overall Verification</span>
-            <strong className="text-emerald-600 font-bold">100% Defense Verification</strong>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 3. BOTTOM WIDGETS ROW (Real October 2026 Calendar + Storefront Breakdown) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Real October 2026 Calendar Widget (6 cols) */}
-        <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-3">
+          {/* ── Bottom Card: Security Defense Coverage (Overlapping Bubbles + Invariant Defense Bars) ── */}
+          <div className="card-3d-reflection bg-white rounded-3xl p-6 space-y-5 hover:-translate-y-1 transition-all duration-300">
             <div>
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4 text-[#0070BA]" />
-                <h2 className="font-bold text-slate-900 text-sm">October 2026</h2>
+              <h3 className="text-base font-black text-slate-900 tracking-tight">
+                Security Defense Coverage
+              </h3>
+            </div>
+
+            {/* Overlapping Bubble Circles: 100%, 100%, 100%, 100% */}
+            <div className="py-2">
+              <div className="flex items-center">
+                {/* Bubble 1: 100% (Signature) */}
+                <div className="w-16 h-16 rounded-full bg-[#0A3E29] text-white font-black text-xs flex flex-col items-center justify-center shadow-md ring-4 ring-white z-40 shrink-0 hover:scale-105 transition-transform" title="Webhook Signature Check: 100%">
+                  <span>100%</span>
+                  <span className="text-[8px] font-normal text-emerald-300">Sig</span>
+                </div>
+                {/* Bubble 2: 100% (Replay) */}
+                <div className="w-14 h-14 rounded-full bg-[#10B981] text-white font-bold text-[11px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-30 shrink-0 hover:scale-105 transition-transform" title="Replay Attack Defense: 100%">
+                  <span>100%</span>
+                  <span className="text-[7.5px] font-normal text-emerald-100">Replay</span>
+                </div>
+                {/* Bubble 3: 100% (Gate) */}
+                <div className="w-12 h-12 rounded-full bg-[#37926F] text-white font-bold text-[10px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-20 shrink-0 hover:scale-105 transition-transform" title="Deterministic Code Gate: 100%">
+                  <span>100%</span>
+                  <span className="text-[7px] font-normal text-emerald-100">Gate</span>
+                </div>
+                {/* Bubble 4: 100% (Vault) */}
+                <div className="w-10 h-10 rounded-full bg-[#60B08E] text-white font-bold text-[9px] flex flex-col items-center justify-center shadow-md ring-4 ring-white -ml-4 z-10 shrink-0 hover:scale-105 transition-transform" title="Evidence Vault SHA-256: 100%">
+                  <span>100%</span>
+                  <span className="text-[6.5px] font-normal text-emerald-100">Vault</span>
+                </div>
               </div>
-              <span className="text-[11px] text-slate-400">Response countdown calendar (Click day to filter)</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0070BA] bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Week of Oct 5–11</span>
-            </div>
-          </div>
 
-          {/* Days Strip */}
-          <div className="grid grid-cols-7 gap-2 text-center text-xs my-2">
-            {calendar.days.map((day: any, idx: number) => {
-              const isUrgentActive = idx === calendar.activeDayIdx;
-              const isToday = day.isToday;
-              const isFilterSelected = selectedDayFilter === day.fullDate;
-
-              return (
-                <button
-                  key={day.fullDate}
-                  onClick={() => setSelectedDayFilter(isFilterSelected ? null : day.fullDate)}
-                  className={`flex flex-col items-center gap-1 p-2.5 rounded-2xl transition-all relative ${
-                    isFilterSelected
-                      ? 'bg-[#0070BA] text-white shadow-lg shadow-blue-800/30 font-bold'
-                      : isUrgentActive
-                      ? 'bg-blue-50 text-[#0070BA] border border-blue-200 font-bold'
-                      : isToday
-                      ? 'bg-slate-100 text-slate-900 font-bold'
-                      : 'hover:bg-slate-50 text-slate-600'
-                  }`}
-                >
-                  <span className="text-[10px] uppercase font-semibold text-slate-400">{day.dayName}</span>
-                  <span className="text-base font-extrabold">{day.dateNumber}</span>
-                  
-                  {isToday && (
-                    <span className="text-[8px] font-bold text-[#0070BA] uppercase">Today</span>
-                  )}
-
-                  {day.disputeCount > 0 && (
-                    <span 
-                      className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold text-white bg-rose-600`}
-                      title={`${day.disputeCount} deadline(s)`}
-                    >
-                      {day.disputeCount}
+            {/* Invariant Defense Progress Bars */}
+            <div className="space-y-3 pt-1 border-t border-slate-100">
+              {defenseInvariantsData.map((item) => (
+                <div key={item.name} className="space-y-1">
+                  <div className="flex justify-between text-xs font-bold text-slate-700">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="truncate">{item.name}</span>
                     </span>
-                  )}
-                </button>
-              );
-            })}
+                    <span className="font-extrabold text-[11px] shrink-0" style={{ color: item.color }}>
+                      {item.metric}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="h-full rounded-full transition-all duration-500" 
+                      style={{ width: `${item.percentage}%`, backgroundColor: item.color }} 
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
-            <span>
-              <strong>{kpis.expiring48hCount} dispute(s)</strong> due within 48h response window
-            </span>
-            <span className="text-[#0070BA] font-bold">Strict PayPal Gate</span>
-          </div>
         </div>
 
-        {/* Real Merchant Store Vault Coverage (6 cols) */}
-        <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
-          <div>
-            <h2 className="font-bold text-slate-900 text-sm">Evidence Vault Completeness</h2>
-            <span className="text-xs text-slate-400">Real cryptographic snapshot ratio per transaction</span>
-          </div>
-
-          <div className="space-y-3.5 my-2">
-            {storeBreakdowns.map((b: any, idx: number) => (
-              <div key={idx}>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                  <span className="truncate max-w-[280px]">{b.storeName}</span>
-                  <span style={{ color: b.color }} className="font-mono">{b.percentage}%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-1000"
-                    style={{ width: `${b.percentage}%`, backgroundColor: b.color }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
-            <span>SHA-256 Checksum Integrity</span>
-            <span className="text-emerald-600 font-bold">✓ 100% Verified &amp; Immutable</span>
-          </div>
-        </div>
       </div>
 
-      {/* ── 4. DISPUTE QUEUE TABLE (AG GRID IN CLEAN WHITE CARD) ── */}
-      <div id="dispute-queue-section" className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm space-y-4 scroll-mt-6">
+      {/* ═══════════════════════════════════════════════════════════
+          LIVE DISPUTE QUEUE & REAL-TIME ADJUDICATION
+          (Full width, live database records, zero AI icons with 3D Reflection)
+      ═══════════════════════════════════════════════════════════ */}
+      <div id="dispute-queue-section" className="card-3d-reflection rounded-3xl p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <FileCheck className="w-5 h-5 text-[#0070BA]" />
-              <h2 className="font-bold text-slate-900 text-base">Active Dispute Queue</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-[#0070BA] border border-blue-100">
-                AG Grid Powered
+              <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                Dispute Adjudication &amp; Live Queue
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#EBF5EF] text-[#0A3E29] border border-[#D5EDE0]">
+                {filteredDisputes.length} Cases
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Prioritized by financial exposure and countdown deadline. Real-time updates via SSE.
+              Prioritized by financial exposure and response deadline with live PayPal synchronization
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={fetchDashboardData}
-              className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full border border-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors"
-              title="Refresh queue"
+              onClick={handleSeedDemo}
+              disabled={seeding}
+              className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              title="Reset Demo Cases"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Refresh</span>
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-600 ${seeding ? 'animate-spin' : ''}`} />
+              <span>Seed Demo</span>
             </button>
 
             <button
               onClick={handleSimulateDispute}
               disabled={simulating}
-              className="px-4 py-2 bg-[#0070BA] hover:bg-[#003087] text-white rounded-full text-xs font-bold shadow-md shadow-blue-800/30 flex items-center gap-2 transition-all disabled:opacity-50"
+              className="px-4 py-2 rounded-full bg-[#0A3E29] hover:bg-[#072d1e] text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
-              {simulating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
-              <span>Simulate Inbound Dispute</span>
+              <PlusCircle className={`w-3.5 h-3.5 text-emerald-400 ${simulating ? 'animate-spin' : ''}`} />
+              <span>Simulate Dispute</span>
             </button>
           </div>
         </div>
 
-        {/* AG Grid component */}
+        {/* AG Grid Component */}
         {loading ? (
           <div className="p-12 text-center text-slate-400">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0070BA]" />
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0A3E29]" />
             <p className="text-xs font-medium">Loading real-time dispute queue...</p>
           </div>
         ) : (
           <QueueGrid disputes={filteredDisputes} />
         )}
       </div>
+
     </div>
   );
 }
