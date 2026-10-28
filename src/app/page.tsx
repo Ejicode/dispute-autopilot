@@ -253,6 +253,21 @@ export default function DashboardPage() {
     return null;
   };
 
+  const handleFilterByCategory = (categoryName: string) => {
+    let reason = categoryName;
+    if (categoryName.includes('Not Received') || categoryName.includes('INR')) {
+      reason = 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED';
+    } else if (categoryName.includes('Not As Described') || categoryName.includes('SNAD')) {
+      reason = 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED';
+    } else if (categoryName.includes('Unauthor') || categoryName.includes('UNAUTH')) {
+      reason = 'UNAUTHORISED';
+    }
+    setSelectedCategory((prev) => (prev === reason ? null : reason));
+    setTimeout(() => {
+      document.getElementById('dispute-queue-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  };
+
   return (
     <div className="space-y-6">
       {/* Active Filter Clear Banner */}
@@ -262,7 +277,7 @@ export default function DashboardPage() {
             <Filter className="w-4 h-4 text-[#003087]" />
             <span>
               Filtering queue by: 
-              {selectedCategory && <strong className="ml-1">Reason ({selectedCategory})</strong>}
+              {selectedCategory && <strong className="ml-1">Reason ({selectedCategory.replace(/_/g, ' ')})</strong>}
               {selectedDayFilter && <strong className="ml-1">Date ({selectedDayFilter})</strong>}
             </span>
           </div>
@@ -271,7 +286,7 @@ export default function DashboardPage() {
               setSelectedCategory(null);
               setSelectedDayFilter(null);
             }}
-            className="text-xs font-bold text-[#0070BA] hover:underline"
+            className="text-xs font-bold text-[#0070BA] hover:underline cursor-pointer"
           >
             Clear Filter &amp; Show All
           </button>
@@ -283,20 +298,25 @@ export default function DashboardPage() {
         
         {/* ═══════════════════════════════════════════════════════════
             LEFT COLUMN (~68% width on desktop)
-            - 2x2 Metric Cards (Top-left is signature solid Forest Green)
+            - 2x2 Metric Cards (All fully clickable to relevant sections)
             - Paired Dual-Bar Chart ("Customer Habits / Dispute Flow")
             - Active Dispute Queue Table Card
         ═══════════════════════════════════════════════════════════ */}
         <div className="xl:col-span-8 space-y-6">
           
-          {/* 2x2 Balanced Metric Cards Grid */}
+          {/* 2x2 Balanced Metric Cards Grid — Clickable & Interactive */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
-            {/* Card 1: PayPal Navy Signature Card */}
-            <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white rounded-3xl p-5 sm:p-6 shadow-md shadow-blue-950/20 flex flex-col justify-between min-h-[160px] relative overflow-hidden group card-interactive">
+            {/* Card 1: PayPal Navy Signature Card -> Links to Storefront Sales */}
+            <Link
+              href="/storefront"
+              className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white rounded-3xl p-5 sm:p-6 shadow-md shadow-blue-950/20 flex flex-col justify-between min-h-[160px] relative overflow-hidden group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all block"
+              title="Click to view Protected Storefront Sales & Orders"
+            >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-blue-100/90">
-                  Protected Volume
+                <span className="text-xs font-semibold text-blue-100/90 flex items-center gap-1.5">
+                  <span>Protected Volume</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </span>
                 <span className="bg-[#FFC439] text-[#001C48] font-black text-[11px] px-2.5 py-0.5 rounded-full shadow-sm">
                   Live DB
@@ -311,20 +331,25 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between text-xs text-blue-100/80 pt-2 border-t border-white/15">
                 <span>{kpis.orderCount} store orders protected</span>
-                <span className="font-bold text-emerald-300 flex items-center gap-1">
+                <span className="font-bold text-emerald-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  SHA-256 Vault
+                  <span>SHA-256 Vault →</span>
                 </span>
               </div>
-            </div>
+            </Link>
 
-            {/* Card 2: Total Orders */}
-            <div className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive">
+            {/* Card 2: Total Orders -> Links to Storefront Orders */}
+            <Link
+              href="/storefront"
+              className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] hover:border-[#003087]/50 hover:shadow-lg transition-all block"
+              title="Click to view all Storefront Transactions & Orders"
+            >
               <div className="flex items-center justify-between relative z-10">
-                <span className="text-xs font-semibold text-slate-600">
-                  Total Orders
+                <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                  <span>Total Orders</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full">
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
                   {kpis.orderCount} Orders
                 </span>
               </div>
@@ -337,17 +362,24 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
                 <span>Store transactions</span>
-                <span className="text-[#0070BA] font-bold">Verified</span>
-              </div>
-            </div>
-
-            {/* Card 3: Unique Customers */}
-            <div className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive">
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-xs font-semibold text-slate-600">
-                  Unique Customers
+                <span className="text-[#0070BA] font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  <span>View Orders →</span>
                 </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full">
+              </div>
+            </Link>
+
+            {/* Card 3: Unique Customers -> Links to Merchant Profile */}
+            <Link
+              href="/profile"
+              className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] hover:border-[#003087]/50 hover:shadow-lg transition-all block"
+              title="Click to view Merchant Profile & Customer Telemetry"
+            >
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                  <span>Unique Customers</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </span>
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
                   {kpis.customerCount} Buyers
                 </span>
               </div>
@@ -360,17 +392,24 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
                 <span>Active buyer accounts</span>
-                <span className="text-emerald-600 font-bold">Protected</span>
-              </div>
-            </div>
-
-            {/* Card 4: Evidence Vault */}
-            <div className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive">
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-xs font-semibold text-slate-600">
-                  Evidence Vault
+                <span className="text-emerald-600 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  <span>View Profile →</span>
                 </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full">
+              </div>
+            </Link>
+
+            {/* Card 4: Evidence Vault -> Links to Case Evidence Vault */}
+            <Link
+              href="/case/dsp_hero_1240"
+              className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] hover:border-[#003087]/50 hover:shadow-lg transition-all block"
+              title="Click to inspect SHA-256 Cryptographic Evidence Vault"
+            >
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                  <span>Evidence Vault</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </span>
+                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
                   {kpis.evidenceCount} Files
                 </span>
               </div>
@@ -383,9 +422,11 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
                 <span>Cryptographic proof</span>
-                <span className="text-[#0070BA] font-bold">SHA-256</span>
+                <span className="text-[#0070BA] font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  <span>Inspect Vault →</span>
+                </span>
               </div>
-            </div>
+            </Link>
 
           </div>
 
@@ -525,7 +566,8 @@ export default function DashboardPage() {
                       <Cell 
                         key={`cell-${index}`} 
                         fill={entry.color} 
-                        className="cursor-pointer hover:opacity-90 transition-opacity" 
+                        className="cursor-pointer hover:opacity-80 transition-opacity" 
+                        onClick={() => handleFilterByCategory(entry.name)}
                       />
                     ))}
                   </Pie>
@@ -533,34 +575,59 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </div>
 
-            {/* Product Category Rows: INR, SNAD, Unauthorised */}
+            {/* Product Category Rows: INR, SNAD, Unauthorised (Clickable Filter Buttons) */}
             <div className="space-y-2.5 pt-1">
-              {productStatData.map((item) => (
-                <div
-                  key={item.name}
-                  className="w-full flex items-center justify-between p-2 rounded-2xl bg-white/70 hover:bg-white transition-all shadow-xs"
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <span className="text-xs font-semibold text-slate-800 truncate">{item.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-black text-slate-900">{item.value.toLocaleString()} cases</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-[#003087]">
-                      {item.change}
-                    </span>
-                  </div>
-                </div>
-              ))}
+              {productStatData.map((item) => {
+                const isSelected = selectedCategory && (
+                  (item.name.includes('Received') && selectedCategory === 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED') ||
+                  (item.name.includes('Described') && selectedCategory === 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED') ||
+                  (item.name.includes('Unauthor') && selectedCategory === 'UNAUTHORISED')
+                );
+
+                return (
+                  <button
+                    key={item.name}
+                    type="button"
+                    onClick={() => handleFilterByCategory(item.name)}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-2xl transition-all shadow-xs cursor-pointer text-left ${
+                      isSelected
+                        ? 'bg-blue-50 border-2 border-[#003087] shadow-sm scale-[1.01]'
+                        : 'bg-white/80 hover:bg-white hover:border-slate-300 border border-slate-200/60'
+                    }`}
+                    title={`Click to filter Dispute Queue by ${item.name}`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                      <span className={`text-xs font-semibold truncate ${isSelected ? 'text-[#003087] font-bold' : 'text-slate-800'}`}>
+                        {item.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-black text-slate-900">{item.value.toLocaleString()} cases</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-[#003087] text-white' : 'bg-blue-100 text-[#003087]'}`}>
+                        {isSelected ? 'Filtered ✓' : item.change}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* ── Bottom Card: Security Defense Coverage (Overlapping Bubbles + Invariant Defense Bars) ── */}
-          <div className="card-3d-reflection bg-white rounded-3xl p-6 space-y-5 hover:-translate-y-1 transition-all duration-300">
-            <div>
-              <h3 className="text-base font-black text-slate-900 tracking-tight">
-                Security Defense Coverage
+          {/* ── Bottom Card: Security Defense Coverage (Clickable Link to Trust Lab) ── */}
+          <Link
+            href="/trust-lab"
+            className="card-3d-reflection bg-white rounded-3xl p-6 space-y-5 hover:-translate-y-1 hover:border-[#003087]/50 hover:shadow-lg transition-all duration-300 block cursor-pointer group"
+            title="Click to run Trust Lab penetration attack suite"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <span>Security Defense Coverage</span>
+                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
               </h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                6/6 BLOCKED
+              </span>
             </div>
 
             {/* Balanced Non-Overlapping Security Pillars */}
@@ -605,7 +672,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Link>
 
         </div>
 
