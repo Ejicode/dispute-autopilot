@@ -97,31 +97,26 @@ export default function EvidenceVaultPage() {
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       
       {/* ── Top Header Bar ── */}
-      <div className="card-3d-reflection rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <Link
-              href="/"
-              className="text-xs font-semibold text-slate-500 hover:text-[#003087] flex items-center gap-1 transition-colors mr-1"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Dashboard</span>
-            </Link>
-            <span className="text-slate-300">/</span>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <ShieldCheck className="w-6 h-6 text-[#003087]" />
-              <span>Evidence Vault</span>
-            </h1>
-            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
-              SHA-256 Chained
-            </span>
-            <span className="bg-blue-50 text-[#003087] border border-blue-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-              Immutable
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 max-w-2xl">
-            Cryptographic proof captured at payment time. Every record is hashed with SHA-256 for instant PayPal Seller Protection verification (§ 11.3 &amp; § 11.3(b)).
-          </p>
+      <div className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <Link
+            href="/"
+            className="text-xs font-semibold text-slate-500 hover:text-[#003087] flex items-center gap-1 transition-colors mr-1"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Dashboard</span>
+          </Link>
+          <span className="text-slate-300">/</span>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <ShieldCheck className="w-6 h-6 text-[#003087]" />
+            <span>Evidence Vault</span>
+          </h1>
+          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+            SHA-256 Chained
+          </span>
+          <span className="bg-blue-50 text-[#003087] border border-blue-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+            Immutable
+          </span>
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
@@ -148,68 +143,86 @@ export default function EvidenceVaultPage() {
         </div>
       </div>
 
-      {/* ── 4 KPI Telemetry Cards ── */}
+      {/* ── 4 KPI Telemetry Cards — Styled & Clean ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>Total Vault Records</span>
-            <Database className="w-4 h-4 text-[#003087]" />
+        {/* Card 1: Total Records */}
+        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between min-h-[140px] group hover:scale-[1.02] transition-transform">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Records</span>
+            <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-[#003087] border border-blue-100">
+              <Database className="w-4 h-4" />
+            </div>
           </div>
-          <div className="my-2">
-            <span className="text-3xl font-black text-slate-900 leading-none">
+          <div className="my-1.5">
+            <span className="text-3xl font-black text-slate-900 tracking-tight leading-none">
               {items.length}
             </span>
-            <span className="text-xs text-slate-500 font-medium ml-1.5">Files Hashed</span>
           </div>
-          <div className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 pt-1.5 border-t border-slate-100">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-            <span>100% Chain-of-Custody</span>
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Active Vault
+            </span>
           </div>
         </div>
 
-        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>Cryptographic Integrity</span>
-            <Hash className="w-4 h-4 text-[#0070BA]" />
+        {/* Card 2: Hash Standard */}
+        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between min-h-[140px] group hover:scale-[1.02] transition-transform">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hash Standard</span>
+            <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center text-[#0070BA] border border-sky-100">
+              <Hash className="w-4 h-4" />
+            </div>
           </div>
-          <div className="my-2">
-            <span className="text-3xl font-black text-slate-900 leading-none">
+          <div className="my-1.5">
+            <span className="text-2xl font-black text-slate-900 tracking-tight font-mono leading-none">
               SHA-256
             </span>
           </div>
-          <div className="text-[11px] text-slate-500 font-medium pt-1.5 border-t border-slate-100">
-            <span>Zero hash collisions detected</span>
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#003087] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+              Tamper-Proof
+            </span>
           </div>
         </div>
 
-        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>Capture Latency</span>
-            <FileCheck className="w-4 h-4 text-emerald-600" />
+        {/* Card 3: Capture Latency */}
+        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between min-h-[140px] group hover:scale-[1.02] transition-transform">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Capture Time</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+              <FileCheck className="w-4 h-4" />
+            </div>
           </div>
-          <div className="my-2">
-            <span className="text-3xl font-black text-emerald-600 leading-none">
-              &lt;4s
+          <div className="my-1.5">
+            <span className="text-3xl font-black text-emerald-600 tracking-tight leading-none">
+              &lt; 4s
             </span>
-            <span className="text-xs text-slate-500 font-medium ml-1.5">Pre-Dispute</span>
           </div>
-          <div className="text-[11px] text-slate-500 font-medium pt-1.5 border-t border-slate-100">
-            <span>Captured at payment checkout</span>
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              Pre-Dispute
+            </span>
           </div>
         </div>
 
-        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>Policy Grounding</span>
-            <Shield className="w-4 h-4 text-[#003087]" />
+        {/* Card 4: Policy Match */}
+        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between min-h-[140px] group hover:scale-[1.02] transition-transform">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Policy Cited</span>
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-[#003087] border border-indigo-100">
+              <Shield className="w-4 h-4" />
+            </div>
           </div>
-          <div className="my-2">
-            <span className="text-2xl font-black text-slate-900 leading-none">
-              § 11.3 / § 11.3(b)
+          <div className="my-1.5">
+            <span className="text-2xl font-black text-slate-900 tracking-tight leading-none">
+              § 11.3 &amp; (b)
             </span>
           </div>
-          <div className="text-[11px] text-[#0070BA] font-bold pt-1.5 border-t border-slate-100">
-            <span>PayPal Seller Protection</span>
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#0070BA] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+              Seller Protection
+            </span>
           </div>
         </div>
       </div>
