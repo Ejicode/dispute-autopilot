@@ -19,6 +19,7 @@ import (
 	"github.com/Ejicode/dispute-autopilot/internal/config"
 	"github.com/Ejicode/dispute-autopilot/internal/demo"
 	"github.com/Ejicode/dispute-autopilot/internal/httpx"
+	"github.com/Ejicode/dispute-autopilot/internal/rag"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
 	"github.com/Ejicode/dispute-autopilot/internal/trustlab"
 	"github.com/Ejicode/dispute-autopilot/internal/types"
@@ -630,7 +631,15 @@ const geminiSystemPromptSuffix = `
 
 Respond helpfully, concisely, and cite exact numbers from the data where relevant.`
 
-// callGemini asks the configured LLM; callers fall back to the dynamic dialogue engine.
+// candidateGeminiModels are tried in sequence to prevent 503 high-demand or model deprecation errors.
+var candidateGeminiModels = []string{
+	"gemini-3.5-flash",
+	"gemini-3.5-flash-lite",
+	"gemini-3.1-flash-lite",
+	"gemini-3-flash-preview",
+}
+
+// callGemini asks the configured LLM using resilient multi-model cascading.
 func callGemini(ctx context.Context, message, contextText string, history []map[string]any, clientKey string) (string, error) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if clientKey != "" {
@@ -640,6 +649,7 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 	if apiKey == "" {
 		return "", errors.New("no Gemini API key configured")
 	}
+
 	contents := []map[string]any{}
 	start := len(history) - 8
 	if start < 0 {
@@ -659,54 +669,98 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 		"role":  "user",
 		"parts": []map[string]any{{"text": message}},
 	})
+
+	systemPrompt := geminiSystemPromptPrefix + contextText + geminiSystemPromptSuffix
 	payload, err := json.Marshal(map[string]any{
-		"system_instruction": map[string]any{"parts": []map[string]any{{"text": geminiSystemPromptPrefix + contextText + geminiSystemPromptSuffix}}},
+		"system_instruction": map[string]any{"parts": []map[string]any{{"text": systemPrompt}}},
 		"contents":           contents,
-		"generationConfig":   map[string]any{"maxOutputTokens": 600, "temperature": 0.6},
+		"generationConfig":   map[string]any{"maxOutputTokens": 4096, "temperature": 0.4},
 	})
 	if err != nil {
 		return "", err
 	}
-	model := os.Getenv("GEMINI_MODEL")
-	if model == "" {
-		model = os.Getenv("AI_MODEL_NAME")
+
+	// Build models to try: explicit model first if valid, then candidate list
+	modelsToTry := []string{}
+	preferred := os.Getenv("GEMINI_MODEL")
+	if preferred == "" {
+		preferred = os.Getenv("AI_MODEL_NAME")
 	}
-	if model == "" || model == "DisputeAutopilot-Agent-v1" || model == "DisputeAutopilot-Deterministic-v2" || model == "gemini-2.0-flash" || model == "gemini-3.8-flash" {
-		model = "gemini-3.5-flash"
+	if preferred != "" && preferred != "DisputeAutopilot-Agent-v1" && preferred != "DisputeAutopilot-Deterministic-v2" && preferred != "gemini-2.0-flash" && preferred != "gemini-3.8-flash" {
+		modelsToTry = append(modelsToTry, preferred)
 	}
-	endpoint := "https://generativelanguage.googleapis.com/v1beta/models/" + url.PathEscape(model) + ":generateContent?key=" + url.QueryEscape(apiKey)
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
-	if err != nil {
-		return "", err
-	}
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("x-goog-api-key", apiKey)
-	response, err := (&http.Client{Timeout: 20 * time.Second}).Do(request)
-	if err != nil {
-		return "", err
-	}
-	defer response.Body.Close()
-	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return "", fmt.Errorf("gemini error: %d", response.StatusCode)
-	}
-	var data struct {
-		Candidates []struct {
-			Content struct {
-				Parts []struct {
-					Text string `json:"text"`
-				} `json:"parts"`
-			} `json:"content"`
-		} `json:"candidates"`
-	}
-	if err := json.NewDecoder(response.Body).Decode(&data); err != nil {
-		return "", err
-	}
-	if len(data.Candidates) > 0 && len(data.Candidates[0].Content.Parts) > 0 {
-		if text := data.Candidates[0].Content.Parts[0].Text; text != "" {
-			return text, nil
+	for _, m := range candidateGeminiModels {
+		duplicate := false
+		for _, prev := range modelsToTry {
+			if prev == m {
+				duplicate = true
+				break
+			}
+		}
+		if !duplicate {
+			modelsToTry = append(modelsToTry, m)
 		}
 	}
-	return "Sorry, I could not generate a response.", nil
+
+	var lastErr error
+	for _, model := range modelsToTry {
+		endpoint := "https://generativelanguage.googleapis.com/v1beta/models/" + url.PathEscape(model) + ":generateContent?key=" + url.QueryEscape(apiKey)
+		reqCtx, cancel := context.WithTimeout(ctx, 12*time.Second)
+		request, err := http.NewRequestWithContext(reqCtx, http.MethodPost, endpoint, bytes.NewReader(payload))
+		if err != nil {
+			cancel()
+			lastErr = err
+			continue
+		}
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("x-goog-api-key", apiKey)
+
+		response, err := (&http.Client{Timeout: 12 * time.Second}).Do(request)
+		if err != nil {
+			cancel()
+			lastErr = err
+			continue
+		}
+
+		respBody, readErr := io.ReadAll(response.Body)
+		response.Body.Close()
+		cancel()
+
+		if readErr != nil {
+			lastErr = readErr
+			continue
+		}
+
+		if response.StatusCode < 200 || response.StatusCode >= 300 {
+			lastErr = fmt.Errorf("gemini %s returned HTTP %d: %s", model, response.StatusCode, string(respBody))
+			continue
+		}
+
+		var data struct {
+			Candidates []struct {
+				Content struct {
+					Parts []struct {
+						Text string `json:"text"`
+					} `json:"parts"`
+				} `json:"content"`
+			} `json:"candidates"`
+		}
+		if err := json.Unmarshal(respBody, &data); err != nil {
+			lastErr = err
+			continue
+		}
+
+		if len(data.Candidates) > 0 && len(data.Candidates[0].Content.Parts) > 0 {
+			if text := strings.TrimSpace(data.Candidates[0].Content.Parts[0].Text); text != "" {
+				return text, nil
+			}
+		}
+	}
+
+	if lastErr != nil {
+		return "", lastErr
+	}
+	return "I am monitoring your store with live dispute and vault intelligence. How can I help you resolve this?", nil
 }
 
 // readLooseJSON decodes a JSON object without enforcing content-type.
@@ -895,13 +949,21 @@ func (a *API) assistantSend(w http.ResponseWriter, r *http.Request, user *types.
 		return err
 	}
 
+	ragRes, _ := rag.Retrieve(r.Context(), db, user.ID, message)
+	combinedContext := snap.ContextText
+	var citedSources []string
+	if ragRes != nil {
+		combinedContext += "\n\n" + ragRes.ContextText
+		citedSources = ragRes.CitedSources
+	}
+
 	action, target, actionText := detectAndExecuteAction(r.Context(), db, snap, message)
 	var aiText, spokenText string
 
 	if actionText != "" {
 		aiText = actionText
 		spokenText = cleanForTTS(actionText)
-	} else if text, err := callGemini(r.Context(), message, snap.ContextText, history, clientKey); err == nil && text != "" {
+	} else if text, err := callGemini(r.Context(), message, combinedContext, history, clientKey); err == nil && text != "" {
 		aiText = text
 		spokenText = cleanForTTS(text)
 	} else {
@@ -918,15 +980,17 @@ func (a *API) assistantSend(w http.ResponseWriter, r *http.Request, user *types.
 
 	httpx.JSON(w, http.StatusOK, map[string]any{
 		"message": map[string]any{
-			"id":          aiMessageID,
-			"role":        "assistant",
-			"content":     aiText,
-			"spoken_text": spokenText,
-			"created_at":  aiNow,
+			"id":            aiMessageID,
+			"role":          "assistant",
+			"content":       aiText,
+			"spoken_text":   spokenText,
+			"created_at":    aiNow,
+			"cited_sources": citedSources,
 		},
-		"action":      action,
-		"target":      target,
-		"spoken_text": spokenText,
+		"action":        action,
+		"target":        target,
+		"spoken_text":   spokenText,
+		"cited_sources": citedSources,
 	})
 	return nil
 }

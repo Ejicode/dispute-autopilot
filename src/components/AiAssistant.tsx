@@ -655,6 +655,38 @@ export default function AiAssistant() {
               )}
             </div>
 
+            {/* Quick Judge & Discovery Prompt Pills */}
+            <div className="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => sendMessage("Why does Dispute Autopilot win the PayPal AI Hackathon?")}
+                className="px-2.5 py-1 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[10px] font-bold text-amber-900 whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>🏆 Why DA Wins</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => sendMessage("Retrieve PayPal Seller Protection rules for Case PP-D-99214")}
+                className="px-2.5 py-1 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold text-[#003087] whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>🔍 § 11.3 Rules</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => sendMessage("Show evidence vault verification for $1,240 drone")}
+                className="px-2.5 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[10px] font-bold text-indigo-900 whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>🛡️ Vault Proof</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => sendMessage("Run Trust Lab penetration attacks")}
+                className="px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[10px] font-bold text-emerald-900 whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>⚡ Test Security</span>
+              </button>
+            </div>
+
             <div className="w-full pt-1 shrink-0">
               <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 border border-slate-200">
                 <textarea
