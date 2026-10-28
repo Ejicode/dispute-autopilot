@@ -655,14 +655,14 @@ export default function AiAssistant() {
               )}
             </div>
 
-            {/* Quick Judge & Discovery Prompt Pills */}
+            {/* Quick Merchant Operations Prompt Pills */}
             <div className="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 shrink-0">
               <button
                 type="button"
-                onClick={() => sendMessage("Why does Dispute Autopilot win the PayPal AI Hackathon?")}
+                onClick={() => sendMessage("Show summary of active disputes and at-risk capital")}
                 className="px-2.5 py-1 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[10px] font-bold text-amber-900 whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1"
               >
-                <span>🏆 Why DA Wins</span>
+                <span>📊 Dispute Overview</span>
               </button>
               <button
                 type="button"

@@ -10,12 +10,10 @@ import {
   Menu,
   UserCheck,
   LogOut,
-  X,
-  Trophy
+  X
 } from 'lucide-react';
 import { useUser } from './UserContext';
 import SearchBar from './SearchBar';
-import HackathonShowcaseModal from './HackathonShowcaseModal';
 
 interface TopHeaderProps {
   title?: string;
@@ -49,7 +47,6 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [showcaseOpen, setShowcaseOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const { activeUser, logout } = useUser();
 
@@ -87,16 +84,6 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
 
       {/* ── Right Side: Mail Envelope & User Profile Pill ── */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-
-        {/* Hackathon Showcase Button */}
-        <button
-          onClick={() => setShowcaseOpen(true)}
-          className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white font-extrabold text-xs shadow-md shadow-amber-500/20 btn-press transition-all cursor-pointer"
-          title="Open PayPal AI Hackathon Showcase"
-        >
-          <Trophy className="w-4 h-4 text-amber-200 animate-pulse" />
-          <span>Hackathon Showcase</span>
-        </button>
 
         {/* Circular Mail / Envelope Button with Popover */}
         <div className="relative">
@@ -265,8 +252,6 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
           )}
         </div>
       </div>
-
-      <HackathonShowcaseModal open={showcaseOpen} onClose={() => setShowcaseOpen(false)} />
     </header>
   );
 }

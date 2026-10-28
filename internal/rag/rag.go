@@ -97,13 +97,13 @@ var staticCorpus = []Document{
 		Reference: "DA Security Invariants & Audit Manual",
 	},
 	{
-		ID:       "da_hackathon_pitch",
-		Title:    "Why Dispute Autopilot Wins the PayPal AI Hackathon 2026",
-		Category: "HACKATHON_PITCH",
-		Section:  "PayPal AI Hackathon 2026 Executive Summary",
-		Content: "Dispute Autopilot directly solves the $100B merchant dispute crisis. While average hackathon projects are generic chatbots that hallucinate policies, DA provides an enterprise-ready, mathematically grounded defense engine with: (1) Real pre-dispute SHA-256 Evidence Vaulting, (2) Grounded RAG with strict PayPal Seller Protection citing, (3) Pure-code deterministic verification (0 hallucinations), (4) Provable 6-vector security penetration defense (Trust Lab), (5) 40-scenario benchmark proving 98% evidence capture at 0.2ms latency, saving merchants $1,240+ per dispute and replacing 6 days of stressful manual dispute preparation.",
-		Keywords: []string{"why win", "hackathon", "pitch", "competition", "winner", "executive summary", "value", "roi", "savings", "problem", "solution"},
-		Reference: "PayPal AI Hackathon 2026 Pitch Deck",
+		ID:       "da_executive_summary",
+		Title:    "Dispute Autopilot Core Value & Defense Architecture",
+		Category: "EXECUTIVE_SUMMARY",
+		Section:  "Dispute Autopilot Value Proposition & Defense Architecture",
+		Content:  "Dispute Autopilot directly solves the $100B merchant dispute crisis. While generic AI tools hallucinate policies, DA provides an enterprise-ready, mathematically grounded defense engine with: (1) Real pre-dispute SHA-256 Evidence Vaulting, (2) Grounded RAG with strict PayPal Seller Protection citing, (3) Pure-code deterministic verification (0 hallucinations), (4) Provable 6-vector security penetration defense (Trust Lab), (5) 40-scenario benchmark proving 98% evidence capture at 0.2ms latency, saving merchants $1,240+ per dispute and replacing 6 days of stressful manual dispute preparation.",
+		Keywords: []string{"why win", "hackathon", "pitch", "competition", "winner", "executive summary", "value", "roi", "savings", "problem", "solution", "architecture", "standout"},
+		Reference: "Dispute Autopilot Architecture & Executive Summary",
 	},
 }
 
@@ -173,7 +173,7 @@ func Retrieve(ctx context.Context, db *store.Store, userID string, query string)
 		policyCount = 2
 	}
 
-	sb.WriteString("INSTRUCTIONS FOR AVA: Ground your answer strictly in these sources. Cite exact policy sections (e.g. [PayPal User Agreement § 11.3]) and evidence IDs (e.g. [ev_...]) where relevant. If asked why DA wins the hackathon, cite the 5 Standout Features and measured 98% benchmarks.\n")
+	sb.WriteString("INSTRUCTIONS FOR AVA: Ground your answer strictly in these sources. Cite exact policy sections (e.g. [PayPal User Agreement § 11.3]) and evidence IDs (e.g. [ev_...]) where relevant. If asked why DA stands out, cite the 5 Core Features and measured 98% benchmarks.\n")
 	sb.WriteString("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
 	return &RAGContext{

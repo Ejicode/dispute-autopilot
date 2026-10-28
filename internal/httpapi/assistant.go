@@ -170,7 +170,7 @@ func getMerchantSnapshot(ctx context.Context, db *store.Store, userID string) (*
 	}
 
 	context := fmt.Sprintf(`
-PAYPAL AI HACKATHON 2026 CONTEXT & LIVE STORE STATUS:
+PAYPAL MERCHANT DEFENSE CONTEXT & LIVE STORE STATUS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MERCHANT PROFILE:
 - Merchant Name: %s
@@ -428,14 +428,14 @@ func generateDynamicDialogue(ctx context.Context, db *store.Store, snap *Merchan
 		strings.Contains(norm, "project requirement") ||
 		strings.Contains(norm, "what are the features") ||
 		strings.Contains(norm, "tell me about the features") {
-		content = fmt.Sprintf("🏆 **The Five Stand-Out Features for the PayPal AI Hackathon 2026:**\n\n"+
+		content = fmt.Sprintf("🛡️ **The Five Core Defense Pillars of Dispute Autopilot:**\n\n"+
 			"1. **Evidence Vault (Win it before it is filed):** Evidence is snapshotted at payment capture with SHA-256 cryptographic hashes (%d records secured). Ready in **4 seconds** when a dispute arrives.\n\n"+
 			"2. **Cited Drafts Verified by Plain Code:** AI returns JSON citing exact vault records. Pure TypeScript code verifies tracking, dates, and amounts. Unverified claims block approval.\n\n"+
 			"3. **Money-and-Clock Triage (AG Grid):** Queue sorted by capital at risk ($%s) and deadline timer. Deterministic Evidence Strength Score (0–100) outputs **FIGHT**, **ACCEPT**, or **ASK A HUMAN**.\n\n"+
 			"4. **Trust Lab Live Security Attack Suite:** 6 live penetration vectors tested against live endpoints (forged signatures, replay attacks, prompt injection, tampered amounts, expired approvals, race conditions). All **6/6 BLOCKED** with audit proof.\n\n"+
 			"5. **Dispute Bench (40 Scenarios Benchmark):** Standardized evaluation suite across 40 dispute scenarios showing **%s evidence completeness**, **0 unsafe actions**, and **%.2fms execution** (~360,000x faster than 6-min manual baseline).",
 			snap.EvidenceCount, atRisk, snap.BenchPassRate, snap.BenchAvgMs)
-		spokenText = fmt.Sprintf("Here are the five stand-out features for the PayPal AI Hackathon. First, the Evidence Vault snapshots carrier tracking and receipts at payment capture so evidence is ready in four seconds. Second, cited drafts are verified by plain TypeScript code before human approval. Third, money-and-clock triage ranks disputes by capital at risk in AG Grid. Fourth, Trust Lab blocks six live security attacks including prompt injection. And fifth, Dispute Bench evaluates forty scenarios with %s completeness, under two millisecond execution, and zero unsafe actions.", snap.BenchPassRate)
+		spokenText = fmt.Sprintf("Here are the five core defense pillars of Dispute Autopilot. First, the Evidence Vault snapshots carrier tracking and receipts at payment capture so evidence is ready in four seconds. Second, cited drafts are verified by plain TypeScript code before human approval. Third, money-and-clock triage ranks disputes by capital at risk in AG Grid. Fourth, Trust Lab blocks six live security attacks including prompt injection. And fifth, Dispute Bench evaluates forty scenarios with %s completeness, under two millisecond execution, and zero unsafe actions.", snap.BenchPassRate)
 		return content, spokenText
 	}
 
@@ -601,13 +601,13 @@ func ruleBasedResponse(message, contextText string) string {
 	return c
 }
 
-const geminiSystemPromptPrefix = `You are Ava, the Dispute Autopilot (DA) AI Assistant — an expert autonomous agent built for the PayPal AI Hackathon 2026.
+const geminiSystemPromptPrefix = `You are Ava, the Dispute Autopilot (DA) AI Assistant — an expert autonomous agent built for PayPal sellers.
 You are embedded directly inside the DA merchant dashboard and have real-time access to the merchant's disputes, evidence vault, orders, and system security tests.
 DA stands for Dispute Autopilot. The merchant store is "DA Store".
 
-PROJECT REQUIREMENTS & TECHNICAL STANDARDS (PAYPAL AI HACKATHON 2026):
-1. PROBLEM & PRODUCT: Dispute Autopilot (DA) is an agentic dispute defense system that wins back disputed funds for PayPal sellers safely.
-2. FIVE STAND-OUT FEATURES:
+PROJECT ARCHITECTURE & TECHNICAL STANDARDS:
+1. PROBLEM & PRODUCT: Dispute Autopilot (DA) is an enterprise agentic dispute defense system that wins back disputed funds for PayPal sellers safely.
+2. FIVE CORE PILLARS:
    - Evidence Vault: Snapshots evidence at payment capture (PAYMENT.CAPTURE.COMPLETED) with SHA-256 hashes. Ready in 4 seconds when a dispute arrives.
    - Cited Drafts Verified by Plain Code: AI returns JSON claims citing vault evidence IDs. Pure TypeScript verifier verifies facts before human approval. Unverified claims block approval.
    - Money-and-Clock Triage (AG Grid): Queue sorted by money at risk and time left before deadline. Deterministic Evidence Strength Score (0-100) outputs FIGHT, ACCEPT, or ASK A HUMAN.

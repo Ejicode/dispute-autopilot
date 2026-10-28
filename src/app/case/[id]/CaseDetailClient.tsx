@@ -539,146 +539,87 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
-      {/* ── AI RAG Policy & Legal Grounding Panel ── */}
-      <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white border border-blue-200/80 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-blue-100">
+      {/* ── Policy & Legal Grounding Panel ── */}
+      <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-[#003087] text-white shadow-sm">
-              <Sparkles className="w-4 h-4 text-amber-300" />
+            <div className="p-2 rounded-xl bg-[#003087] text-white shadow-xs">
+              <ShieldCheck className="w-4 h-4 text-[#FFC439]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-[#003087] uppercase tracking-wider">
-                  AI RAG Grounding &amp; Policy Citations
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Zero Hallucination Verified
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-600 font-medium mt-0.5">
-                Rebuttal claims mapped directly to official PayPal Seller Protection guidelines &amp; Evidence Vault hashes
-              </p>
-            </div>
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+              Seller Protection Policy Citations
+            </h3>
           </div>
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white text-[#003087] border border-blue-200 shadow-2xs font-mono">
-            RAG Corpus: PayPal User Agreement § 11
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono">
+            PayPal User Agreement § 11
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3">
-          <div className="p-3.5 rounded-xl bg-white/90 border border-blue-100 shadow-2xs">
-            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-              <BookOpen className="w-3.5 h-3.5 text-blue-600" />
-              <span>Matched PayPal Policy</span>
-            </div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Matched Policy
+            </span>
             <div className="text-xs font-bold text-slate-900 mt-1">
               {dispute.reason === 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED'
-                ? 'PayPal User Agreement § 11.3 (Proof of Delivery)'
+                ? '§ 11.3 Proof of Delivery'
                 : dispute.reason === 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED'
-                ? 'PayPal User Agreement § 11.4 (SNAD Rebuttal)'
-                : 'PayPal User Agreement § 11.2 (Unauthorized Safe Harbor)'}
+                ? '§ 11.4 SNAD Rebuttal'
+                : '§ 11.2 Unauthorized Protection'}
             </div>
-            <p className="text-[11px] text-slate-600 mt-1">
-              Online viewable tracking with carrier timestamp &amp; recipient address verification.
-            </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-white/90 border border-blue-100 shadow-2xs">
-            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-              <Lock className="w-3.5 h-3.5 text-indigo-600" />
-              <span>$750+ Signature Threshold</span>
-            </div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Signature Threshold
+            </span>
             <div className="text-xs font-bold text-slate-900 mt-1">
               {dispute.amount_cents >= 75000 
-                ? '§ 11.3(b) Signature Verified on File' 
-                : 'Standard Tracking Sufficient (< $750.00)'}
+                ? '§ 11.3(b) Signature on File' 
+                : 'Standard Tracking (< $750)'}
             </div>
-            <p className="text-[11px] text-slate-600 mt-1">
-              {dispute.amount_cents >= 75000 
-                ? `Order value $${(dispute.amount_cents/100).toFixed(2)} exceeds $750; mandatory physical signature confirmed.`
-                : `Order value $${(dispute.amount_cents/100).toFixed(2)} complies with standard delivery scan requirements.`}
-            </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-white/90 border border-blue-100 shadow-2xs">
-            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Protection Outcome</span>
-            </div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Protection Status
+            </span>
             <div className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
               <Check className="w-3.5 h-3.5" />
-              <span>100% Eligible for Fund Recovery</span>
+              <span>Full Recovery Eligible</span>
             </div>
-            <p className="text-[11px] text-slate-600 mt-1">
-              Evidence items verified by plain-code algorithm against immutable SHA-256 hashes.
-            </p>
           </div>
         </div>
       </div>
 
-      {/* ── PayPal Dispute Lifecycle & Verification Stepper (With 3D Reflection) ── */}
-      <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+      {/* ── Dispute Lifecycle Stepper ── */}
+      <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl space-y-4 bg-white border border-slate-200/90 shadow-sm">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-blue-50 text-[#003087]">
               <Activity className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-                PayPal Dispute Lifecycle &amp; Verification Pipeline
-              </h3>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Cryptographic audit trail from webhook ingestion to PayPal REST API settlement
-              </p>
-            </div>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+              Dispute Lifecycle Pipeline
+            </h3>
           </div>
           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono">
-            Provider: {dispute.provenance === 'PAYPAL_SANDBOX' ? 'PayPal Sandbox REST' : dispute.provenance === 'PAYPAL_LIVE' ? 'PayPal Live Production' : 'Deterministic Sandbox Protocol'}
+            {dispute.provenance === 'PAYPAL_SANDBOX' ? 'PayPal Sandbox REST' : 'PayPal REST API'}
           </span>
         </div>
 
         {/* 5-Step Visual Stepper */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-1">
           {[
-            {
-              step: '1',
-              title: 'Inquiry / Claim',
-              desc: 'PayPal webhook verified & mapped',
-              status: 'done',
-              tag: 'INGESTED'
-            },
-            {
-              step: '2',
-              title: 'Evidence Vault',
-              desc: `${evidenceItems.length} records cryptographically signed`,
-              status: 'done',
-              tag: 'SHA-256'
-            },
-            {
-              step: '3',
-              title: 'Code Verifier',
-              desc: draft?.verified ? 'All factual claims verified' : 'Auditing evidence claims',
-              status: draft?.verified ? 'done' : 'blocked',
-              tag: draft?.verified ? 'VERIFIED' : 'BLOCKING'
-            },
-            {
-              step: '4',
-              title: 'Approval Gate',
-              desc: isResolved ? 'Approved by merchant' : review ? 'Reviewing action snapshot' : 'Awaiting human authorization',
-              status: isResolved ? 'done' : review ? 'active' : 'pending',
-              tag: isResolved ? 'APPROVED' : review ? 'IN REVIEW' : 'GATE ACTIVE'
-            },
-            {
-              step: '5',
-              title: 'PayPal REST Submit',
-              desc: isResolved ? 'Settled with PayPal' : operation?.state === 'SUCCEEDED' ? 'Payload acknowledged by PayPal' : 'Awaiting approval trigger',
-              status: isResolved || operation?.state === 'SUCCEEDED' ? 'done' : 'pending',
-              tag: isResolved ? 'RESOLVED' : operation?.state === 'SUCCEEDED' ? 'ACKNOWLEDGED' : 'PENDING'
-            }
+            { step: '1', title: 'Inquiry Ingested', status: 'done', tag: 'INGESTED' },
+            { step: '2', title: 'Evidence Vault', status: 'done', tag: 'SHA-256' },
+            { step: '3', title: 'Code Verifier', status: draft?.verified ? 'done' : 'blocked', tag: draft?.verified ? 'VERIFIED' : 'BLOCKING' },
+            { step: '4', title: 'Approval Gate', status: isResolved ? 'done' : review ? 'active' : 'pending', tag: isResolved ? 'APPROVED' : review ? 'IN REVIEW' : 'PENDING' },
+            { step: '5', title: 'PayPal REST Submit', status: isResolved || operation?.state === 'SUCCEEDED' ? 'done' : 'pending', tag: isResolved ? 'RESOLVED' : operation?.state === 'SUCCEEDED' ? 'ACKNOWLEDGED' : 'PENDING' }
           ].map((s, idx) => (
             <div
               key={idx}
-              className={`p-3.5 rounded-2xl border transition-all ${
+              className={`p-3 rounded-2xl border transition-all ${
                 s.status === 'done'
                   ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
                   : s.status === 'active'
@@ -688,7 +629,7 @@ export default function CaseDetailPage() {
                   : 'bg-slate-50/70 border-slate-200/80 text-slate-500'
               }`}
             >
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-1">
                 <span className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center ${
                   s.status === 'done'
                     ? 'bg-emerald-600 text-white'
@@ -712,8 +653,7 @@ export default function CaseDetailPage() {
                   {s.tag}
                 </span>
               </div>
-              <h4 className="text-xs font-bold text-slate-900 leading-tight">{s.title}</h4>
-              <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{s.desc}</p>
+              <h4 className="text-xs font-bold text-slate-900 leading-tight mt-1">{s.title}</h4>
             </div>
           ))}
         </div>
@@ -1002,36 +942,30 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Deterministic Code Verifier Gate Card */}
-          <div className={`p-6 rounded-3xl border shadow-sm transition-all duration-300 ${
+          <div className={`p-4 rounded-2xl border transition-all duration-300 ${
             draft?.verified
               ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
               : 'bg-rose-50/80 border-rose-300 ring-2 ring-rose-300 text-rose-900'
           }`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
                 {draft?.verified ? (
-                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                  <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-rose-600 animate-pulse" />
+                  <XCircle className="w-5 h-5 text-rose-600 animate-pulse shrink-0" />
                 )}
-                <h3 className="font-bold text-sm">
-                  Deterministic Code Verifier: {draft?.verified ? 'ALL CLAIMS VERIFIED' : 'APPROVAL BLOCKED'}
+                <h3 className="font-bold text-xs text-slate-900">
+                  Deterministic Code Verifier
                 </h3>
               </div>
-              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase ${
+              <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border uppercase shrink-0 ${
                 draft?.verified
                   ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                   : 'bg-rose-100 text-rose-800 border-rose-300'
               }`}>
-                {draft?.verified ? 'FACTS CHECKED' : 'HARD-BLOCKED'}
+                {draft?.verified ? 'ALL CLAIMS VERIFIED' : 'APPROVAL BLOCKED'}
               </span>
             </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {draft?.verified
-                ? 'Code, not the AI, verified every claimed tracking number, date, amount and address directly against the Evidence Vault.'
-                : 'Safety Enforcement: Code verifier detected unverified or mismatched factual claims. Submission to PayPal is hard-blocked until resolved.'}
-            </p>
 
             {/* Error breakdown if blocked */}
             {!draft?.verified && draft?.verification_errors && draft.verification_errors.length > 0 && (

@@ -27,7 +27,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [showDemoModal, setShowDemoModal] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
   // If already logged in, redirect to home
@@ -103,8 +102,8 @@ export default function LoginPage() {
         {/* Center: Welcome Headline */}
         <div className="relative z-30 my-auto py-6 sm:py-8 space-y-3 max-w-sm">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] font-bold text-blue-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-            <span>PayPal AI Hackathon 2026</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>Merchant Operations Console</span>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase text-white drop-shadow-md leading-none">
             Welcome
@@ -163,7 +162,6 @@ export default function LoginPage() {
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
               <div className="min-w-0">
                 <p className="font-bold">{error}</p>
-                <p className="text-[11px] text-rose-600 mt-0.5">Tip: Click "Sign in with other" below to choose from 1-click demo profiles.</p>
               </div>
             </div>
           )}
@@ -256,67 +254,10 @@ export default function LoginPage() {
               </span>
             </button>
 
-            {/* Divider: Or */}
-            <div className="relative flex items-center justify-center my-2">
-              <div className="w-full border-t border-slate-200" />
-              <span className="absolute bg-white px-3 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                Or
-              </span>
-            </div>
-
-            {/* Secondary Button: Outlined Button (Sign in with other) */}
-            <button
-              type="button"
-              onClick={() => setShowDemoModal(true)}
-              className="w-full rounded-xl bg-white border border-slate-300 hover:border-[#003087] hover:bg-blue-50/50 active:scale-[0.99] py-2.5 font-semibold text-slate-800 hover:text-[#003087] text-xs sm:text-sm tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2 hover:-translate-y-0.5 shadow-2xs"
-            >
-              <span>Sign in with other</span>
-            </button>
-
           </form>
 
-          {/* Quick 1-Click Access Chips */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">
-              <span>Quick 1-Click Access</span>
-              <span className="text-[#0070BA] font-extrabold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                Pre-configured
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                disabled={submitting || loading}
-                onClick={() => submitWithCredentials('admin@disputeautopilot.com', 'Password12345678!')}
-                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#003087] hover:bg-blue-50/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
-              >
-                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#003087]">DA Admin</span>
-                <span className="block text-[9px] text-slate-400 truncate">Dispute Lead</span>
-              </button>
-              <button
-                type="button"
-                disabled={submitting || loading}
-                onClick={() => submitWithCredentials('judge@paypal.test', 'Password12345678!')}
-                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#003087] hover:bg-blue-50/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
-              >
-                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#003087]">Judge</span>
-                <span className="block text-[9px] text-slate-400 truncate">Reviewer</span>
-              </button>
-              <button
-                type="button"
-                disabled={submitting || loading}
-                onClick={() => submitWithCredentials('sb-n0htc53113313@business.example.com', '5k8g!_0O')}
-                className="p-2 rounded-xl border border-slate-200 bg-white hover:border-[#003087] hover:bg-blue-50/50 text-left transition-all cursor-pointer group hover:-translate-y-0.5 shadow-2xs"
-              >
-                <span className="block text-[11px] font-bold text-slate-900 truncate group-hover:text-[#003087]">Sandbox</span>
-                <span className="block text-[9px] text-slate-400 truncate">NVP SOAP</span>
-              </button>
-            </div>
-          </div>
-
           {/* Bottom Register Link */}
-          <div className="text-center text-xs text-slate-500 pt-0.5">
+          <div className="text-center text-xs text-slate-500 pt-3 border-t border-slate-100">
             <span>Don't have an account? </span>
             <Link href="/register" className="font-bold text-slate-900 hover:text-[#0070BA] hover:underline">
               Sign up
@@ -327,102 +268,12 @@ export default function LoginPage() {
 
       </div>
 
-      {/* ── MODAL: Sign in with other (Full Profiles Selector) ── */}
-      {showDemoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-md bg-white card-3d-reflection rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Instant Demo Profiles</h3>
-                <p className="text-xs text-slate-500">Select any role to sign in instantly with 1 tap</p>
-              </div>
-              <button 
-                type="button" 
-                onClick={() => setShowDemoModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-2 pt-1">
-              {/* Profile 1 */}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDemoModal(false);
-                  submitWithCredentials('admin@disputeautopilot.com', 'Password12345678!');
-                }}
-                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#003087] hover:bg-blue-50/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
-              >
-                <div className="flex items-center gap-3">
-                  <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=128&q=80"
-                    alt="DA Admin"
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-[#003087]/20"
-                  />
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#003087]">DA Admin</h4>
-                    <p className="text-[11px] text-slate-500">Dispute Lead · admin@disputeautopilot.com</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#003087] opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
-
-              {/* Profile 2 */}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDemoModal(false);
-                  submitWithCredentials('judge@paypal.test', 'Password12345678!');
-                }}
-                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#003087] hover:bg-blue-50/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
-              >
-                <div className="flex items-center gap-3">
-                  <img
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&q=80"
-                    alt="Judge"
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-500/20"
-                  />
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#003087]">Hackathon Judge</h4>
-                    <p className="text-[11px] text-slate-500">PayPal Reviewer · judge@paypal.test</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#003087] opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
-
-              {/* Profile 3 */}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDemoModal(false);
-                  submitWithCredentials('sb-n0htc53113313@business.example.com', '5k8g!_0O');
-                }}
-                className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-[#003087] hover:bg-blue-50/50 text-left flex items-center justify-between transition-all group cursor-pointer hover:-translate-y-0.5 shadow-xs"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#003087] text-white flex items-center justify-center font-bold text-xs">
-                    PP
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#003087]">PayPal Sandbox Store</h4>
-                    <p className="text-[11px] text-slate-500">NVP SOAP Webhooks Merchant</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#003087] opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── MODAL: Forgot Password Helper ── */}
       {showForgotModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div className="w-full max-w-sm bg-white card-3d-reflection rounded-3xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Demo Account Credentials</h3>
+              <h3 className="text-base font-bold text-slate-900">Sign-in Assistance</h3>
               <button 
                 type="button" 
                 onClick={() => setShowForgotModal(false)}
@@ -432,7 +283,7 @@ export default function LoginPage() {
               </button>
             </div>
             <p className="text-xs text-slate-500">
-              For evaluation, use the pre-configured credentials below or click one to populate:
+              For sandbox access, you can sign in with the primary administrator account:
             </p>
             <div className="space-y-2 text-xs">
               <div 
@@ -443,19 +294,8 @@ export default function LoginPage() {
                 }}
                 className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#003087] cursor-pointer hover:-translate-y-0.5 transition-transform"
               >
-                <span className="font-bold text-slate-800 block">DA Admin</span>
-                <span className="text-[11px] text-slate-500 font-mono block">admin@disputeautopilot.com · Password12345678!</span>
-              </div>
-              <div 
-                onClick={() => {
-                  setEmail('judge@paypal.test');
-                  setPassword('Password12345678!');
-                  setShowForgotModal(false);
-                }}
-                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#003087] cursor-pointer hover:-translate-y-0.5 transition-transform"
-              >
-                <span className="font-bold text-slate-800 block">PayPal Judge</span>
-                <span className="text-[11px] text-slate-500 font-mono block">judge@paypal.test · Password12345678!</span>
+                <span className="font-bold text-slate-800 block">DA Administrator</span>
+                <span className="text-[11px] text-slate-500 font-mono block">admin@disputeautopilot.com</span>
               </div>
             </div>
           </div>

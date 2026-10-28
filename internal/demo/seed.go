@@ -432,9 +432,9 @@ func EnsureDemoAccounts(ctx context.Context) error {
 			Password:  "Password12345678!",
 		},
 		{
-			ID:        "usr_demo_judge_2026",
-			Email:     "judge@paypal.test",
-			Name:      "PayPal Hackathon Judge",
+			ID:        "usr_demo_auditor_2026",
+			Email:     "auditor@paypal.test",
+			Name:      "PayPal Risk Auditor",
 			StoreName: "DA Store",
 			Password:  "Password12345678!",
 		},

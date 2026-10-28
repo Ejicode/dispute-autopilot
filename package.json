@@ -1,7 +1,7 @@
 {
   "name": "dispute-autopilot",
   "version": "1.0.0",
-  "description": "An AI agent that wins back money for online sellers - safely. Built for the PayPal AI Hackathon 2026.",
+  "description": "An autonomous AI agent that protects merchant revenue and automates PayPal dispute defense with deterministic evidence verification.",
   "license": "MIT",
   "private": true,
   "scripts": {

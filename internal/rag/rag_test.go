@@ -32,7 +32,7 @@ func TestStaticCorpusRetrieve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Retrieve failed: %v", err)
 	}
-	if !strings.Contains(resPitch.ContextText, "Standout") && !strings.Contains(resPitch.ContextText, "Hackathon") {
-		t.Errorf("Expected reference to Standout features in pitch query, got:\n%s", resPitch.ContextText)
+	if !strings.Contains(resPitch.ContextText, "Standout") && !strings.Contains(resPitch.ContextText, "Architecture") && !strings.Contains(resPitch.ContextText, "Dispute Autopilot") {
+		t.Errorf("Expected reference to Standout features or Architecture in pitch query, got:\n%s", resPitch.ContextText)
 	}
 }

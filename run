@@ -26,7 +26,7 @@ cat << "BANNER"
              |_|                                       |_|                  
 BANNER
 echo -e "${RESET}"
-echo -e "${CYAN}${BOLD}  PayPal AI Hackathon 2026 Edition | Autonomous Dispute Defense${RESET}"
+echo -e "${CYAN}${BOLD}  Enterprise Edition | Autonomous Dispute Defense${RESET}"
 echo -e "${BLUE}  ----------------------------------------------------------------------${RESET}\n"
 
 # 1. Check Go

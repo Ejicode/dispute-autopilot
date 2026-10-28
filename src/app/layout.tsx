@@ -3,8 +3,8 @@ import './globals.css';
 import SessionProviders from '@/components/SessionProviders';
 
 export const metadata: Metadata = {
-  title: 'Dispute Autopilot | PayPal AI Hackathon 2026',
-  description: 'Production Software — Tamper-evident agentic dispute defense with Evidence Vault & Code Claim Verifier',
+  title: 'Dispute Autopilot (DA) | Enterprise PayPal Dispute Automation',
+  description: 'Enterprise-grade automated dispute defense, real-time evidence vaulting, and PayPal Seller Protection compliance',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

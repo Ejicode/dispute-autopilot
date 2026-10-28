@@ -28,7 +28,7 @@ func main() {
 	fmt.Println()
 	fmt.Println("===============================================================")
 	fmt.Println("  DISPUTE AUTOPILOT | 40-SCENARIO DISPUTE BENCHMARK RUNNER")
-	fmt.Println("  PayPal AI Hackathon 2026 - Independent Evaluation")
+	fmt.Println("  Dispute Resolution Compliance & Performance Suite")
 	fmt.Println("===============================================================")
 	fmt.Println()
 	fmt.Println("Running 40 scripted dispute scenarios...")
