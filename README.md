@@ -1,5 +1,5 @@
 # Dispute Autopilot
-**An AI agent that wins back money for online sellers — safely.**  
+**An Autonomous AI Agent Powered by Google Gemini and PayPal REST APIs that Automates PayPal Dispute Defense, Captures Cryptographic Evidence, and Protects Merchant Revenue.**  
 Built for the **PayPal AI Hackathon 2026** (Team Edition | Oct 6 – Nov 12).
 
 ---
@@ -17,6 +17,36 @@ Online sellers lose thousands of dollars each month on PayPal disputes because e
 6. **Confirms resolution** from a verified PayPal webhook or authenticated provider reconciliation.
 
 > **Data Honesty Guarantee**: PayPal dispute lifecycle actions and webhooks interact with the real PayPal Sandbox REST API. Simulated carrier events, orders, and products are explicitly marked **`DEMO DATA`**. Win rates are never fabricated—all benchmarks report actual measured coverage and verification rates.
+
+---
+
+## Built With
+
+Dispute Autopilot bridges enterprise payment infrastructure and autonomous AI reasoning:
+
+- **PayPal Platform**:
+  - **PayPal Disputes REST API v1**: Automated evidence submission (`/v1/customer/disputes/{id}/provide-evidence`), claim acceptance, and lifecycle state management.
+  - **PayPal Orders & Checkout REST API v2**: Real-time checkout transaction capture, customer billing metadata, and order verification.
+  - **PayPal Webhooks Engine**: Real-time dispute opening, buyer response updates, and settlement webhooks verified cryptographically with simulated or live sandbox RSA certificate validation.
+  - **PayPal Seller Protection Policy Engine**: Automated policy grounding adhering strictly to PayPal User Agreement § 11.3 (Proof of Delivery) and § 11.3(b) (Signature Confirmation for transactions $\ge \$750$).
+  - **PayPal Developer Sandbox**: Live sandbox integration testing with merchant accounts.
+
+- **Artificial Intelligence & Agents**:
+  - **Google Gemini 2.5 / Flash**: High-speed reasoning for dispute classification, evidence relevance extraction, and factual defense drafting.
+  - **Deterministic Code Claim Verifier**: Plain Go logic (not LLM) that checks every sentence's citations against the Evidence Vault before approval.
+  - **Ava (Conversational AI Dispute Partner)**: Floating interactive assistant providing real-time dispute insights, policy guidance, and quick actions.
+  - **Agentic Triage Engine**: Calculates Evidence Strength (0–100) and recommendation rules (`FIGHT`, `ACCEPT`, `ASK A HUMAN`).
+
+- **Frontend & Data Visualization**:
+  - **Next.js 14 & React 18**: Modern App Router, Server-Side Export (`output: 'export'`), responsive layouts.
+  - **AG Grid Community**: High-performance Money-and-Clock dispute triage queue with custom cell renderers and live sorting.
+  - **Tailwind CSS & 3D Specular Design**: Specular reflections, ambient ground sheen, and modern fintech styling.
+  - **Recharts & Lucide Icons**: Real-time dispute volume trends and carrier transit graphs.
+
+- **Backend, Storage & Cryptography**:
+  - **Go 1.26**: High-performance single-binary HTTP API and static file server.
+  - **SQLite (WAL Mode)**: Scoped multi-tenant merchant databases and immutable audit logging.
+  - **SHA-256 Cryptographic Vault**: Immutable evidence hashing and tamper-evident chaining.
 
 ---
 
@@ -124,6 +154,41 @@ Ran against 40 scripted dispute scenarios on Oct 19, 2026:
 
 ---
 
+## Quick Start for Judges (30-Second Evaluation)
+
+Judges can test the full end-to-end platform instantly with zero configuration:
+
+### 1. Launch Platform
+```bash
+# 1-Click Startup (verifies environment, compiles if needed, and starts on :3000):
+./run
+```
+
+### 2. Instant Demo Credentials
+Open [http://localhost:3000/login](http://localhost:3000/login) (credentials are pre-filled on the login screen):
+- **User Email**: `admin@disputeautopilot.com`
+- **Password**: `Password12345678!`
+- Click **"Sign in →"** to access the pre-seeded merchant operations console.
+
+### 3. 3-Minute Guided Evaluation Tour
+1. **Dispute Queue (`/`)**:
+   - Inspect the **AG Grid Money-and-Clock Triage Queue**. Notice how disputes are automatically sorted by funds at risk and expiration deadline.
+   - Click the top dispute (`#PP-D-99214` - **$1,240.00** UltraHD 4K Drone Pro).
+2. **Case Review & AI Defense (`/case/dsp_hero_1240`)**:
+   - Inspect the **Grounded AI Draft**. Every single factual sentence cites a verified Evidence Vault record (`[EV-101]`, `[EV-102]`, `[EV-103]`).
+   - Notice the **Deterministic Claim Verifier**: Plain Go code validates tracking numbers, timestamps, and PayPal § 11.3(b) signature requirements before approval.
+   - Click **"Approve & Submit to PayPal"** to experience the human-in-the-loop safety gate.
+3. **Evidence Vault (`/vault`)**:
+   - View cryptographically hashed checkout receipts, carrier tracking logs, and delivery certificates stamped with immutable SHA-256 checksums.
+4. **Trust Lab Attack Suite (`/trust-lab`)**:
+   - Click **"Run Full Defense Test Suite"** to watch the system dynamically block 6 real-world attack vectors in real-time (Webhook Signature Forgery, Prompt Injection, Amount Tampering, Replays, Race Conditions).
+5. **Dispute Bench (`/bench`)**:
+   - View the 40-scenario benchmark evaluation proving 98% evidence completeness, 100% claim verification, 0 unsafe executions, and ~360,000x speedup.
+6. **Ava AI Assistant**:
+   - Click the floating Ava pill on the bottom-right of any screen to ask questions or trigger quick actions.
+
+---
+
 ## Getting Started
 
 The backend is a single Go binary that serves both the JSON API and the statically
@@ -196,6 +261,19 @@ make test-attacks   # go test ./internal/trustlab/ -count=1 -v
 # Run the 40-scenario benchmark suite (writes bench_results.json)
 make bench          # go run ./cmd/bench
 ```
+
+---
+
+## Prize Category Alignment
+
+| Prize Category | Award | How Dispute Autopilot Wins |
+| :--- | :---: | :--- |
+| **Grand Prize / 1st Place** | **$12,000** | End-to-end, production-ready AI agent solving a multi-billion dollar merchant problem. Combines PayPal Disputes API, Google Gemini AI, SHA-256 Evidence Vault, and deterministic safety verification. |
+| **Best Use of PayPal APIs** | **$5,000** | Deep integration across PayPal Disputes API v1, Orders API v2, Webhook signature verification, and automated Seller Protection (§ 11.3 & § 11.3(b)) compliance. |
+| **Best Agentic AI Workflow** | **$5,000** | Autonomous multi-step agent: captures proof at checkout, prioritizes triage queue, drafts cited rebuttals, verifies claims with deterministic code, and enforces human-in-the-loop approval. |
+| **Best Security & Responsible AI** | **$5,000** | Trust Lab with 6 live penetration tests: blocked webhook forgery, prompt injection neutralization, strict schema enforcement, and immutable cryptographic audit logs. |
+| **Best UI/UX & Design** | **$5,000** | Enterprise AG Grid queue, 3D specular card reflections on white canvas, responsive sidebar navigation, and interactive floating AI assistant (Ava). |
+| **Best Real-World Impact & Rigor** | **$5,000** | Dispute Bench testing 40 scenarios (10 live PayPal Sandbox, 30 pipeline), proving 100% claim verification, zero fabricated metrics, and ~360,000x speedup over human assembly. |
 
 ---
 

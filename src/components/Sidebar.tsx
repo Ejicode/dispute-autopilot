@@ -173,6 +173,12 @@ export default function Sidebar({
                 <ArrowUpRight className="w-3.5 h-3.5 text-blue-200" />
               </Link>
             </div>
+
+            <div className="pt-1 text-center border-t border-white/10">
+              <span className="text-[9px] font-bold text-blue-200/75 tracking-wider uppercase block">
+                PayPal REST APIs • Gemini AI
+              </span>
+            </div>
           </div>
         ) : (
           <button

@@ -86,9 +86,14 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
         )}
 
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
-            {title}
-          </h1>
+          <div className="flex items-center">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
+              {title}
+            </h1>
+            <span className="hidden lg:inline-flex items-center gap-1 ml-2.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200/80 text-[10px] font-extrabold text-[#003087]">
+              PayPal • Gemini AI
+            </span>
+          </div>
           <p className="text-xs font-semibold text-slate-400 mt-1">
             {formattedDate}
           </p>

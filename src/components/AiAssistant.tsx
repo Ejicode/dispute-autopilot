@@ -492,8 +492,8 @@ export default function AiAssistant() {
           <span className="text-xs font-black tracking-tight text-white flex items-center gap-1.5">
             <Headphones className="w-4 h-4 text-blue-200" />
             <span>Ava</span>
-            <span className="text-[10px] text-blue-200/90 font-medium bg-white/10 px-2 py-0.5 rounded-full border border-white/15">
-              Dispute Partner
+            <span className="text-[10px] text-blue-200/90 font-bold bg-white/10 px-2 py-0.5 rounded-full border border-white/15">
+              PayPal AI Partner
             </span>
           </span>
         </button>
@@ -524,7 +524,7 @@ export default function AiAssistant() {
                   )}
                 </div>
                 <p className="text-[10px] text-blue-200/90 font-medium leading-none mt-1 truncate">
-                  Autonomous Dispute Defense Partner
+                  PayPal AI Dispute Partner • Gemini Powered
                 </p>
               </div>
             </div>
