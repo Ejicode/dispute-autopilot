@@ -96,32 +96,32 @@ export default function BenchPage() {
 
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection">
+          <div className="card-3d-reflection p-4 rounded-2xl">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Scenarios</span>
             <span className="text-2xl font-bold text-slate-900 block">{summary.totalScenarios}</span>
             <span className="text-[10px] text-slate-400">10 Live · 30 Stubbed</span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection">
+          <div className="card-3d-reflection p-4 rounded-2xl">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Evidence Complete</span>
             <span className="text-2xl font-bold text-emerald-600 block">{summary.evidenceCompleteRate}%</span>
             <span className="text-[10px] text-slate-400">Required proof held</span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection">
+          <div className="card-3d-reflection p-4 rounded-2xl">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Claims Verified</span>
             <span className="text-2xl font-bold text-[#0070BA] block">{summary.claimsVerifiedRate}%</span>
             <span className="text-[10px] text-slate-400">Code verified vs Vault</span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection">
+          <div className="card-3d-reflection p-4 rounded-2xl">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Unsafe Actions</span>
             <span className="text-2xl font-bold text-emerald-600 block">{summary.unsafeActionsExecuted}</span>
             <span className="text-[10px] text-emerald-600 font-bold">ZERO Unsafe Actions</span>
           </div>
 
           {/* Signature PayPal Navy & Blue Card */}
-          <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white p-4 rounded-2xl shadow-lg shadow-blue-950/25 card-3d-reflection">
+          <div className="card-3d-reflection-dark text-white p-4 rounded-2xl">
             <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider block mb-1">Speedup Factor</span>
             <span className="text-2xl font-bold text-white block">~{summary.speedupFactor}x</span>
             <span className="text-[10px] text-blue-100">vs 6-min manual baseline</span>
@@ -129,7 +129,7 @@ export default function BenchPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden card-3d-reflection">
+      <div className="card-3d-reflection rounded-2xl">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileCheck className="w-4 h-4 text-[#003087]" />

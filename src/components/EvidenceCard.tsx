@@ -164,10 +164,10 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
   return (
     <div
       id={`ev-${item.id}`}
-      className={`p-4 rounded-2xl border transition-all duration-200 overflow-hidden w-full min-w-0 ${
+      className={`p-4 rounded-2xl border transition-all duration-200 w-full min-w-0 card-3d-reflection ${
         isHighlighted
-          ? 'bg-blue-50/90 border-[#003087] ring-2 ring-blue-400/40 shadow-md'
-          : 'card-3d-reflection hover:border-slate-300'
+          ? 'bg-blue-50/90 border-[#003087] ring-2 ring-blue-400/40'
+          : 'hover:border-slate-300'
       }`}
     >
       {/* Card Header */}

@@ -97,7 +97,7 @@ export default function EvidenceVaultPage() {
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       
       {/* ── Top Header Bar ── */}
-      <div className="card-3d-reflection bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="card-3d-reflection rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2.5 flex-wrap">
             <Link
@@ -150,7 +150,7 @@ export default function EvidenceVaultPage() {
 
       {/* ── 4 KPI Telemetry Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card-3d-reflection bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
             <span>Total Vault Records</span>
             <Database className="w-4 h-4 text-[#003087]" />
@@ -167,7 +167,7 @@ export default function EvidenceVaultPage() {
           </div>
         </div>
 
-        <div className="card-3d-reflection bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
             <span>Cryptographic Integrity</span>
             <Hash className="w-4 h-4 text-[#0070BA]" />
@@ -182,7 +182,7 @@ export default function EvidenceVaultPage() {
           </div>
         </div>
 
-        <div className="card-3d-reflection bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
             <span>Capture Latency</span>
             <FileCheck className="w-4 h-4 text-emerald-600" />
@@ -198,7 +198,7 @@ export default function EvidenceVaultPage() {
           </div>
         </div>
 
-        <div className="card-3d-reflection bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
             <span>Policy Grounding</span>
             <Shield className="w-4 h-4 text-[#003087]" />
@@ -215,7 +215,7 @@ export default function EvidenceVaultPage() {
       </div>
 
       {/* ── Search & Filter Controls ── */}
-      <div className="card-3d-reflection bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+      <div className="card-3d-reflection rounded-3xl p-5 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           
           {/* Search Input */}

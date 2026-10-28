@@ -171,7 +171,7 @@ export default function TrustLabPage() {
   return (
     <div className="space-y-6">
       {/* ── Top Header Card ── */}
-      <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5 card-3d-reflection">
+      <div className="card-3d-reflection p-6 sm:p-7 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
@@ -245,9 +245,9 @@ export default function TrustLabPage() {
               className={`p-6 rounded-3xl border transition-all duration-200 card-3d-reflection ${
                 runResult
                   ? isBlocked
-                    ? 'bg-white border-emerald-200 shadow-sm ring-1 ring-emerald-200'
-                    : 'bg-white border-rose-200 shadow-sm ring-1 ring-rose-200'
-                  : 'bg-white border-slate-200/90 shadow-sm'
+                    ? 'border-emerald-300 ring-2 ring-emerald-200'
+                    : 'border-rose-300 ring-2 ring-rose-200'
+                  : 'hover:border-slate-300'
               }`}
             >
               <div className="flex items-start justify-between mb-3">

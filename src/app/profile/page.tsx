@@ -115,7 +115,7 @@ export default function MerchantProfilePage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* ── Top Hero: Merchant Profile & Security Credentials ── */}
-      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm relative overflow-hidden card-3d-reflection">
+      <div className="card-3d-reflection rounded-3xl p-6 sm:p-7 relative">
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#003087]/10 via-[#0070BA]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
@@ -231,7 +231,7 @@ export default function MerchantProfilePage() {
       {/* ── 4 KPI Cards — 100% Live from analytics API ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Protected GMV from real order totals */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm relative overflow-hidden group hover:border-[#003087]/40 hover:shadow-md transition-all duration-300 card-3d-reflection">
+        <div className="card-3d-reflection p-5 rounded-2xl relative group transition-all duration-300">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Protected GMV</span>
             <div className="p-2 rounded-xl bg-blue-50 text-[#003087]"><DollarSign className="w-4 h-4" /></div>
@@ -246,7 +246,7 @@ export default function MerchantProfilePage() {
         </div>
 
         {/* Card 2: Win Rate — computed from resolved disputes */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm relative overflow-hidden group hover:border-[#003087]/40 hover:shadow-md transition-all duration-300 card-3d-reflection">
+        <div className="card-3d-reflection p-5 rounded-2xl relative group transition-all duration-300">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Dispute Win Rate</span>
             <div className="p-2 rounded-xl bg-blue-50 text-[#003087]"><CheckCircle2 className="w-4 h-4" /></div>
@@ -260,7 +260,7 @@ export default function MerchantProfilePage() {
         </div>
 
         {/* Card 3: Avg Response Time — computed from real timestamps */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm relative overflow-hidden group hover:border-[#003087]/40 hover:shadow-md transition-all duration-300 card-3d-reflection">
+        <div className="card-3d-reflection p-5 rounded-2xl relative group transition-all duration-300">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Avg Response Time</span>
             <div className="p-2 rounded-xl bg-amber-50 text-amber-600"><Clock className="w-4 h-4" /></div>
@@ -272,7 +272,7 @@ export default function MerchantProfilePage() {
         </div>
 
         {/* Card 4: Active Cases — real count from DB */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm relative overflow-hidden group hover:border-[#003087]/40 hover:shadow-md transition-all duration-300 card-3d-reflection">
+        <div className="card-3d-reflection p-5 rounded-2xl relative group transition-all duration-300">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Cases</span>
             <div className="p-2 rounded-xl bg-rose-50 text-rose-600"><AlertTriangle className="w-4 h-4" /></div>
@@ -290,7 +290,7 @@ export default function MerchantProfilePage() {
       {(wavePoints.length > 0 || donutCategories.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left 8 cols: Wave Timeline */}
-          <div className="lg:col-span-8 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-4 card-3d-reflection">
+          <div className="lg:col-span-8 card-3d-reflection p-6 rounded-3xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
               <div>
                 <h2 className="font-bold text-slate-900 text-sm">Protected GMV vs. Disputed Volume</h2>
@@ -333,7 +333,7 @@ export default function MerchantProfilePage() {
           </div>
 
           {/* Right 4 cols: Dispute Category Donut */}
-          <div className="lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-4 card-3d-reflection">
+          <div className="lg:col-span-4 card-3d-reflection p-6 rounded-3xl space-y-4">
             <div className="pb-3 border-b border-slate-100">
               <h2 className="font-bold text-slate-900 text-sm">Dispute Category Breakdown</h2>
               <p className="text-xs text-slate-500 font-medium">Real distribution from your disputes table</p>
@@ -359,7 +359,7 @@ export default function MerchantProfilePage() {
       )}
 
       {/* ── Active Dispute Cases Table ── */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-4 card-3d-reflection">
+      <div className="card-3d-reflection p-6 rounded-3xl space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <FileCheck className="w-5 h-5 text-[#003087]" />

@@ -310,7 +310,7 @@ export default function DashboardPage() {
             {/* Card 1: Protected Volume -> Links to Captured Orders & Revenue Ledger */}
             <Link
               href="/storefront?tab=orders#captured-orders"
-              className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white rounded-3xl p-5 sm:p-6 shadow-md shadow-blue-950/20 flex flex-col justify-between min-h-[160px] relative overflow-hidden group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all block"
+              className="card-3d-reflection-dark text-white rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] relative group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all block"
               title="Click to view all Protected Orders and Revenue Ledger"
             >
               <div className="flex items-center justify-between">
@@ -537,8 +537,8 @@ export default function DashboardPage() {
         ───────────────────────────────────────────────────────── */}
         <div className="xl:col-span-4 space-y-6">
 
-          {/* ── Top Card: Dispute Reason Exposure (Soft Blue Gradient + Solid Pie Chart with 3D Reflection) ── */}
-          <div className="card-3d-reflection bg-gradient-to-b from-blue-50/80 to-slate-50/80 rounded-3xl p-6 border border-blue-200/80 space-y-4 hover:-translate-y-1 transition-all duration-300">
+          {/* ── Top Card: Dispute Reason Exposure (Solid Pie Chart with 3D Reflection) ── */}
+          <div className="card-3d-reflection rounded-3xl p-6 space-y-4 hover:-translate-y-1 transition-all duration-300">
             <div>
               <h3 className="text-base font-black text-[#003087] tracking-tight">
                 Dispute Reason Exposure
@@ -589,10 +589,10 @@ export default function DashboardPage() {
                     key={item.name}
                     type="button"
                     onClick={() => handleFilterByCategory(item.name)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-2xl transition-all shadow-xs cursor-pointer text-left ${
+                    className={`w-full flex items-center justify-between p-2.5 rounded-2xl transition-all cursor-pointer text-left ${
                       isSelected
-                        ? 'bg-blue-50 border-2 border-[#003087] shadow-sm scale-[1.01]'
-                        : 'bg-white/80 hover:bg-white hover:border-slate-300 border border-slate-200/60'
+                        ? 'card-3d-reflection-subtle border-2 border-[#003087] shadow-sm scale-[1.01]'
+                        : 'card-3d-reflection-subtle hover:border-slate-300'
                     }`}
                     title={`Click to filter Dispute Queue by ${item.name}`}
                   >
@@ -617,7 +617,7 @@ export default function DashboardPage() {
           {/* ── Bottom Card: Security Defense Coverage (Clickable Link to Trust Lab) ── */}
           <Link
             href="/trust-lab"
-            className="card-3d-reflection bg-white rounded-3xl p-6 space-y-5 hover:-translate-y-1 hover:border-[#003087]/50 hover:shadow-lg transition-all duration-300 block cursor-pointer group"
+            className="card-3d-reflection rounded-3xl p-6 space-y-5 hover:-translate-y-1 hover:border-[#003087]/50 transition-all duration-300 block cursor-pointer group"
             title="Click to run Trust Lab penetration attack suite"
           >
             <div className="flex items-center justify-between">
@@ -632,19 +632,19 @@ export default function DashboardPage() {
 
             {/* Balanced Non-Overlapping Security Pillars */}
             <div className="grid grid-cols-4 gap-2 py-1">
-              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-blue-50/70 border border-blue-200/60 text-center card-interactive">
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl card-3d-reflection-subtle text-center card-interactive">
                 <span className="text-sm font-black text-[#003087]">100%</span>
                 <span className="text-[10px] font-bold text-slate-600 mt-0.5">Signature</span>
               </div>
-              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-blue-50/70 border border-blue-200/60 text-center card-interactive">
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl card-3d-reflection-subtle text-center card-interactive">
                 <span className="text-sm font-black text-[#0070BA]">100%</span>
                 <span className="text-[10px] font-bold text-slate-600 mt-0.5">Replay</span>
               </div>
-              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-blue-50/70 border border-blue-200/60 text-center card-interactive">
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl card-3d-reflection-subtle text-center card-interactive">
                 <span className="text-sm font-black text-[#00A6E0]">100%</span>
                 <span className="text-[10px] font-bold text-slate-600 mt-0.5">Policy</span>
               </div>
-              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 text-center card-interactive">
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl card-3d-reflection-subtle text-center card-interactive">
                 <span className="text-sm font-black text-emerald-600">100%</span>
                 <span className="text-[10px] font-bold text-slate-600 mt-0.5">Vault</span>
               </div>

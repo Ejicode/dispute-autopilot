@@ -356,7 +356,7 @@ export default function StorefrontPage() {
 
         {/* ── 4 Executive Sales KPI Cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection flex items-center justify-between">
+          <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Gross Revenue</span>
               <span className="text-xl font-extrabold text-slate-900 block mt-0.5">${stats.totalRevenue}</span>
@@ -370,7 +370,7 @@ export default function StorefrontPage() {
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection flex items-center justify-between">
+          <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Captured Orders</span>
               <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{stats.totalOrders} Orders</span>
@@ -381,7 +381,7 @@ export default function StorefrontPage() {
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection flex items-center justify-between">
+          <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Evidence Protection</span>
               <span className="text-xl font-extrabold text-emerald-700 block mt-0.5">100% Vaulted</span>
@@ -392,7 +392,7 @@ export default function StorefrontPage() {
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm card-3d-reflection flex items-center justify-between">
+          <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Fulfillment Status</span>
               <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{stats.delivered} Delivered</span>
@@ -533,7 +533,7 @@ export default function StorefrontPage() {
             {displayedProducts.map((prod) => (
               <div
                 key={prod.id}
-                className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm hover:shadow-xl transition-all duration-200 flex flex-col justify-between group card-3d-reflection"
+                className="card-3d-reflection rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between group"
               >
                 <div>
                   {/* Product Image with Quick View overlay */}
@@ -826,7 +826,7 @@ export default function StorefrontPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {customers.map((cust) => (
-                <div key={cust.email} className="card-3d-reflection bg-white p-5 rounded-3xl border border-slate-200/90 shadow-xs space-y-4 flex flex-col justify-between">
+                <div key={cust.email} className="card-3d-reflection p-5 rounded-3xl space-y-4 flex flex-col justify-between">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -912,7 +912,7 @@ export default function StorefrontPage() {
               const isDelivered = ord.delivery_status === "DELIVERED";
 
               return (
-                <div key={ord.id} className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4 card-3d-reflection">
+                <div key={ord.id} className="card-3d-reflection p-5 rounded-2xl space-y-4">
                   {/* Order Top Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div>

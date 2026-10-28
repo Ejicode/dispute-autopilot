@@ -383,7 +383,7 @@ export default function CaseDetailPage() {
       </div>
 
       {/* ── Case Header Hero Card (Balanced, Symmetrical & Polished) ── */}
-      <div className="card-3d-reflection p-6 sm:p-7 rounded-3xl relative overflow-hidden bg-white border border-slate-200/90 shadow-sm">
+      <div className="card-3d-reflection p-6 sm:p-7 rounded-3xl relative">
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#003087]/8 via-[#0070BA]/4 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 relative z-10">
@@ -484,7 +484,7 @@ export default function CaseDetailPage() {
         {/* ── Sub-Card: Customer, Transaction & Order Dossier (Human SaaS Touch) ── */}
         <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Card 1: Customer */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5">
+          <div className="p-3 rounded-xl card-3d-reflection-subtle flex items-start gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-blue-100/70 text-[#003087] flex items-center justify-center shrink-0 mt-0.5">
               <User className="w-4 h-4" />
             </div>
@@ -496,7 +496,7 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Card 2: Shipping Destination */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5">
+          <div className="p-3 rounded-xl card-3d-reflection-subtle flex items-start gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
               <MapPin className="w-4 h-4" />
             </div>
@@ -512,7 +512,7 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Card 3: Storefront Order */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5">
+          <div className="p-3 rounded-xl card-3d-reflection-subtle flex items-start gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-indigo-100/70 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
               <Package className="w-4 h-4" />
             </div>
@@ -526,7 +526,7 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Card 4: Carrier & Tracking */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5">
+          <div className="p-3 rounded-xl card-3d-reflection-subtle flex items-start gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-amber-100/70 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
               <Truck className="w-4 h-4" />
             </div>
@@ -540,7 +540,7 @@ export default function CaseDetailPage() {
       </div>
 
       {/* ── Policy & Legal Grounding Panel ── */}
-      <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm">
+      <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-[#003087] text-white shadow-xs">
@@ -556,7 +556,7 @@ export default function CaseDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3">
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div className="p-3.5 rounded-2xl card-3d-reflection-subtle">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Matched Policy
             </span>
@@ -569,7 +569,7 @@ export default function CaseDetailPage() {
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div className="p-3.5 rounded-2xl card-3d-reflection-subtle">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Signature Threshold
             </span>
@@ -580,7 +580,7 @@ export default function CaseDetailPage() {
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div className="p-3.5 rounded-2xl card-3d-reflection-subtle">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Protection Status
             </span>
@@ -593,7 +593,7 @@ export default function CaseDetailPage() {
       </div>
 
       {/* ── Dispute Lifecycle Stepper ── */}
-      <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl space-y-4 bg-white border border-slate-200/90 shadow-sm">
+      <div className="card-3d-reflection p-5 sm:p-6 rounded-3xl space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-blue-50 text-[#003087]">
@@ -750,7 +750,7 @@ export default function CaseDetailPage() {
         <div className="lg:col-span-6 min-w-0 space-y-6">
 
           {/* Evidence Vault Card (With 3D Reflection) */}
-          <div className="card-3d-reflection p-6 rounded-3xl space-y-4 min-w-0 overflow-hidden">
+          <div className="card-3d-reflection p-6 rounded-3xl space-y-4 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-blue-50 text-[#003087]">
@@ -794,7 +794,7 @@ export default function CaseDetailPage() {
                 <div
                   key={item.id}
                   id={`ev-${item.id}`}
-                  className={`min-w-0 overflow-hidden transition-all duration-300 rounded-2xl ${
+                  className={`min-w-0 transition-all duration-300 rounded-2xl ${
                     highlightedEvidenceId === item.id
                       ? 'ring-4 ring-[#003087] ring-offset-2'
                       : ''
@@ -810,7 +810,7 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Activity Audit Trail Card (With 3D Reflection) */}
-          <div className="card-3d-reflection p-6 rounded-3xl space-y-3 min-w-0 overflow-hidden">
+          <div className="card-3d-reflection p-6 rounded-3xl space-y-3 min-w-0">
             <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
               <Clock className="w-4 h-4 text-slate-400" />
               <h2 className="font-bold text-slate-900 text-sm">Activity Audit Trail</h2>
@@ -819,7 +819,7 @@ export default function CaseDetailPage() {
               {auditLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs flex items-start justify-between gap-2 min-w-0"
+                  className="p-3 rounded-xl card-3d-reflection-subtle text-xs flex items-start justify-between gap-2 min-w-0"
                 >
                   <div className="min-w-0 flex-1">
                     <span className="font-bold text-slate-800 block truncate">
@@ -842,7 +842,7 @@ export default function CaseDetailPage() {
         <div className="lg:col-span-6 min-w-0 space-y-6">
 
           {/* Evidence-Based Response Card */}
-          <div className="card-3d-reflection p-6 rounded-3xl space-y-4 min-w-0 overflow-hidden bg-white border border-slate-200/90 shadow-sm">
+          <div className="card-3d-reflection p-6 rounded-3xl space-y-4 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-[#003087]" />
@@ -982,7 +982,7 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Human Approval Gate Card */}
-          <div className="card-3d-reflection p-6 rounded-3xl space-y-4 bg-white border border-slate-200/90 shadow-sm">
+          <div className="card-3d-reflection p-6 rounded-3xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Lock className="w-5 h-5 text-[#003087]" />
