@@ -13,6 +13,7 @@ import {
   Square,
   RotateCcw,
   Headphones,
+  Sparkles,
   CheckCircle2
 } from "lucide-react";
 import { useUser } from "./UserContext";
@@ -535,60 +536,73 @@ export default function AiAssistant() {
   return (
     <>
       {!open && (
-        <button
-          onClick={() => {
-            setOpen(true);
-            if (voiceAudioEnabled && !currentlySpeakingId) {
-              speakText(greeting, "welcome");
-            }
-          }}
-          className="fixed-floating-assistant card-3d-reflection flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] hover:from-[#001433] hover:to-[#005ea6] shadow-2xl text-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ring-4 ring-white/90 border border-blue-400/40 group select-none"
+        <div 
+          className="fixed-floating-assistant group select-none"
           style={{ position: 'fixed', right: '24px', bottom: '24px', left: 'auto', top: 'auto', zIndex: 9999 }}
-          title="Open Ava AI Assistant"
         >
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
-          </span>
-          <span className="text-xs font-black tracking-tight text-white flex items-center gap-1.5">
-            <Headphones className="w-4 h-4 text-blue-200" />
-            <span>Ava</span>
-            <span className="text-[10px] text-blue-200/90 font-bold bg-white/10 px-2 py-0.5 rounded-full border border-white/15">
-              PayPal AI Partner
-            </span>
-          </span>
-        </button>
+          {/* Ambient Living AI Glow Blur Halo underneath & radiating outward */}
+          <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-[#0070BA] via-indigo-500 to-cyan-400 opacity-75 blur-xl group-hover:opacity-100 group-hover:blur-2xl animate-pulse pointer-events-none transition-all duration-700" />
+          <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-400 opacity-60 blur-md pointer-events-none" />
+
+          {/* Frosted Glassmorphism AI Button */}
+          <button
+            onClick={() => {
+              setOpen(true);
+              if (voiceAudioEnabled && !currentlySpeakingId) {
+                speakText(greeting, "welcome");
+              }
+            }}
+            className="relative flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#001C48]/95 via-[#003087]/90 to-[#0070BA]/90 backdrop-blur-xl border border-white/30 shadow-[0_8px_24px_rgba(0,48,135,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)] text-white hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer ring-2 ring-white/60"
+            title="Open Ava AI (Gemini 3.5)"
+          >
+            <Sparkles className="w-4 h-4 text-cyan-300 animate-pulse shrink-0" />
+            <span className="text-xs font-black tracking-wide text-white">Ava AI</span>
+
+            {/* Specular Top Shine Line */}
+            <div className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+          </button>
+        </div>
       )}
 
       {open && (
         <div
-          className="fixed-floating-assistant card-3d-reflection w-[360px] sm:w-[380px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-100px)] sm:max-h-[min(540px,calc(100vh-100px))] h-auto rounded-[28px] flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95 origin-bottom-right"
+          className="fixed-floating-assistant select-none"
           style={{ position: 'fixed', right: '24px', bottom: '24px', left: 'auto', top: 'auto', zIndex: 9999 }}
         >
-          {/* ── Sleek Gradient Header ── */}
-          <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-4 py-3 flex items-center justify-between shrink-0 text-white select-none">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-xs">
-                <Headphones className="w-4 h-4 text-blue-200" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h4 className="text-white font-black text-xs leading-none">Ava</h4>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {activeVoiceName && (
-                    <span 
-                      className="text-[9px] text-blue-200 font-mono bg-blue-950/70 px-1.5 py-0.5 rounded border border-blue-600/50 truncate max-w-[90px]" 
-                      title={`Active Voice: ${activeVoiceName}`}
-                    >
-                      {activeVoiceName.replace(/Google /i, "").replace(/English /i, "").replace(/\(.*?\)/g, "").trim()}
-                    </span>
-                  )}
+          {/* Ambient Ethereal Glow Blur around the open AI card */}
+          <div className="absolute -inset-3 rounded-[36px] bg-gradient-to-tr from-[#0070BA]/40 via-indigo-500/30 to-cyan-400/35 blur-2xl pointer-events-none -z-10 animate-pulse-soft" />
+
+          <div
+            className="card-3d-reflection w-[360px] sm:w-[380px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-100px)] sm:max-h-[min(540px,calc(100vh-100px))] h-auto rounded-[28px] flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95 origin-bottom-right relative"
+          >
+            {/* ── Sleek Gradient Header with AI Sparkles ── */}
+            <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-4 py-3 flex items-center justify-between shrink-0 text-white select-none">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-400/30 to-blue-400/20 flex items-center justify-center shrink-0 border border-cyan-300/40 shadow-xs">
+                  <Sparkles className="w-4 h-4 text-cyan-200 fill-cyan-300/30 animate-pulse" />
                 </div>
-                <p className="text-[10px] text-blue-200/90 font-medium leading-none mt-1 truncate">
-                  PayPal AI Dispute Partner • Gemini Powered
-                </p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="text-white font-black text-xs leading-none">Ava <span className="text-cyan-300">AI</span></h4>
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#22d3ee]" />
+                    <span className="text-[9px] font-black uppercase tracking-wider text-cyan-200 bg-cyan-500/20 px-1.5 py-0.5 rounded border border-cyan-400/30">
+                      Gemini 3.5
+                    </span>
+                    {activeVoiceName && (
+                      <span 
+                        className="text-[9px] text-blue-200 font-mono bg-blue-950/70 px-1.5 py-0.5 rounded border border-blue-600/50 truncate max-w-[80px]" 
+                        title={`Active Voice: ${activeVoiceName}`}
+                      >
+                        {activeVoiceName.replace(/Google /i, "").replace(/English /i, "").replace(/\(.*?\)/g, "").trim()}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-cyan-200/90 font-medium leading-none mt-1 truncate flex items-center gap-1">
+                    <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+                    PayPal AI Dispute Partner • Gemini Powered
+                  </p>
+                </div>
               </div>
-            </div>
 
             <div className="flex items-center gap-1 shrink-0">
               <button
@@ -667,7 +681,7 @@ export default function AiAssistant() {
                   ) : loading ? (
                     <Loader2 className="w-4 h-4 text-blue-300 animate-spin z-10" />
                   ) : (
-                    <Headphones className="w-4 h-4 text-blue-300 z-10" />
+                    <Sparkles className="w-4 h-4 text-cyan-300 animate-pulse z-10" />
                   )}
                 </button>
               </div>
@@ -838,8 +852,8 @@ export default function AiAssistant() {
             </div>
 
           </div>
-
         </div>
+      </div>
       )}
     </>
   );
