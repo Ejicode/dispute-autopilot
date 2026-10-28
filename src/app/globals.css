@@ -120,8 +120,20 @@ code, kbd, samp, pre {
     inset 0 1.5px 0 rgba(255, 255, 255, 1),
     inset 0 0 0 1px rgba(255, 255, 255, 0.7),
     inset 0 -1.5px 0 rgba(0, 48, 135, 0.03);
-  position: relative;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-3d-reflection:not(.fixed):not([style*="fixed"]) {
+  position: relative;
+}
+
+.fixed-floating-assistant {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 24px !important;
+  left: auto !important;
+  top: auto !important;
+  z-index: 9999 !important;
 }
 
 /* Ambient Ground Mirror Sheen underneath floating elements */
