@@ -65,24 +65,36 @@ export default function Sidebar({
       }`}
     >
       <div className="space-y-5 overflow-y-auto custom-scrollbar pr-1">
-        {/* ── Top Header: Logo + Collapse Button ── */}
-        <div className={`flex items-center pb-3 pt-1 border-b border-slate-100/80 ${collapsed ? 'justify-center' : 'justify-between px-1'}`}>
-          <Logo collapsed={collapsed} size={collapsed ? 'md' : 'lg'} />
-
-          {onToggleCollapse && (
-            <button
-              onClick={onToggleCollapse}
-              className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors"
-              title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-            >
-              {collapsed ? (
-                <ChevronRight className="w-4 h-4 text-[#003087]" />
-              ) : (
-                <ChevronLeft className="w-4 h-4 text-slate-500" />
-              )}
-            </button>
-          )}
-        </div>
+        {/* ── Top Header: Logo + Collapse Button (Auto-adjusting flex layout) ── */}
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-2.5 pb-3 pt-1 border-b border-slate-100/80 w-full">
+            <div className="flex items-center justify-center w-full">
+              <Logo collapsed={true} size="sm" />
+            </div>
+            {onToggleCollapse && (
+              <button
+                onClick={onToggleCollapse}
+                className="w-7 h-7 rounded-xl bg-slate-100 hover:bg-blue-50 text-[#003087] flex items-center justify-center transition-all cursor-pointer shadow-xs border border-slate-200/80 hover:border-blue-200"
+                title="Expand Sidebar"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-between pb-3 pt-1 px-1 border-b border-slate-100/80">
+            <Logo collapsed={false} size="lg" />
+            {onToggleCollapse && (
+              <button
+                onClick={onToggleCollapse}
+                className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                title="Collapse Sidebar"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* ── Navigation Menu Grouped By Sections ── */}
         <nav className="space-y-4">

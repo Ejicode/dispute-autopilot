@@ -419,9 +419,9 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
 
       {/* ── AG Grid Table ── */}
       <div 
-        className="ag-theme-quartz w-full rounded-xl overflow-hidden border border-slate-200/80 custom-scrollbar transition-all duration-300"
+        className="ag-theme-quartz w-full rounded-2xl overflow-hidden border border-slate-200/80 custom-scrollbar transition-all duration-300 shadow-xs mb-8"
         style={{
-          height: filteredRowData.length === 0 ? '200px' : filteredRowData.length <= 3 ? '260px' : filteredRowData.length <= 6 ? '340px' : '440px'
+          height: filteredRowData.length === 0 ? '220px' : filteredRowData.length <= 3 ? '290px' : filteredRowData.length <= 6 ? '390px' : '480px'
         }}
       >
         <AgGridReact<Dispute>

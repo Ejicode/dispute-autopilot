@@ -107,6 +107,69 @@ code, kbd, samp, pre {
   -ms-overflow-style: none !important;
 }
 
+/* ─── AG Grid Custom Pagination Bar with Generous Spacing ─── */
+.ag-theme-quartz .ag-paging-panel {
+  padding: 10px 20px !important;
+  gap: 16px !important;
+  justify-content: space-between !important;
+  border-top: 1px solid #E2E8F0 !important;
+  background: #F8FAFC !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #475569 !important;
+}
+
+.ag-theme-quartz .ag-paging-row-summary-panel {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.ag-theme-quartz .ag-paging-page-summary-panel {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.ag-theme-quartz .ag-paging-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: 0 4px !important;
+  border-radius: 8px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  color: #003087 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.ag-theme-quartz .ag-paging-button:hover:not(.ag-disabled) {
+  background-color: #F1F5F9 !important;
+  border-color: #003087 !important;
+  color: #003087 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 48, 135, 0.15) !important;
+}
+
+.ag-theme-quartz .ag-paging-button.ag-disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  border-color: #E2E8F0 !important;
+  background: #F8FAFC !important;
+  box-shadow: none !important;
+}
+
+.ag-theme-quartz .ag-picker-field-wrapper {
+  border-radius: 8px !important;
+  border-color: #CBD5E1 !important;
+  padding: 2px 6px !important;
+}
+
+
 /* ─── 3D Specular Reflection & Elevated Card Translucency ─── */
 .card-3d-reflection {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.99) 0%, rgba(255, 255, 255, 0.92) 40%, rgba(246, 250, 254, 0.88) 60%, rgba(255, 255, 255, 0.97) 100%) !important;

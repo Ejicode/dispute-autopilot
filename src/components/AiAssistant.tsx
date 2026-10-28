@@ -75,6 +75,8 @@ export default function AiAssistant() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const pinnedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const sendMessageRef = useRef<(text?: string) => Promise<void>>(async () => {});
+  const startListeningRef = useRef<() => void>(() => {});
 
   const selectBestVoice = useCallback((): SpeechSynthesisVoice | null => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
@@ -210,6 +212,16 @@ export default function AiAssistant() {
     utterance.onend = () => {
       setCurrentlySpeakingId(null);
       activeUtteranceRef.current = null;
+
+      // Humanized response intake: If Ava asked a question or offered suggestions, wait and auto-listen for the merchant's answer!
+      const isQuestion = clean.includes("?") || /\b(would you|should I|what do you|tell me|confirm|how can I|can I help)\b/i.test(clean);
+      if (isQuestion && typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+        setTimeout(() => {
+          if (startListeningRef.current) {
+            startListeningRef.current();
+          }
+        }, 450);
+      }
     };
 
     utterance.onerror = () => {
@@ -237,24 +249,17 @@ export default function AiAssistant() {
     }
   };
 
-  const toggleListening = () => {
-    if (typeof window === "undefined") return;
+  const startListening = useCallback(() => {
+    if (typeof window === "undefined" || isListening) return;
 
-    if (isListening) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      setIsListening(false);
-      return;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setCurrentlySpeakingId(null);
+      activeUtteranceRef.current = null;
     }
-
-    stopSpeaking();
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
-      return;
-    }
+    if (!SpeechRecognition) return;
 
     try {
       const recognition = new SpeechRecognition();
@@ -287,7 +292,7 @@ export default function AiAssistant() {
         setIsListening(false);
         const text = transcriptRef.current?.trim() || inputRef.current?.value?.trim() || "";
         if (text.length > 0) {
-          sendMessage(text);
+          sendMessageRef.current(text);
           transcriptRef.current = "";
         }
       };
@@ -298,6 +303,22 @@ export default function AiAssistant() {
       console.error("Failed to start speech recognition:", err);
       setIsListening(false);
     }
+  }, [isListening]);
+
+  startListeningRef.current = startListening;
+
+  const toggleListening = () => {
+    if (typeof window === "undefined") return;
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    startListening();
   };
 
   const executePlatformAction = async (action?: string, target?: string) => {
@@ -459,6 +480,46 @@ export default function AiAssistant() {
     }
   };
 
+  sendMessageRef.current = sendMessage;
+
+  const getSuggestionsForLatestMessage = () => {
+    const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant');
+    if (!lastAssistantMsg) {
+      return [
+        "What is our active dispute risk?",
+        "Explain § 11.3 Seller Protection",
+        "Check Evidence Vault proofs"
+      ];
+    }
+    const text = lastAssistantMsg.content.toLowerCase();
+    if (text.includes("dispute") || text.includes("pp-d-") || text.includes("rebuttal")) {
+      return [
+        "Yes, submit defense to PayPal",
+        "Show carrier tracking proof",
+        "What is the submission deadline?"
+      ];
+    }
+    if (text.includes("vault") || text.includes("evidence") || text.includes("hash")) {
+      return [
+        "Is tracking verified?",
+        "Check § 11.3(b) signature threshold",
+        "View order invoice details"
+      ];
+    }
+    if (text.includes("attack") || text.includes("security") || text.includes("threat")) {
+      return [
+        "Run full Trust Lab suite",
+        "Explain prompt injection defense",
+        "Show cryptographic audit log"
+      ];
+    }
+    return [
+      "Show active disputes",
+      "Check Seller Protection rules",
+      "Simulate storefront checkout"
+    ];
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -481,7 +542,7 @@ export default function AiAssistant() {
               speakText(greeting, "welcome");
             }
           }}
-          className="fixed-floating-assistant flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] hover:from-[#001433] hover:to-[#005ea6] shadow-2xl text-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ring-4 ring-white/90 border border-blue-400/40 group select-none"
+          className="fixed-floating-assistant card-3d-reflection flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] hover:from-[#001433] hover:to-[#005ea6] shadow-2xl text-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ring-4 ring-white/90 border border-blue-400/40 group select-none"
           style={{ position: 'fixed', right: '24px', bottom: '24px', left: 'auto', top: 'auto', zIndex: 9999 }}
           title="Open Ava AI Assistant"
         >
@@ -501,7 +562,7 @@ export default function AiAssistant() {
 
       {open && (
         <div
-          className="fixed-floating-assistant w-[360px] sm:w-[380px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-100px)] sm:max-h-[min(540px,calc(100vh-100px))] h-auto rounded-[28px] bg-white flex flex-col overflow-hidden shadow-2xl border border-slate-200/90 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95 origin-bottom-right"
+          className="fixed-floating-assistant card-3d-reflection w-[360px] sm:w-[380px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-100px)] sm:max-h-[min(540px,calc(100vh-100px))] h-auto rounded-[28px] flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95 origin-bottom-right"
           style={{ position: 'fixed', right: '24px', bottom: '24px', left: 'auto', top: 'auto', zIndex: 9999 }}
         >
           {/* ── Sleek Gradient Header ── */}
@@ -684,6 +745,22 @@ export default function AiAssistant() {
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* Dynamic Human-Assistance Suggested Answers */}
+            <div className="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 shrink-0">
+              {getSuggestionsForLatestMessage().map((chip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => sendMessage(chip)}
+                  disabled={loading}
+                  className="px-2.5 py-1 rounded-full bg-blue-50/80 hover:bg-blue-100/90 hover:text-[#003087] border border-blue-200/80 text-[10px] font-bold text-slate-800 whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                >
+                  <span className="text-[#0070BA]">💬</span>
+                  <span>{chip}</span>
+                </button>
+              ))}
             </div>
 
             {/* Quick Merchant Operations Prompt Pills */}
