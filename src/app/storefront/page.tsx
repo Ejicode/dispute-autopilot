@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
 import { 
   ShoppingBag, 
   Truck, 
@@ -32,6 +33,30 @@ export default function StorefrontPage() {
   const { lastEvent } = useRealtime();
   const [orders, setOrders] = useState<DemoOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+
+  // Top-level navigation tab: 'catalog' | 'orders' | 'customers'
+  const [activeTab, setActiveTab] = useState<'catalog' | 'orders' | 'customers'>('catalog');
+
+  // Sync tab from URL query params
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'orders') setActiveTab('orders');
+      else if (tab === 'customers') setActiveTab('customers');
+      else if (tab === 'catalog') setActiveTab('catalog');
+      else if (window.location.hash === '#captured-orders') setActiveTab('orders');
+    }
+  }, []);
+
+  const handleTabChange = (tab: 'catalog' | 'orders' | 'customers') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
 
   // Search, category & sorting state
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,6 +95,38 @@ export default function StorefrontPage() {
       delivered,
       inTransit,
     };
+  }, [orders]);
+
+  // Aggregate unique customer directory from live orders
+  const customers = useMemo(() => {
+    const map = new Map<string, {
+      name: string;
+      email: string;
+      address: string;
+      orderCount: number;
+      totalSpentCents: number;
+      orders: DemoOrder[];
+    }>();
+    
+    for (const o of orders) {
+      const email = o.buyer_email || 'unknown@example.com';
+      const existing = map.get(email);
+      if (existing) {
+        existing.orderCount += 1;
+        existing.totalSpentCents += o.total_cents;
+        existing.orders.push(o);
+      } else {
+        map.set(email, {
+          name: o.buyer_name || 'Verified Buyer',
+          email,
+          address: o.shipping_address || 'Address on file',
+          orderCount: 1,
+          totalSpentCents: o.total_cents,
+          orders: [o],
+        });
+      }
+    }
+    return Array.from(map.values());
   }, [orders]);
 
   // Fetch captured orders from SQLite
@@ -348,8 +405,50 @@ export default function StorefrontPage() {
         </div>
       </div>
 
-      {/* ── Search & Filter Controls ── */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3 card-3d-reflection">
+      {/* ── Main Tab Navigation Bar ── */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => handleTabChange('catalog')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'catalog'
+              ? 'bg-[#003087] text-white shadow-md shadow-blue-950/20'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4" />
+          <span>Store Catalog (52)</span>
+        </button>
+
+        <button
+          onClick={() => handleTabChange('orders')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'orders'
+              ? 'bg-[#003087] text-white shadow-md shadow-blue-950/20'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <Truck className="w-4 h-4" />
+          <span>Captured Orders ({orders.length})</span>
+        </button>
+
+        <button
+          onClick={() => handleTabChange('customers')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'customers'
+              ? 'bg-[#003087] text-white shadow-md shadow-blue-950/20'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <User className="w-4 h-4" />
+          <span>Customer Directory ({customers.length})</span>
+        </button>
+      </div>
+
+      {/* ── Catalog View ── */}
+      {activeTab === 'catalog' && (
+        <div className="space-y-6">
+          {/* ── Search & Filter Controls ── */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3 card-3d-reflection">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Live Search Input */}
           <div className="relative w-full sm:w-80">
@@ -529,6 +628,8 @@ export default function StorefrontPage() {
           </div>
         )}
       </div>
+    </div>
+  )}
 
       {/* ── Product Quick-View & Detailed Specs Modal ── */}
       {selectedProduct && (
@@ -696,8 +797,91 @@ export default function StorefrontPage() {
         </div>
       )}
 
+      {/* ── Customer Directory View ── */}
+      {activeTab === 'customers' && (
+        <div className="space-y-4 pt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-[#003087]" />
+              <h2 className="font-bold text-slate-900 text-base">Customer Directory</h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-[#003087] border border-blue-200">
+                {customers.length} Unique Buyers
+              </span>
+            </div>
+            <span className="text-xs text-emerald-600 font-bold flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>PayPal Verified Accounts • 0 Fraud Flags</span>
+            </span>
+          </div>
+
+          {loadingOrders ? (
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 card-3d-reflection">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#003087]" />
+              <p className="text-xs">Loading customer directory...</p>
+            </div>
+          ) : customers.length === 0 ? (
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs card-3d-reflection">
+              No customer accounts found yet. Click "Create demo order" in the Store Catalog to generate buyer records.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {customers.map((cust) => (
+                <div key={cust.email} className="card-3d-reflection bg-white p-5 rounded-3xl border border-slate-200/90 shadow-xs space-y-4 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#001C48] to-[#0070BA] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                          {cust.name.split(' ').map((n: string) => n[0]).join('')}
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-slate-900 text-sm leading-tight">{cust.name}</h3>
+                          <span className="text-xs text-slate-500 font-mono block mt-0.5">{cust.email}</span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                        Verified
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase">
+                        <MapPin className="w-3 h-3 text-[#003087]" />
+                        <span>Shipping Address</span>
+                      </div>
+                      <p className="text-slate-800 font-medium">{cust.address}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Orders Placed</span>
+                        <span className="font-extrabold text-slate-900">{cust.orderCount} Orders</span>
+                      </div>
+                      <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Spend</span>
+                        <span className="font-extrabold text-[#003087]">${(cust.totalSpentCents / 100).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-400 text-[11px]">Latest: <strong>{cust.orders[0]?.order_number}</strong></span>
+                    <button
+                      onClick={() => handleTabChange('orders')}
+                      className="text-[#0070BA] font-bold hover:underline flex items-center gap-0.5 text-xs cursor-pointer"
+                    >
+                      <span>View Orders →</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Captured Orders & Carrier Transit Stepper ── */}
-      <div className="space-y-4 pt-6 border-t border-slate-200/80">
+      {activeTab === 'orders' && (
+        <div id="captured-orders" className="space-y-4 pt-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-[#003087]" />
@@ -814,6 +998,7 @@ export default function StorefrontPage() {
           </div>
         )}
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 }

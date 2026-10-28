@@ -476,3 +476,21 @@ func (a *API) analytics(w http.ResponseWriter, r *http.Request, _ *types.UserAcc
 	})
 	return nil
 }
+
+func (a *API) vaultList(w http.ResponseWriter, r *http.Request, _ *types.UserAccount) error {
+	db, err := store.Merchant(r.Context())
+	if err != nil {
+		return err
+	}
+	items, err := queryMaps(r.Context(), db, `SELECT id, dispute_id, order_id, evidence_type, title, source, content, sha256_hash, captured_at
+		FROM evidence_items
+		ORDER BY captured_at DESC`)
+	if err != nil {
+		return err
+	}
+	httpx.JSON(w, http.StatusOK, map[string]any{
+		"items": items,
+		"count": len(items),
+	})
+	return nil
+}

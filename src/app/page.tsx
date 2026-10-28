@@ -307,11 +307,11 @@ export default function DashboardPage() {
           {/* 2x2 Balanced Metric Cards Grid — Clickable & Interactive */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
-            {/* Card 1: PayPal Navy Signature Card -> Links to Storefront Sales */}
+            {/* Card 1: Protected Volume -> Links to Captured Orders & Revenue Ledger */}
             <Link
-              href="/storefront"
+              href="/storefront?tab=orders#captured-orders"
               className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#0070BA] text-white rounded-3xl p-5 sm:p-6 shadow-md shadow-blue-950/20 flex flex-col justify-between min-h-[160px] relative overflow-hidden group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all block"
-              title="Click to view Protected Storefront Sales & Orders"
+              title="Click to view all Protected Orders and Revenue Ledger"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-blue-100/90 flex items-center gap-1.5">
@@ -333,16 +333,16 @@ export default function DashboardPage() {
                 <span>{kpis.orderCount} store orders protected</span>
                 <span className="font-bold text-emerald-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span>SHA-256 Vault →</span>
+                  <span>Orders Ledger →</span>
                 </span>
               </div>
             </Link>
 
-            {/* Card 2: Total Orders -> Links to Storefront Orders */}
+            {/* Card 2: Total Orders -> Links to Captured Orders Tab */}
             <Link
-              href="/storefront"
+              href="/storefront?tab=orders#captured-orders"
               className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] hover:border-[#003087]/50 hover:shadow-lg transition-all block"
-              title="Click to view all Storefront Transactions & Orders"
+              title="Click to inspect Captured Orders & Carrier Tracking Ledger"
             >
               <div className="flex items-center justify-between relative z-10">
                 <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
@@ -363,16 +363,16 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
                 <span>Store transactions</span>
                 <span className="text-[#0070BA] font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                  <span>View Orders →</span>
+                  <span>View Orders Ledger →</span>
                 </span>
               </div>
             </Link>
 
-            {/* Card 3: Unique Customers -> Links to Merchant Profile */}
+            {/* Card 3: Unique Customers -> Links to Customer Directory Tab */}
             <Link
-              href="/profile"
+              href="/storefront?tab=customers"
               className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] hover:border-[#003087]/50 hover:shadow-lg transition-all block"
-              title="Click to view Merchant Profile & Customer Telemetry"
+              title="Click to view Customer Directory & Verified Buyer Profiles"
             >
               <div className="flex items-center justify-between relative z-10">
                 <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
@@ -393,16 +393,16 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
                 <span>Active buyer accounts</span>
                 <span className="text-emerald-600 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                  <span>View Profile →</span>
+                  <span>Customer Directory →</span>
                 </span>
               </div>
             </Link>
 
-            {/* Card 4: Evidence Vault -> Links to Case Evidence Vault */}
+            {/* Card 4: Evidence Vault -> Links to dedicated /vault page */}
             <Link
-              href="/case/dsp_hero_1240"
+              href="/vault"
               className="card-3d-reflection rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[160px] group card-interactive cursor-pointer hover:scale-[1.02] active:scale-[0.98] hover:border-[#003087]/50 hover:shadow-lg transition-all block"
-              title="Click to inspect SHA-256 Cryptographic Evidence Vault"
+              title="Click to open the Evidence Vault & inspect all SHA-256 cryptographic records"
             >
               <div className="flex items-center justify-between relative z-10">
                 <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
@@ -423,7 +423,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 relative z-10">
                 <span>Cryptographic proof</span>
                 <span className="text-[#0070BA] font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                  <span>Inspect Vault →</span>
+                  <span>Open Evidence Vault →</span>
                 </span>
               </div>
             </Link>

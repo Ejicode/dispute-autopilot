@@ -11,6 +11,7 @@ import {
   Activity, 
   Settings, 
   ShieldCheck,
+  FileCheck,
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
@@ -39,6 +40,7 @@ export default function Sidebar({
         { href: '/', label: 'Dispute Queue', icon: Home, exact: true },
         { href: '/case/dsp_hero_1240', label: 'Case Review', icon: Shield, matchPrefix: '/case' },
         { href: '/storefront', label: 'Sales & Orders', icon: Tag },
+        { href: '/vault', label: 'Evidence Vault', icon: FileCheck },
       ],
     },
     {

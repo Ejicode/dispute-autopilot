@@ -55,6 +55,7 @@ func New(webDir string) http.Handler {
 
 	mux.HandleFunc("GET /api/search", api.withMerchant(api.search))
 	mux.HandleFunc("GET /api/analytics", api.withMerchant(api.analytics))
+	mux.HandleFunc("GET /api/vault", api.withMerchant(api.vaultList))
 
 	mux.HandleFunc("GET /api/trust-lab/run", api.withMerchant(api.trustLabList))
 	mux.HandleFunc("POST /api/trust-lab/run", api.withMerchant(api.trustLabRun))
