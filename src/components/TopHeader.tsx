@@ -45,7 +45,7 @@ function formatOrdinalDate(d: Date): string {
   return `${dayName}, ${monthName} ${dayNum}${suffix} ${year}`;
 }
 
-export default function TopHeader({ title = 'Sales Report', onToggleSidebar }: TopHeaderProps) {
+export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: TopHeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
