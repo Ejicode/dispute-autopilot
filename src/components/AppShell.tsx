@@ -58,7 +58,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Authentication pages render immediately without sidebar shell or protected gate
   if (isAuthPage) {
-    return <main className="w-full h-full min-h-screen bg-white">{children}</main>;
+    return <main className="w-full h-screen bg-white overflow-hidden">{children}</main>;
   }
 
   // Branded enterprise software loading screen

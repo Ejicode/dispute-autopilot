@@ -7,14 +7,11 @@ import { useUser } from '@/components/UserContext';
 import { 
   User, 
   Lock, 
-  Check, 
-  ChevronRight, 
+  ArrowRight, 
   ShieldCheck, 
-  AlertCircle,
-  HelpCircle,
-  X,
-  ArrowRight,
-  ShoppingBag
+  ShoppingBag, 
+  AlertCircle, 
+  X 
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 
@@ -31,7 +28,6 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // If already logged in, redirect based on user
   useEffect(() => {
     if (!loading && activeUser) {
       if (activeUser.email.includes('buyer')) {
@@ -50,7 +46,7 @@ export default function LoginPage() {
     const result = await login(eEmail, ePass);
     setSubmitting(false);
     if (!result.success) {
-      setError(result.error || 'Unable to sign in. Please verify credentials or create an account.');
+      setError(result.error || 'Unable to sign in.');
     } else {
       if (eEmail.includes('buyer')) {
         router.replace('/storefront?mode=buyer');
@@ -66,112 +62,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full flex flex-col md:flex-row bg-white select-none relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
+    <div className="h-screen w-full flex flex-col md:flex-row bg-white select-none overflow-hidden">
       
-      {/* ═════════════════════════════════════════════════════════════
-          LEFT HALF: PayPal Deep Navy Hero Panel
-      ═════════════════════════════════════════════════════════════ */}
-      <div className="w-full max-w-full md:w-1/2 lg:w-5/12 xl:w-1/2 h-auto md:h-full bg-gradient-to-br from-[#001433] via-[#001C48] to-[#003087] p-5 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-between relative overflow-hidden text-white shrink-0">
+      {/* LEFT PANEL */}
+      <div className="w-full md:w-5/12 lg:w-1/2 bg-gradient-to-br from-[#001433] via-[#001C48] to-[#003087] p-8 sm:p-12 lg:p-16 flex flex-col justify-between text-white shrink-0 h-auto md:h-full">
+        <Logo variant="light" size="lg" href="/login" />
         
-        {/* Animated Background Ambient Glows */}
-        <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-[#0070BA]/25 blur-3xl pointer-events-none animate-pulse-soft" />
-        <div className="absolute -bottom-20 -right-20 w-80 h-80 rounded-full bg-[#00CFDE]/15 blur-3xl pointer-events-none animate-pulse-soft" />
-        
-        {/* 1. Large 3D Sphere (Desktop only to prevent mobile clutter) */}
-        <div 
-          className="hidden md:block absolute -bottom-16 -left-16 w-56 h-56 sm:w-64 sm:h-64 rounded-full pointer-events-none animate-float-slow z-10"
-          style={{
-            background: 'radial-gradient(circle at 35% 30%, #38BDF8 0%, #0070BA 25%, #003087 65%, #001433 100%)',
-            boxShadow: 'inset -12px -12px 28px rgba(0,0,0,0.65), inset 8px 8px 20px rgba(255,255,255,0.45), 0 24px 50px rgba(0,0,0,0.55)'
-          }}
-        />
-
-        {/* 2. Medium 3D Sphere (Desktop only) */}
-        <div 
-          className="hidden md:block absolute bottom-6 left-36 sm:left-44 w-32 h-32 sm:w-40 sm:h-40 rounded-full pointer-events-none animate-float-medium z-20"
-          style={{
-            background: 'radial-gradient(circle at 35% 30%, #93C5FD 0%, #0070BA 30%, #002366 70%, #000F26 100%)',
-            boxShadow: 'inset -8px -8px 20px rgba(0,0,0,0.6), inset 6px 6px 16px rgba(255,255,255,0.5), 0 20px 38px rgba(0,0,0,0.5)'
-          }}
-        />
-
-        {/* 3. Floating Orb (Desktop only) */}
-        <div 
-          className="hidden md:block absolute top-16 right-8 w-20 h-20 rounded-full opacity-70 pointer-events-none animate-float-fast z-10"
-          style={{
-            background: 'radial-gradient(circle at 35% 30%, #60A5FA 0%, #0070BA 35%, #003087 70%, #001433 100%)',
-            boxShadow: 'inset -4px -4px 10px rgba(0,0,0,0.5), inset 3px 3px 8px rgba(255,255,255,0.4), 0 12px 26px rgba(0,0,0,0.3)'
-          }}
-        />
-
-        {/* Top: Brand Monogram Header */}
-        <div className="relative z-30 flex items-center justify-between">
-          <Logo variant="light" size="md" href="/login" />
-          <div className="md:hidden inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[9px] font-bold text-blue-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>Sandbox</span>
-          </div>
-        </div>
-
-        {/* Center: Welcome Headline */}
-        <div className="relative z-30 my-auto py-4 sm:py-6 md:py-8 space-y-2 sm:space-y-3 max-w-sm">
-          <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] font-bold text-blue-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>Merchant Operations Console</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight uppercase text-white drop-shadow-md leading-none">
-            Welcome
+        <div className="my-auto py-8">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
+            Dispute Autopilot
           </h1>
-          <h2 className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-blue-200">
-            Dispute Autopilot (DA) Platform
-          </h2>
-          <p className="text-xs text-white/80 font-normal leading-relaxed pt-0.5 max-w-xs hidden sm:block">
-            Production-grade dispute defense, carrier tracking telemetry, tamper-evident Evidence Vault, and deterministic settlement verification powered by PayPal.
-          </p>
         </div>
 
-        {/* Bottom: Trust & Status Indicator (desktop/tablet) */}
-        <div className="relative z-30 hidden sm:flex items-center justify-between text-[11px] text-emerald-200/90 font-medium pt-3 border-t border-white/10">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
-            <span>256-bit Encrypted Session</span>
-          </div>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-emerald-300 font-semibold">
-            Live Sandbox Connected
-          </span>
+        <div className="text-xs text-blue-200/80 font-medium">
+          PayPal Operations Platform
         </div>
-
       </div>
 
-      {/* ═════════════════════════════════════════════════════════════
-          RIGHT HALF: Seamless White Form Canvas
-      ═════════════════════════════════════════════════════════════ */}
-      <div className="w-full max-w-full md:w-1/2 lg:w-7/12 xl:w-1/2 min-h-0 md:h-full bg-white flex flex-col justify-center px-4 py-6 sm:px-8 sm:py-8 lg:p-12 relative overflow-y-auto overflow-x-hidden no-scrollbar flex-1 box-border">
-        
-        {/* Decorative 3D Sphere Peeking from Bottom Right (Desktop only) */}
-        <div 
-          className="hidden md:block absolute -bottom-16 -right-16 w-44 h-44 sm:w-52 sm:h-52 rounded-full pointer-events-none animate-float-slow z-0"
-          style={{
-            background: 'radial-gradient(circle at 35% 30%, #7DD3FC 0%, #0070BA 40%, #003087 75%, #001C48 100%)',
-            boxShadow: 'inset -8px -8px 20px rgba(0,0,0,0.35), inset 6px 6px 14px rgba(255,255,255,0.45), 0 16px 36px rgba(0,48,135,0.18)'
-          }}
-        />
-
-        {/* Form Container: strictly constrained with mx-auto and box-border */}
-        <div className="w-full max-w-[340px] sm:max-w-md mx-auto space-y-4 relative z-10 my-auto py-2 box-border">
+      {/* RIGHT PANEL */}
+      <div className="w-full md:w-7/12 lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-16 h-full bg-white overflow-y-auto">
+        <div className="w-full max-w-sm space-y-6">
           
-          {/* Header */}
-          <div className="space-y-1">
+          <div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Sign in
+              Sign In
             </h2>
-            <p className="text-xs text-slate-400 font-medium">
-              Choose your role to access the sandbox environment
-            </p>
           </div>
 
-          {/* Persona Switcher Tabs */}
-          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+          {/* Persona Tabs */}
+          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
             <button
               type="button"
               onClick={() => {
@@ -180,14 +99,14 @@ export default function LoginPage() {
                 setPassword('Password12345678!');
                 setError('');
               }}
-              className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 loginMode === 'merchant'
                   ? 'bg-[#003087] text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Merchant Console</span>
+              <span>Merchant</span>
             </button>
             <button
               type="button"
@@ -197,51 +116,29 @@ export default function LoginPage() {
                 setPassword('Password12345678!');
                 setError('');
               }}
-              className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 loginMode === 'buyer'
                   ? 'bg-[#0070BA] text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-[#FFC439]" />
-              <span className="truncate">Buyer ($5k Fake $)</span>
+              <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+              <span>Buyer ($5k Fake $)</span>
             </button>
           </div>
 
-          {/* Role Context Hint */}
-          <div className={`p-2.5 rounded-xl text-[11px] leading-relaxed border ${
-            loginMode === 'merchant'
-              ? 'bg-blue-50/70 border-blue-200/70 text-slate-700'
-              : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
-          }`}>
-            {loginMode === 'merchant' ? (
-              <span>
-                <strong>Merchant Mode:</strong> Review triage queue, Evidence Vault hashes, and approve Ava AI defense drafts.
-              </span>
-            ) : (
-              <span>
-                <strong>Buyer Mode:</strong> Shop with <strong>$5,000 PayPal fake money</strong>, track shipments, and simulate disputes that merchants defend live.
-              </span>
-            )}
-          </div>
-
-          {/* Error Message */}
           {error && (
-            <div role="alert" className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
-              <div className="min-w-0">
-                <p className="font-bold">{error}</p>
-              </div>
+            <div role="alert" className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{error}</span>
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={submit} className="space-y-3.5 w-full">
+          <form onSubmit={submit} className="space-y-4">
             
-            {/* Field 1: User Name / Email */}
             <div className="space-y-1">
-              <label htmlFor="email" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                {loginMode === 'merchant' ? 'Merchant Email' : 'Buyer Email'}
+              <label htmlFor="email" className="block text-xs font-bold text-slate-700">
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -252,18 +149,16 @@ export default function LoginPage() {
                   type="email"
                   autoComplete="username"
                   required
-                  maxLength={254}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="admin@disputeautopilot.com"
-                  className="w-full box-border rounded-xl bg-slate-50/80 border border-slate-200 pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white transition-all text-slate-900 placeholder:text-slate-400"
+                  className="w-full box-border rounded-xl bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white text-slate-900"
                 />
               </div>
             </div>
 
-            {/* Field 2: Password */}
             <div className="space-y-1">
-              <label htmlFor="password" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+              <label htmlFor="password" className="block text-xs font-bold text-slate-700">
                 Password
               </label>
               <div className="relative">
@@ -275,25 +170,23 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  maxLength={128}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full box-border rounded-xl bg-slate-50/80 border border-slate-200 pl-10 pr-16 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white transition-all text-slate-900 placeholder:text-slate-400"
+                  className="w-full box-border rounded-xl bg-slate-50 border border-slate-200 pl-10 pr-16 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white text-slate-900"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[10px] font-extrabold tracking-wider text-[#0070BA] hover:text-[#003087] cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[10px] font-extrabold text-[#0070BA] hover:text-[#003087] cursor-pointer"
                 >
                   {showPassword ? 'HIDE' : 'SHOW'}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password Row */}
-            <div className="flex items-center justify-between text-xs pt-0.5">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 font-medium">
+            <div className="flex items-center justify-between text-xs">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600">
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -305,57 +198,38 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowForgotModal(true)}
-                className="text-xs font-semibold text-slate-600 hover:text-[#0070BA] transition-colors cursor-pointer"
+                className="text-xs text-slate-500 hover:text-[#0070BA] cursor-pointer"
               >
                 Forgot Password?
               </button>
             </div>
 
-            {/* Primary Button: Solid PayPal Navy */}
             <button
               type="submit"
               disabled={submitting || loading}
-              className="w-full rounded-xl bg-[#003087] hover:bg-[#001C48] active:scale-[0.99] py-3 font-bold text-white text-xs sm:text-sm tracking-wide transition-all shadow-md shadow-[#003087]/25 hover:shadow-lg hover:shadow-[#003087]/35 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2 relative overflow-hidden group"
+              className="w-full rounded-xl bg-[#003087] hover:bg-[#001C48] py-3 font-bold text-white text-xs sm:text-sm transition-all shadow-md shadow-[#003087]/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              <span className="relative z-10 flex items-center gap-1.5">
-                {submitting ? 'Signing in…' : loginMode === 'merchant' ? 'Sign in as Merchant' : 'Sign in as Buyer ($5k Balance)'}
-                {!submitting && <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />}
-              </span>
+              <span>{submitting ? 'Signing in…' : 'Sign In'}</span>
+              {!submitting && <ArrowRight className="w-4 h-4" />}
             </button>
 
           </form>
 
-          {/* Quick 1-Click Buyer Access */}
-          <div className="pt-2 text-center">
-            <button
-              type="button"
-              disabled={submitting || loading}
-              onClick={() => submitWithCredentials('buyer@disputeautopilot.com', 'Password12345678!')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0070BA] hover:text-[#003087] hover:underline bg-blue-50/80 hover:bg-blue-100/80 px-3.5 py-2 rounded-full border border-blue-200/80 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <ShoppingBag className="w-3.5 h-3.5 text-[#0070BA]" />
-              <span>1-Click Buyer Sign-In ($5k Fake Money Sandbox) →</span>
-            </button>
-          </div>
-
-          {/* Bottom Register Link */}
-          <div className="text-center text-xs text-slate-500 pt-3 border-t border-slate-100">
+          <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-100">
             <span>Don't have an account? </span>
-            <Link href="/register" className="font-bold text-slate-900 hover:text-[#0070BA] hover:underline">
+            <Link href="/register" className="font-bold text-[#003087] hover:text-[#0070BA] hover:underline">
               Sign up
             </Link>
           </div>
 
         </div>
-
       </div>
 
-      {/* ── MODAL: Forgot Password Helper ── */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-sm bg-white card-3d-reflection rounded-3xl p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Sign-in Assistance</h3>
+              <h3 className="text-base font-bold text-slate-900">Demo Credentials</h3>
               <button 
                 type="button" 
                 onClick={() => setShowForgotModal(false)}
@@ -364,9 +238,6 @@ export default function LoginPage() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-slate-500">
-              For sandbox access, you can sign in with the primary administrator account:
-            </p>
             <div className="space-y-2 text-xs">
               <div 
                 onClick={() => {
@@ -374,10 +245,21 @@ export default function LoginPage() {
                   setPassword('Password12345678!');
                   setShowForgotModal(false);
                 }}
-                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#003087] cursor-pointer hover:-translate-y-0.5 transition-transform"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#003087] cursor-pointer"
               >
-                <span className="font-bold text-slate-800 block">DA Administrator</span>
+                <span className="font-bold text-slate-800 block">Merchant</span>
                 <span className="text-[11px] text-slate-500 font-mono block">admin@disputeautopilot.com</span>
+              </div>
+              <div 
+                onClick={() => {
+                  setEmail('buyer@disputeautopilot.com');
+                  setPassword('Password12345678!');
+                  setShowForgotModal(false);
+                }}
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0070BA] cursor-pointer"
+              >
+                <span className="font-bold text-slate-800 block">Buyer</span>
+                <span className="text-[11px] text-slate-500 font-mono block">buyer@disputeautopilot.com</span>
               </div>
             </div>
           </div>
