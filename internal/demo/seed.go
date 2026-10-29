@@ -452,6 +452,13 @@ func EnsureDemoAccounts(ctx context.Context) error {
 			StoreName: "DA Store",
 			Password:  "Password12345678!",
 		},
+		{
+			ID:        "usr_demo_buyer_shopper",
+			Email:     "buyer@disputeautopilot.com",
+			Name:      "Jordan Miller (PayPal Buyer)",
+			StoreName: "Dispute Autopilot Store",
+			Password:  "Password12345678!",
+		},
 	}
 
 	for _, u := range demoUsers {

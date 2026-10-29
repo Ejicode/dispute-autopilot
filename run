@@ -68,7 +68,7 @@ PORT="${PORT:-3000}"
 echo -e "${GREEN}${BOLD}✓ Dispute Autopilot is ready!${RESET}"
 echo -e "  ➜ Local URL:       ${CYAN}${BOLD}http://localhost:${PORT}${RESET}"
 echo -e "  ➜ Mode:            ${GREEN}Offline Demo${RESET} (Realtime simulated sandbox)"
-echo -e "  ➜ AI Provider:     ${CYAN}Google Gemini 2.0 Flash${RESET} (Free AI Studio key supported)"
+echo -e "  ➜ AI Provider:     ${CYAN}Ava AI Autonomous Defense Engine${RESET}"
 echo -e "  ➜ Security Suite:  ${GREEN}6/6 Penetration Attack Vectors Active${RESET}"
 echo -e "  ➜ Press ${BOLD}Ctrl+C${RESET} to gracefully stop the server.\n"
 

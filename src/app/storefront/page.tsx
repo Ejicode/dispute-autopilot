@@ -79,6 +79,26 @@ export default function StorefrontPage() {
     address: '742 Evergreen Terrace, Springfield, OR 97477',
   });
 
+  // Simulated PayPal Fake Money Wallet Balance (starts at $5,000.00 = 500000 cents)
+  const [paypalBalance, setPaypalBalance] = useState<number>(500000);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('paypal_sandbox_fake_balance');
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed)) setPaypalBalance(parsed);
+      }
+    }
+  }, []);
+
+  const updateBalance = (cents: number) => {
+    setPaypalBalance(cents);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paypal_sandbox_fake_balance', String(cents));
+    }
+  };
+
   // Computed live sales stats
   const stats = useMemo(() => {
     let totalCents = 0;
@@ -224,6 +244,8 @@ export default function StorefrontPage() {
 
       if (res.ok) {
         const data = await res.json();
+        const nextBal = Math.max(0, paypalBalance - product.price_cents);
+        updateBalance(nextBal);
         setCheckoutSuccessToast({ name: product.name, orderNumber: data.order?.order_number || 'New Order' });
         setTimeout(() => setCheckoutSuccessToast(null), 6000);
         await fetchOrders();
@@ -351,6 +373,53 @@ export default function StorefrontPage() {
           <div className="flex items-center gap-2 text-xs text-slate-600 bg-blue-50/70 border border-blue-100 rounded-2xl px-4 py-2.5 shrink-0">
             <ShieldCheck className="w-4 h-4 text-[#003087] shrink-0" />
             <span>Every purchase creates an immutable <strong>SHA-256 Vault record</strong></span>
+          </div>
+        </div>
+
+        {/* ── PayPal Sandbox Fake Money Buyer Wallet Banner ── */}
+        <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] p-5 rounded-3xl text-white shadow-xl border border-white/20 card-3d-reflection-dark flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
+              <ShoppingBag className="w-6 h-6 text-[#FFC439]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#FFC439] bg-white/10 px-2 py-0.5 rounded-full border border-white/15">
+                  PayPal Sandbox Buyer Wallet
+                </span>
+                <span className="text-xs text-blue-200">
+                  Shopper: <strong>Jordan Miller</strong> (Verified Demo Buyer)
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  ${(paypalBalance / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+                <span className="text-xs font-bold text-blue-200">USD PayPal Fake Money</span>
+              </div>
+              <p className="text-[11px] text-blue-100/80 mt-0.5">
+                Use your fake PayPal money to purchase any product. The order and cryptographic proof are immediately sent to the Merchant Console.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => updateBalance(paypalBalance + 100000)}
+              className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-bold transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
+              title="Add $1,000 Fake Money to PayPal Wallet"
+            >
+              <Zap className="w-3.5 h-3.5 text-[#FFC439]" />
+              <span>+ $1,000 Fake $</span>
+            </button>
+            <Link
+              href="/"
+              className="px-4 py-2 rounded-xl bg-[#FFC439] hover:bg-[#F59E0B] text-slate-900 text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-[#003087]" />
+              <span>View Merchant Console →</span>
+            </Link>
           </div>
         </div>
 
@@ -601,19 +670,19 @@ export default function StorefrontPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleBuyProduct(prod)}
-                      disabled={buyingProductId !== null}
-                      className="flex-1 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 btn-press"
-                      title="1-Click Demo Order & Evidence Vault Capture"
-                    >
-                      {buyingProductId === prod.id ? (
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <ShoppingBag className="w-3.5 h-3.5 text-[#FFC439]" />
-                      )}
-                      <span>1-Click Buy Demo</span>
-                    </button>
+                      <button
+                        onClick={() => handleBuyProduct(prod)}
+                        disabled={buyingProductId !== null}
+                        className="flex-1 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 btn-press"
+                        title="Instant Purchase with PayPal Fake Money & Cryptographic Vault Capture"
+                      >
+                        {buyingProductId === prod.id ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <ShoppingBag className="w-3.5 h-3.5 text-[#FFC439]" />
+                        )}
+                        <span>Pay with PayPal (Fake $)</span>
+                      </button>
                     <button
                       onClick={() => { setCheckoutError(null); setSelectedProduct(prod); }}
                       className="px-3 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors text-xs font-bold shrink-0 btn-press"
@@ -789,7 +858,7 @@ export default function StorefrontPage() {
                   ) : (
                     <ShoppingBag className="w-4 h-4 text-[#FFC439]" />
                   )}
-                  <span>Create demo order</span>
+                  <span>Complete Purchase with PayPal</span>
                 </button>
               </div>
             </div>

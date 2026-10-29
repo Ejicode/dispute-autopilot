@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -121,7 +122,11 @@ func Merchant(ctx context.Context) (*Store, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, err
 	}
-	filename := filepath.Join(directory, sc.MerchantID+".db")
+	merchantID := sc.MerchantID
+	if sc.Mode == config.ModeDemo && (merchantID == "usr_demo_buyer_shopper" || strings.Contains(strings.ToLower(merchantID), "buyer")) {
+		merchantID = "usr_demo_da_admin"
+	}
+	filename := filepath.Join(directory, merchantID+".db")
 
 	merchantMu.Lock()
 	s, ok := merchants[filename]

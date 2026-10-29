@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { 
   Search, 
   Mail, 
@@ -12,7 +13,8 @@ import {
   Menu,
   UserCheck,
   LogOut,
-  X
+  X,
+  ShoppingBag
 } from 'lucide-react';
 import { useUser } from './UserContext';
 import SearchBar from './SearchBar';
@@ -51,6 +53,8 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const { activeUser, logout } = useUser();
+  const pathname = usePathname() || '';
+  const isStorefront = pathname.startsWith('/storefront');
 
   const notificationsRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -91,7 +95,7 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
               {title}
             </h1>
             <span className="hidden lg:inline-flex items-center gap-1 ml-2.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200/80 text-[10px] font-extrabold text-[#003087]">
-              PayPal • Gemini AI
+              PayPal • Ava AI Defense
             </span>
           </div>
           <p className="text-xs font-semibold text-slate-400 mt-1">
@@ -100,13 +104,34 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
         </div>
       </div>
 
-      {/* ── Center / In-Place Search Bar ── */}
-      <div className="flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2 sm:mx-4">
+      {/* ── Center / In-Place Search Bar (Desktop/Tablet) ── */}
+      <div className="hidden md:block flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2 sm:mx-4">
         <SearchBar variant="light" placeholder="Search transactions, items, disputes…" />
       </div>
 
       {/* ── Right Side: Mail Envelope & User Profile Pill ── */}
-      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+
+        {/* Quick Persona Switcher */}
+        {isStorefront ? (
+          <Link
+            href="/"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-sm"
+            title="Switch to Merchant Operations Console"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Merchant Console</span>
+          </Link>
+        ) : (
+          <Link
+            href="/storefront?mode=buyer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all card-3d-reflection"
+            title="Open Buyer Storefront with $5,000 PayPal Fake Money"
+          >
+            <ShoppingBag className="w-3.5 h-3.5 text-[#0070BA]" />
+            <span>Buyer ($5k Fake $)</span>
+          </Link>
+        )}
 
         {/* Circular Mail / Envelope Button with Popover */}
         <div ref={notificationsRef} className="relative">

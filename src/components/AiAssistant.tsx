@@ -553,7 +553,7 @@ export default function AiAssistant() {
               }
             }}
             className="relative flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#001C48]/95 via-[#003087]/90 to-[#0070BA]/90 backdrop-blur-xl border border-white/30 shadow-[0_8px_24px_rgba(0,48,135,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)] text-white hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer ring-2 ring-white/60"
-            title="Open Ava AI (Gemini 3.5)"
+            title="Open Ava AI Dispute Partner"
           >
             <Sparkles className="w-4 h-4 text-cyan-300 animate-pulse shrink-0" />
             <span className="text-xs font-black tracking-wide text-white">Ava AI</span>
@@ -586,7 +586,7 @@ export default function AiAssistant() {
                     <h4 className="text-white font-black text-xs leading-none">Ava <span className="text-cyan-300">AI</span></h4>
                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#22d3ee]" />
                     <span className="text-[9px] font-black uppercase tracking-wider text-cyan-200 bg-cyan-500/20 px-1.5 py-0.5 rounded border border-cyan-400/30">
-                      Gemini 3.5
+                      Ava v2.5
                     </span>
                     {activeVoiceName && (
                       <span 
@@ -599,7 +599,7 @@ export default function AiAssistant() {
                   </div>
                   <p className="text-[10px] text-cyan-200/90 font-medium leading-none mt-1 truncate flex items-center gap-1">
                     <Sparkles className="w-2.5 h-2.5 text-amber-300" />
-                    PayPal AI Dispute Partner • Gemini Powered
+                    PayPal AI Dispute Partner • Autonomous Defense
                   </p>
                 </div>
               </div>

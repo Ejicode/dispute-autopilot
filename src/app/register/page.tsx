@@ -92,12 +92,12 @@ export default function RegisterPage() {
 
         {/* Registration Card */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden card-3d-reflection">
-          <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-6 py-4">
+          <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-4 sm:px-6 py-4">
             <h2 className="text-white font-bold text-base">Merchant Registration</h2>
             <p className="text-white/70 text-xs mt-0.5">Secure registration with live PayPal sandbox credentials</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
             {error && (
               <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />

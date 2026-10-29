@@ -882,7 +882,7 @@ export default function CaseDetailPage() {
 
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-400">
-                Engine: <strong className="text-slate-700 font-mono">Gemini 3.5 Flash + RAG</strong>
+                Engine: <strong className="text-slate-700 font-mono">Ava AI Autonomous Defense Engine + RAG</strong>
               </span>
               <button
                 onClick={handleRegenerateDraft}

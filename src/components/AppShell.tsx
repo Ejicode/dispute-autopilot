@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import TopHeader from '@/components/TopHeader';
 import CreateAccountModal from '@/components/CreateAccountModal';
@@ -10,13 +11,20 @@ import Logo from '@/components/Logo';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { activeUser, sessionError, loading: userLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileDrawerOpen(false);
+  }, [pathname]);
+
   // Robust path normalization ignoring query strings and trailing slashes
   const normalizedPath = (pathname || '').split('?')[0].replace(/\/+$/, '') || '/';
   const isAuthPage = normalizedPath === '/login' || normalizedPath === '/register' || normalizedPath.startsWith('/login') || normalizedPath.startsWith('/register');
+  const isPublicBuyerPage = normalizedPath === '/storefront' || normalizedPath.startsWith('/storefront');
 
   // Restore sidebar state from localStorage on load
   useEffect(() => {
@@ -24,12 +32,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (saved === 'true') setCollapsed(true);
   }, []);
 
-  // API authorization is enforced server-side; redirect unauthenticated users to /login
+  // API authorization is enforced server-side; redirect unauthenticated users to /login (except auth and public buyer storefront)
   useEffect(() => {
-    if (!userLoading && !activeUser && !isAuthPage) {
+    if (!userLoading && !activeUser && !isAuthPage && !isPublicBuyerPage) {
       router.replace('/login');
     }
-  }, [userLoading, activeUser, isAuthPage, router]);
+  }, [userLoading, activeUser, isAuthPage, isPublicBuyerPage, router]);
 
   // Dynamic page title helper
   const getPageTitle = (path: string): string => {
@@ -81,6 +89,34 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Public buyer storefront renders for unauthenticated users without redirect
+  if (!activeUser && isPublicBuyerPage) {
+    return (
+      <div className="min-h-screen w-full bg-[#F4F6F8] flex flex-col">
+        {/* Simple Buyer Navigation Header */}
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+          <div className="flex items-center gap-3">
+            <Logo variant="dark" size="sm" href="/storefront" />
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Buyer Sandbox (Fake Money)
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>Merchant Sign-In →</span>
+            </Link>
+          </div>
+        </header>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   // Redirecting unauthenticated user
   if (!activeUser) {
     return (
@@ -118,15 +154,36 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         />
       </div>
 
-      {/* Floating Left Sidebar Container */}
-      <div className="p-3 pr-1 flex shrink-0 h-full relative z-10">
+      {/* Desktop Floating Left Sidebar Container */}
+      <div className="hidden md:flex p-3 pr-1 shrink-0 h-full relative z-10">
         <Sidebar collapsed={collapsed} onToggleCollapse={handleToggle} />
       </div>
 
+      {/* Mobile Navigation Drawer with Backdrop Overlay */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex animate-in fade-in duration-150">
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+            onClick={() => setMobileDrawerOpen(false)}
+            aria-label="Close navigation"
+          />
+          <div className="relative z-10 w-72 max-w-[85vw] h-full p-3 animate-in slide-in-from-left duration-200 flex flex-col">
+            <Sidebar 
+              collapsed={false} 
+              onToggleCollapse={() => setMobileDrawerOpen(false)}
+              onNavigate={() => setMobileDrawerOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Main App Container */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-transparent relative z-10 transition-all duration-300">
-        <TopHeader title={getPageTitle(normalizedPath)} onToggleSidebar={handleToggle} />
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 pb-6 custom-scrollbar">
+        <TopHeader 
+          title={getPageTitle(normalizedPath)} 
+          onToggleSidebar={() => setMobileDrawerOpen(prev => !prev)} 
+        />
+        <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-2 pb-6 custom-scrollbar">
           <div className="max-w-[1600px] mx-auto">
             {sessionError && <p role="alert" className="mb-4 text-sm text-rose-700">{sessionError}</p>}
             {children}

@@ -28,6 +28,8 @@ body {
   color: #0F172A;
   background-color: #F4F6F8;
   min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
   letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -24,11 +24,13 @@ interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   onSimulateDispute?: () => void;
+  onNavigate?: () => void;
 }
 
 export default function Sidebar({
   collapsed = false,
   onToggleCollapse,
+  onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
   const { logout } = useUser();
@@ -39,7 +41,7 @@ export default function Sidebar({
       items: [
         { href: '/', label: 'Dispute Queue', icon: Home, exact: true },
         { href: '/case/dsp_hero_1240', label: 'Case Review', icon: Shield, matchPrefix: '/case' },
-        { href: '/storefront', label: 'Sales & Orders', icon: Tag },
+        { href: '/storefront', label: 'Buyer Store ($5k Fake $)', icon: Tag },
         { href: '/vault', label: 'Evidence Vault', icon: FileCheck },
       ],
     },
@@ -141,11 +143,11 @@ export default function Sidebar({
                   );
 
                   return item.href.startsWith('/case/') ? (
-                    <a key={item.label} href={item.href} className={className} title={collapsed ? item.label : undefined}>
+                    <a key={item.label} href={item.href} onClick={onNavigate} className={className} title={collapsed ? item.label : undefined}>
                       {content}
                     </a>
                   ) : (
-                    <Link key={item.label} href={item.href} className={className} title={collapsed ? item.label : undefined}>
+                    <Link key={item.label} href={item.href} onClick={onNavigate} className={className} title={collapsed ? item.label : undefined}>
                       {content}
                     </Link>
                   );
@@ -188,7 +190,7 @@ export default function Sidebar({
 
             <div className="pt-1 text-center border-t border-white/10">
               <span className="text-[9px] font-bold text-blue-200/75 tracking-wider uppercase block">
-                PayPal REST APIs • Gemini AI
+                PayPal REST APIs • Ava AI Defense
               </span>
             </div>
           </div>
