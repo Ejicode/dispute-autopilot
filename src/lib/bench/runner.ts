@@ -4,24 +4,22 @@
 export interface BenchRunSummary {
   batchId: string;
   totalScenarios: number;
-  liveCount: number;
-  stubbedCount: number;
   evidenceCompleteRate: number; // percentage
   claimsVerifiedRate: number; // percentage
   unsafeActionsExecuted: number; // must be 0!
-  medianProcessingTimeMs: number;
-  handTimedBaselineSec: number; // 360 seconds
+  medianProcessingTimeUs: number;
+  manualBaselineSec: number; // team estimate, not yet measured
   speedupFactor: number;
   results: Array<{
     scenarioId: string;
     name: string;
     reason: string;
-    isLive: boolean;
+    category: string;
     strengthScore: number;
     recommendation: string;
     claimsCount: number;
     claimsVerified: boolean;
-    timeMs: number;
+    timeUs: number;
     unsafeActions: number;
   }>;
 }

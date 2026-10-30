@@ -17,7 +17,6 @@ type scenario struct {
 	category               string
 	reason                 types.DisputeReason
 	amountCents            int64
-	isLive                 bool
 	hasTracking            bool
 	carrierStatus          string
 	hasSignature           bool
@@ -49,7 +48,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryCleanINR,
 			reason:                 types.ReasonNotReceived,
 			amountCents:            int64((45 + i*15) * 100),
-			isLive:                 true, // Live sandbox tier
 			hasTracking:            true,
 			carrierStatus:          "DELIVERED",
 			hasSignature:           i%2 == 0,
@@ -72,7 +70,6 @@ func buildBenchScenarios() []scenario {
 			category:               categorySNAD,
 			reason:                 types.ReasonNotAsDescribed,
 			amountCents:            int64((80 + (i-10)*20) * 100),
-			isLive:                 false,
 			hasTracking:            true,
 			carrierStatus:          "DELIVERED",
 			hasSignature:           false,
@@ -90,7 +87,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryUnauthorized,
 			reason:                 types.ReasonUnauthorised,
 			amountCents:            int64((150 + (i-20)*35) * 100),
-			isLive:                 false,
 			hasTracking:            true,
 			carrierStatus:          "DELIVERED",
 			hasSignature:           true,
@@ -108,7 +104,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryAdversarialEdge,
 			reason:                 types.ReasonNotReceived,
 			amountCents:            12500,
-			isLive:                 false,
 			hasTracking:            true,
 			carrierStatus:          "DELIVERED",
 			hasSignature:           false,
@@ -122,7 +117,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryAdversarialEdge,
 			reason:                 types.ReasonNotReceived,
 			amountCents:            3500,
-			isLive:                 false,
 			hasTracking:            false,
 			carrierStatus:          "LABEL_CREATED",
 			hasSignature:           false,
@@ -136,7 +130,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryAdversarialEdge,
 			reason:                 types.ReasonNotReceived,
 			amountCents:            8900,
-			isLive:                 false,
 			hasTracking:            true,
 			carrierStatus:          "IN_TRANSIT",
 			hasSignature:           false,
@@ -150,7 +143,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryAdversarialEdge,
 			reason:                 types.ReasonNotReceived,
 			amountCents:            145000,
-			isLive:                 false,
 			hasTracking:            true,
 			carrierStatus:          "DELIVERED",
 			hasSignature:           false,
@@ -164,7 +156,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryAdversarialEdge,
 			reason:                 types.ReasonNotAsDescribed,
 			amountCents:            22000,
-			isLive:                 false,
 			hasTracking:            true,
 			carrierStatus:          "DELIVERED",
 			hasSignature:           false,
@@ -178,7 +169,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryAdversarialEdge,
 			reason:                 types.ReasonDuplicate,
 			amountCents:            4999,
-			isLive:                 false,
 			hasTracking:            true,
 			carrierStatus:          "DELIVERED",
 			hasSignature:           false,
@@ -196,7 +186,6 @@ func buildBenchScenarios() []scenario {
 			category:               categoryDeadline,
 			reason:                 types.ReasonNotReceived,
 			amountCents:            int64((500 + (i-34)*250) * 100),
-			isLive:                 false,
 			hasTracking:            true,
 			carrierStatus:          "DELIVERED",
 			hasSignature:           true,

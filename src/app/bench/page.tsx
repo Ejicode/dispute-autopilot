@@ -99,7 +99,7 @@ export default function BenchPage() {
           <div className="card-3d-reflection p-4 rounded-2xl">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Scenarios</span>
             <span className="text-2xl font-bold text-slate-900 block">{summary.totalScenarios}</span>
-            <span className="text-[10px] text-slate-400">10 Live · 30 Stubbed</span>
+            <span className="text-[10px] text-slate-400">Offline fixtures</span>
           </div>
 
           <div className="card-3d-reflection p-4 rounded-2xl">
@@ -124,7 +124,7 @@ export default function BenchPage() {
           <div className="card-3d-reflection-dark text-white p-4 rounded-2xl">
             <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider block mb-1">Speedup Factor</span>
             <span className="text-2xl font-bold text-white block">~{summary.speedupFactor}x</span>
-            <span className="text-[10px] text-blue-100">vs 6-min manual baseline</span>
+            <span className="text-[10px] text-blue-100">{summary.medianProcessingTimeUs}µs median vs ~{Math.round(summary.manualBaselineSec / 60)}-min manual estimate</span>
           </div>
         </div>
       )}
@@ -145,7 +145,7 @@ export default function BenchPage() {
                 <th className="py-3 px-4">Scenario ID</th>
                 <th className="py-3 px-4">Name</th>
                 <th className="py-3 px-4">Reason</th>
-                <th className="py-3 px-4">Type</th>
+                <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">ESS</th>
                 <th className="py-3 px-4">Recommendation</th>
                 <th className="py-3 px-4">Evidence</th>
@@ -165,8 +165,8 @@ export default function BenchPage() {
                       </span>
                     </td>
                     <td className="py-2.5 px-4">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${r.isLive ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-600 bg-slate-50 border-slate-200'}`}>
-                        {r.isLive ? 'Live' : 'Stubbed'}
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border text-slate-600 bg-slate-50 border-slate-200">
+                        {r.category.replace(/_/g, ' ')}
                       </span>
                     </td>
                     <td className="py-2.5 px-4">

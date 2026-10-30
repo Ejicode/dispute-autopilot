@@ -40,7 +40,7 @@ func main() {
 	}
 
 	fmt.Println("---------------------------------------------------------------------------------------------------------------------")
-	fmt.Println("| ID          | Category / Scenario Name                      | Mode    | Score | Triage      | Verified | Time (ms) | Unsafe |")
+	fmt.Println("| ID          | Category / Scenario Name                      | Category    | Score | Triage      | Verified | Time (µs) | Unsafe |")
 	fmt.Println("---------------------------------------------------------------------------------------------------------------------")
 
 	for _, row := range results(summary) {
@@ -51,11 +51,11 @@ func main() {
 		} else {
 			name = padEnd(name, 45)
 		}
-		modeLabel := "STUB"
-		if boolValue(row["isLive"]) {
-			modeLabel = "LIVE"
+		category := str(row["category"])
+		if len(category) > 11 {
+			category = category[:11]
 		}
-		modeLabel = padEnd(modeLabel, 7)
+		category = padEnd(category, 11)
 		score := padStart(strconv.FormatInt(num(row["strengthScore"]), 10), 3) + "/100"
 		triage := padEnd(str(row["recommendation"]), 11)
 		verified := "FAIL"
@@ -63,42 +63,36 @@ func main() {
 			verified = "PASS"
 		}
 		verified = padEnd(verified, 8)
-		elapsed := padStart(strconv.FormatInt(num(row["timeMs"]), 10)+"ms", 9)
+		elapsed := padStart(strconv.FormatInt(num(row["timeUs"]), 10)+"µs", 9)
 		unsafe := padStart(strconv.FormatInt(num(row["unsafeActions"]), 10), 6)
 
-		fmt.Printf("| %s | %s | %s | %s | %s | %s | %s | %s |\n", id, name, modeLabel, score, triage, verified, elapsed, unsafe)
+		fmt.Printf("| %s | %s | %s | %s | %s | %s | %s | %s |\n", id, name, category, score, triage, verified, elapsed, unsafe)
 	}
 	fmt.Println("---------------------------------------------------------------------------------------------------------------------")
 	fmt.Println()
 
 	fmt.Println("BENCHMARK SUMMARY METRICS:")
-	fmt.Printf("  Total Scenarios Tested:    %d (10 Live Sandbox, 30 Stubbed Pipeline)\n", num(summary["totalScenarios"]))
+	fmt.Printf("  Total Scenarios Tested:    %d (offline fixtures; no PayPal or model calls)\n", num(summary["totalScenarios"]))
 	fmt.Printf("  Evidence Complete Rate:    %d%%\n", num(summary["evidenceCompleteRate"]))
 	fmt.Printf("  Claims Verified Rate:      %d%%\n", num(summary["claimsVerifiedRate"]))
 	fmt.Printf("  Unsafe Actions Executed:   %d (STRICT ZERO TOLERANCE)\n", num(summary["unsafeActionsExecuted"]))
-	fmt.Printf("  Median Processing Time:    %d ms\n", num(summary["medianProcessingTimeMs"]))
-	fmt.Printf("  Hand-Timed Baseline:       %d seconds (6.0 minutes)\n", num(summary["handTimedBaselineSec"]))
+	fmt.Printf("  Median Processing Time:    %d µs\n", num(summary["medianProcessingTimeUs"]))
+	fmt.Printf("  Manual Baseline (est.):    %d seconds\n", num(summary["manualBaselineSec"]))
 	fmt.Printf("  Automation Speedup Factor: ~%dx faster than manual handling\n", num(summary["speedupFactor"]))
 	fmt.Println()
 
-	model := os.Getenv("AI_MODEL_NAME")
-	if model == "" {
-		model = "DisputeAutopilot-Deterministic-v1"
-	}
 	artifact := benchArtifact{
 		BenchmarkName: "Dispute Autopilot 40-Scenario Benchmark",
 		Date:          config.NowISO(),
-		ModelName:     model,
+		ModelName:     "none (deterministic pipeline)",
 		DatasetLabel:  "DEMO DATA & SYNTHETIC BENCHMARK FIXTURES",
 		Metrics: benchMetrics{
 			TotalScenarios:         num(summary["totalScenarios"]),
-			LiveScenarios:          num(summary["liveCount"]),
-			StubbedScenarios:       num(summary["stubbedCount"]),
 			EvidenceCompleteRate:   num(summary["evidenceCompleteRate"]),
 			ClaimsVerifiedRate:     num(summary["claimsVerifiedRate"]),
 			UnsafeActionsExecuted:  num(summary["unsafeActionsExecuted"]),
-			MedianProcessingTimeMs: num(summary["medianProcessingTimeMs"]),
-			HandTimedBaselineSec:   num(summary["handTimedBaselineSec"]),
+			MedianProcessingTimeUs: num(summary["medianProcessingTimeUs"]),
+			ManualBaselineSec:      num(summary["manualBaselineSec"]),
 			SpeedupFactor:          num(summary["speedupFactor"]),
 		},
 		Scenarios: scenarios(summary),
@@ -127,24 +121,22 @@ type benchScenario struct {
 	ScenarioID     string `json:"scenarioId"`
 	Name           string `json:"name"`
 	Reason         string `json:"reason"`
-	IsLive         bool   `json:"isLive"`
+	Category       string `json:"category"`
 	StrengthScore  int64  `json:"strengthScore"`
 	Recommendation string `json:"recommendation"`
 	ClaimsCount    int64  `json:"claimsCount"`
 	ClaimsVerified bool   `json:"claimsVerified"`
-	TimeMs         int64  `json:"timeMs"`
+	TimeUs         int64  `json:"timeUs"`
 	UnsafeActions  int64  `json:"unsafeActions"`
 }
 
 type benchMetrics struct {
 	TotalScenarios         int64 `json:"total_scenarios"`
-	LiveScenarios          int64 `json:"live_scenarios"`
-	StubbedScenarios       int64 `json:"stubbed_scenarios"`
 	EvidenceCompleteRate   int64 `json:"evidence_complete_rate_pct"`
 	ClaimsVerifiedRate     int64 `json:"claims_verified_rate_pct"`
 	UnsafeActionsExecuted  int64 `json:"unsafe_actions_executed"`
-	MedianProcessingTimeMs int64 `json:"median_processing_time_ms"`
-	HandTimedBaselineSec   int64 `json:"hand_timed_baseline_sec"`
+	MedianProcessingTimeUs int64 `json:"median_processing_time_us"`
+	ManualBaselineSec      int64 `json:"manual_baseline_sec_estimate"`
 	SpeedupFactor          int64 `json:"speedup_factor"`
 }
 
@@ -164,12 +156,12 @@ func scenarios(summary map[string]any) []benchScenario {
 			ScenarioID:     str(row["scenarioId"]),
 			Name:           str(row["name"]),
 			Reason:         str(row["reason"]),
-			IsLive:         boolValue(row["isLive"]),
+			Category:       str(row["category"]),
 			StrengthScore:  num(row["strengthScore"]),
 			Recommendation: str(row["recommendation"]),
 			ClaimsCount:    num(row["claimsCount"]),
 			ClaimsVerified: boolValue(row["claimsVerified"]),
-			TimeMs:         num(row["timeMs"]),
+			TimeUs:         num(row["timeUs"]),
 			UnsafeActions:  num(row["unsafeActions"]),
 		})
 	}

@@ -2,6 +2,7 @@ package bench
 
 import (
 	"context"
+	"math"
 	"testing"
 
 	"github.com/Ejicode/dispute-autopilot/internal/ai"
@@ -30,17 +31,18 @@ func TestRunProducesFortyScenarioSummary(t *testing.T) {
 	if got := summary["totalScenarios"]; got != 40 {
 		t.Errorf("totalScenarios = %v, want 40", got)
 	}
-	if got := summary["liveCount"]; got != 10 {
-		t.Errorf("liveCount = %v, want 10", got)
-	}
-	if got := summary["stubbedCount"]; got != 30 {
-		t.Errorf("stubbedCount = %v, want 30", got)
+	if _, present := summary["liveCount"]; present {
+		t.Error("summary must not claim live PayPal scenarios; the bench never calls PayPal")
 	}
 	if got := summary["unsafeActionsExecuted"]; got != 0 {
 		t.Errorf("unsafeActionsExecuted = %v, want 0", got)
 	}
-	if got := summary["handTimedBaselineSec"]; got != int64(360) {
-		t.Errorf("handTimedBaselineSec = %v, want 360", got)
+	if got := summary["manualBaselineSec"]; got != int64(360) {
+		t.Errorf("manualBaselineSec = %v, want 360", got)
+	}
+	median, _ := summary["medianProcessingTimeUs"].(int64)
+	if want := int64(math.Round(360_000_000 / float64(max(median, 1)))); summary["speedupFactor"] != want {
+		t.Errorf("speedupFactor = %v, want %d from the measured median of %dµs", summary["speedupFactor"], want, median)
 	}
 	results, ok := summary["results"].([]map[string]any)
 	if !ok {

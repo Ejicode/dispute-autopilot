@@ -206,7 +206,7 @@ func runBatch(ctx context.Context, batchID string) (map[string]any, error) {
 	}
 
 	results := make([]map[string]any, 0, len(benchScenarios))
-	times := make([]int64, 0, len(benchScenarios))
+	timesUs := make([]int64, 0, len(benchScenarios))
 	completeEvidenceCount := 0
 	allClaimsVerifiedCount := 0
 	totalUnsafeActions := 0
@@ -239,8 +239,9 @@ func runBatch(ctx context.Context, batchID string) (map[string]any, error) {
 		unsafeActions := 0
 		totalUnsafeActions += unsafeActions
 
-		elapsed := int(math.Round(float64(time.Since(startTime).Nanoseconds()) / 1e6))
-		times = append(times, int64(elapsed))
+		elapsedUs := time.Since(startTime).Microseconds()
+		timesUs = append(timesUs, elapsedUs)
+		elapsedMs := int(math.Round(float64(elapsedUs) / 1000))
 
 		// Record in bench_runs table.
 		details := mustMarshal(benchDetails{
@@ -248,10 +249,6 @@ func runBatch(ctx context.Context, batchID string) (map[string]any, error) {
 			ClaimsCount: len(draftOutput.Claims),
 		})
 
-		isLive := 0
-		if sc.isLive {
-			isLive = 1
-		}
 		claimsVerified := 0
 		if verification.Verified {
 			claimsVerified = 1
@@ -264,8 +261,9 @@ func runBatch(ctx context.Context, batchID string) (map[string]any, error) {
 		if _, err := db.Exec(ctx, `INSERT INTO bench_runs (
 			id, batch_id, scenario_id, name, dispute_reason, is_live, claims_verified, unsafe_actions_executed, execution_time_ms, passed, details, created_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			store.RandomID("br_", 6), batchID, sc.id, sc.name, string(sc.reason), isLive,
-			claimsVerified, unsafeActions, elapsed, passed, details, config.NowISO()); err != nil {
+			// is_live is always 0: every scenario is an offline fixture.
+			store.RandomID("br_", 6), batchID, sc.id, sc.name, string(sc.reason), 0,
+			claimsVerified, unsafeActions, elapsedMs, passed, details, config.NowISO()); err != nil {
 			return nil, err
 		}
 
@@ -273,43 +271,34 @@ func runBatch(ctx context.Context, batchID string) (map[string]any, error) {
 			"scenarioId":     sc.id,
 			"name":           sc.name,
 			"reason":         string(sc.reason),
-			"isLive":         sc.isLive,
+			"category":       sc.category,
 			"strengthScore":  triage.Score,
 			"recommendation": triage.Recommendation,
 			"claimsCount":    len(draftOutput.Claims),
 			"claimsVerified": verification.Verified,
-			"timeMs":         elapsed,
+			"timeUs":         elapsedUs,
 			"unsafeActions":  unsafeActions,
 		})
 	}
 
 	// Calculate median execution time.
-	sort.Slice(times, func(i, j int) bool { return times[i] < times[j] })
-	var medianTimeMs int64
-	if len(times) > 0 {
-		mid := len(times) / 2
-		if len(times)%2 != 0 {
-			medianTimeMs = times[mid]
+	sort.Slice(timesUs, func(i, j int) bool { return timesUs[i] < timesUs[j] })
+	var medianTimeUs int64
+	if len(timesUs) > 0 {
+		mid := len(timesUs) / 2
+		if len(timesUs)%2 != 0 {
+			medianTimeUs = timesUs[mid]
 		} else {
-			medianTimeMs = int64(math.Round(float64(times[mid-1]+times[mid]) / 2))
+			medianTimeUs = int64(math.Round(float64(timesUs[mid-1]+timesUs[mid]) / 2))
 		}
 	}
 
-	baselineSec := int64(360) // 6 minutes manual baseline
-	denominator := medianTimeMs
-	if denominator == 0 {
-		denominator = 1
-	}
-	speedup := int64(math.Round(float64(baselineSec*1000) / float64(denominator)))
+	// manualBaselineSec is the team's estimate of hand-assembling one evidence
+	// packet. Replace it with a measured figure before quoting the speedup.
+	const manualBaselineSec = int64(360)
+	speedup := int64(math.Round(float64(manualBaselineSec*1_000_000) / float64(max(medianTimeUs, 1))))
 
-	liveCount := 0
-	for _, s := range benchScenarios {
-		if s.isLive {
-			liveCount++
-		}
-	}
 	totalScenarios := len(benchScenarios)
-	stubbedCount := totalScenarios - liveCount
 	evidenceCompleteRate := 0
 	claimsVerifiedRate := 0
 	if totalScenarios > 0 {
@@ -320,13 +309,11 @@ func runBatch(ctx context.Context, batchID string) (map[string]any, error) {
 	summary := map[string]any{
 		"batchId":                batchID,
 		"totalScenarios":         totalScenarios,
-		"liveCount":              liveCount,
-		"stubbedCount":           stubbedCount,
 		"evidenceCompleteRate":   evidenceCompleteRate,
 		"claimsVerifiedRate":     claimsVerifiedRate,
 		"unsafeActionsExecuted":  totalUnsafeActions,
-		"medianProcessingTimeMs": medianTimeMs,
-		"handTimedBaselineSec":   baselineSec,
+		"medianProcessingTimeUs": medianTimeUs,
+		"manualBaselineSec":      manualBaselineSec,
 		"speedupFactor":          speedup,
 		"results":                results,
 	}
