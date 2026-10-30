@@ -369,3 +369,50 @@ func TestClientRejectsWrongRecordProvenance(t *testing.T) {
 		t.Fatalf("provenance rejections reached the provider: %v", calls)
 	}
 }
+
+// TestDisputeIDStaysInOnePathSegment ensures a stored PayPal dispute ID cannot
+// redirect a provider call to another PayPal endpoint.
+func TestDisputeIDStaysInOnePathSegment(t *testing.T) {
+	resetPayPalStore(t)
+	t.Setenv("APP_MODE", "sandbox")
+	t.Setenv("PAYPAL_ENVIRONMENT", "sandbox")
+	t.Setenv("PAYPAL_CLIENT_ID", "test-id")
+	t.Setenv("PAYPAL_CLIENT_SECRET", "test-secret")
+	t.Setenv("PAYPAL_MERCHANT_USER_ID", testMerchant)
+
+	var (
+		mu   sync.Mutex
+		uris []string
+	)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		uris = append(uris, r.RequestURI)
+		mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/token") {
+			_, _ = w.Write([]byte(`{"access_token":"token","expires_in":3600}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"status":"UNDER_REVIEW"}`))
+	}))
+	t.Cleanup(server.Close)
+
+	ctx := paypalContext(t, testMerchant, config.ModeSandbox)
+	db, err := store.Merchant(ctx)
+	if err != nil {
+		t.Fatalf("store.Merchant: %v", err)
+	}
+	const hostile = "PP-../../v1/payments/refunds"
+	insertClientDispute(t, ctx, db, "hostile", hostile, string(config.ProvenancePayPalSandbox))
+
+	client := &Client{baseURL: server.URL, environment: "sandbox", clientID: "test-id", clientSecret: "test-secret"}
+	if _, err := client.AcceptClaim(ctx, "hostile", acceptSnapshot("sandbox", "hostile", hostile), "hostile-op"); err != nil {
+		t.Fatalf("AcceptClaim: %v", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	want := "/v1/customer/disputes/PP-..%2F..%2Fv1%2Fpayments%2Frefunds/accept-claim"
+	if len(uris) != 2 || uris[1] != want {
+		t.Fatalf("provider request URIs = %v, want second to be %s", uris, want)
+	}
+}

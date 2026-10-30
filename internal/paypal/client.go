@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -210,7 +211,7 @@ func (c *Client) ProvideEvidence(ctx context.Context, disputeID string, action t
 	if err != nil {
 		return ProviderCall{}, err
 	}
-	endpoint := c.baseURL + "/v1/customer/disputes/" + action.PayPalDisputeID + "/provide-evidence"
+	endpoint := c.baseURL + "/v1/customer/disputes/" + url.PathEscape(action.PayPalDisputeID) + "/provide-evidence"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(requestBody))
 	if err != nil {
 		return ProviderCall{}, err
@@ -271,7 +272,7 @@ func (c *Client) AcceptClaim(ctx context.Context, disputeID string, action types
 	if err != nil {
 		return ProviderCall{}, err
 	}
-	endpoint := c.baseURL + "/v1/customer/disputes/" + action.PayPalDisputeID + "/accept-claim"
+	endpoint := c.baseURL + "/v1/customer/disputes/" + url.PathEscape(action.PayPalDisputeID) + "/accept-claim"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(requestBody))
 	if err != nil {
 		return ProviderCall{}, err
@@ -334,7 +335,7 @@ func (c *Client) GetDisputeDetails(ctx context.Context, disputeID string) (any, 
 			return http.ErrUseLastResponse
 		},
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/v1/customer/disputes/"+dispute.PayPalDisputeID, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/v1/customer/disputes/"+url.PathEscape(dispute.PayPalDisputeID), nil)
 	if err != nil {
 		return nil, httpx.Errorf(http.StatusBadGateway, "Unable to retrieve PayPal dispute details. No action was retried.")
 	}
