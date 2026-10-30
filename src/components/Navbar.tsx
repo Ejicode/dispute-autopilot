@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Shield, ShieldCheck, Radio, AlertTriangle, Clock, ShoppingCart, Activity, FileCheck, X } from 'lucide-react';
 import { useRealtime } from './RealtimeContext';
 import Logo from './Logo';
+import { formatCurrency } from '@/lib/currency';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -74,7 +75,7 @@ export default function Navbar() {
               <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span>
-                  <strong className="font-bold">${(metrics.totalAtRiskCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> at risk
+                  <strong className="font-bold">{formatCurrency(metrics.totalAtRiskCents, 'USD')}</strong> at risk
                 </span>
                 <span className="text-amber-600">·</span>
                 <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />

@@ -14,6 +14,7 @@ import (
 	"github.com/Ejicode/dispute-autopilot/internal/carrier"
 	"github.com/Ejicode/dispute-autopilot/internal/config"
 	"github.com/Ejicode/dispute-autopilot/internal/httpx"
+	"github.com/Ejicode/dispute-autopilot/internal/paypal"
 	"github.com/Ejicode/dispute-autopilot/internal/realtime"
 	"github.com/Ejicode/dispute-autopilot/internal/runtime"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
@@ -24,6 +25,11 @@ import (
 var emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
 
 var supportedCarriers = []string{"USPS", "FEDEX", "UPS"}
+
+var supportedCurrencies = []string{
+	"USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CHF", "NZD", "HKD", "SGD",
+	"SEK", "DKK", "PLN", "NOK", "CZK", "ILS", "MXN", "BRL", "TWD", "THB",
+}
 
 // orderItem is the normalized line item persisted with an order.
 type orderItem struct {
@@ -103,8 +109,17 @@ func Checkout(ctx context.Context, body map[string]any) (map[string]any, error) 
 	if !emailPattern.MatchString(buyerEmail) {
 		return nil, httpx.Errorf(http.StatusBadRequest, "Invalid buyer_email")
 	}
-	if value, present := body["currency"]; present && value != "USD" {
-		return nil, httpx.Errorf(http.StatusBadRequest, "Only USD is supported")
+	currency := "USD"
+	if raw, present := body["currency"]; present {
+		val, ok := raw.(string)
+		if !ok {
+			return nil, httpx.Errorf(http.StatusBadRequest, "Invalid currency")
+		}
+		val = strings.ToUpper(strings.TrimSpace(val))
+		if !contains(supportedCurrencies, val) {
+			return nil, httpx.Errorf(http.StatusBadRequest, "Unsupported currency")
+		}
+		currency = val
 	}
 
 	rawItems, ok := body["items"].([]any)
@@ -164,7 +179,6 @@ func Checkout(ctx context.Context, body map[string]any) (map[string]any, error) 
 
 	orderID := store.RandomID("ord_", 6)
 	orderNumber := "ORD-" + strings.ToUpper(store.RandomHex(8))
-	currency := "USD"
 	paypalOrderID := "PAYPAL-ORD-" + strings.ToUpper(store.RandomHex(6))
 	trackingNumber := carrier.GenerateTrackingNumber(carrierName)
 	now := config.NowISO()
@@ -296,6 +310,17 @@ func Checkout(ctx context.Context, body map[string]any) (map[string]any, error) 
 		realtime.Default().Publish(ctx, "VAULT_ITEM_ADDED", item)
 	}
 	realtime.Default().Publish(ctx, "ORDER_CAPTURED", createdOrder)
+
+	// Proactively sync tracking label to PayPal Shipping Trackers API
+	if trackingNumber != "" && paypalOrderID != "" {
+		_, _ = paypal.Default.SendTracker(ctx, paypal.TrackerInfo{
+			TransactionID:  paypalOrderID,
+			TrackingNumber: trackingNumber,
+			Status:         "SHIPPED",
+			Carrier:        carrierName,
+			NotifyBuyer:    false,
+		})
+	}
 
 	return map[string]any{"order": createdOrder, "success": true}, nil
 }

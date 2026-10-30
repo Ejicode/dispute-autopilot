@@ -115,7 +115,7 @@ func TestCheckoutValidation(t *testing.T) {
 	}{
 		{"missing buyer", func(b map[string]any) { delete(b, "buyer_name") }, http.StatusBadRequest, "Invalid buyer_name."},
 		{"bad email", func(b map[string]any) { b["buyer_email"] = "nope" }, http.StatusBadRequest, "Invalid buyer_email"},
-		{"bad currency", func(b map[string]any) { b["currency"] = "EUR" }, http.StatusBadRequest, "Only USD is supported"},
+		{"bad currency", func(b map[string]any) { b["currency"] = "XYZ" }, http.StatusBadRequest, "Unsupported currency"},
 		{"no items", func(b map[string]any) { b["items"] = []any{} }, http.StatusBadRequest, "Supply 1 to 100 items"},
 		{"unknown sku", func(b map[string]any) { b["items"] = []any{map[string]any{"sku": "NOPE", "quantity": 1}} }, http.StatusBadRequest, "Unknown SKU or quantity exceeds demo catalog stock"},
 		{"excess stock", func(b map[string]any) { b["items"] = []any{map[string]any{"sku": "DJI-M3P-CINE", "quantity": 99}} }, http.StatusBadRequest, "Unknown SKU or quantity exceeds demo catalog stock"},
@@ -141,3 +141,27 @@ func TestCheckoutValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckoutMultiCurrency(t *testing.T) {
+	ctx := testCtx(t)
+	body := map[string]any{
+		"buyer_name":       "Helena Vance",
+		"buyer_email":      "helena@example.com",
+		"shipping_address": "45 Boulevard Saint-Germain, Paris, France",
+		"currency":         "EUR",
+		"carrier":          "FEDEX",
+		"items":            []any{map[string]any{"sku": "DJI-M3P-CINE", "quantity": 1}},
+	}
+	resp, err := Checkout(ctx, body)
+	if err != nil {
+		t.Fatalf("Checkout with EUR failed: %v", err)
+	}
+	order, ok := resp["order"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected order map, got %#v", resp)
+	}
+	if order["currency"] != "EUR" {
+		t.Fatalf("expected order currency EUR, got %v", order["currency"])
+	}
+}
+

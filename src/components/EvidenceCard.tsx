@@ -16,6 +16,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { EvidenceItem } from '@/lib/types';
+import { formatCurrency } from '@/lib/currency';
 
 interface EvidenceCardProps {
   item: EvidenceItem;
@@ -99,7 +100,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
           <div className="min-w-0">
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Payment</span>
             <span className="font-bold text-emerald-600 text-sm block">
-              ${data.total_cents ? (data.total_cents / 100).toFixed(2) : '0.00'} {data.currency || 'USD'}
+              {formatCurrency(data.total_cents || 0, data.currency || 'USD')}
             </span>
             <span className="text-[11px] text-slate-500 truncate block">{data.payment_method || 'PayPal Express Checkout'}</span>
           </div>

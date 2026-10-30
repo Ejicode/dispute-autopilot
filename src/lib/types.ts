@@ -81,7 +81,7 @@ export interface AIDraft {
 
 export interface ExactActionSnapshot {
   environment?: import('./runtime/mode').AppMode;
-  action_type: 'PROVIDE_EVIDENCE' | 'ACCEPT_CLAIM';
+  action_type: 'PROVIDE_EVIDENCE' | 'ACCEPT_CLAIM' | 'APPEAL' | 'MAKE_OFFER' | 'ESCALATE' | 'ACKNOWLEDGE_RETURN_ITEM';
   dispute_id: string;
   paypal_dispute_id: string;
   amount_cents: number;

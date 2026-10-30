@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Dispute } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
+import { formatCurrency } from '@/lib/currency';
 import { 
   TrendingUp, 
   RefreshCw, 
@@ -35,6 +36,14 @@ const QueueGrid = dynamic(() => import('@/components/QueueGrid'), {
   loading: () => <div className="h-96 rounded-2xl bg-slate-100 animate-pulse" />,
 });
 
+// Static security telemetry data — hoisted outside component to avoid per-render recreation
+const defenseInvariantsData = [
+  { name: 'Webhook Signature Check', metric: '100% Cryptographic', status: 'Active' as const, percentage: 100, color: '#003087' },
+  { name: 'Replay Protection (Idempotent)', metric: '100% Unique Lock', status: 'Active' as const, percentage: 100, color: '#0070BA' },
+  { name: 'Deterministic Policy Gate', metric: '100% Enforced', status: 'Active' as const, percentage: 100, color: '#00A6E0' },
+  { name: 'Evidence Vault SHA-256', metric: '100% Verified', status: 'Active' as const, percentage: 100, color: '#10B981' },
+];
+
 export default function DashboardPage() {
   const { lastEvent } = useRealtime();
 
@@ -45,13 +54,14 @@ export default function DashboardPage() {
   const [seeding, setSeeding] = useState(false);
   const [timeframe, setTimeframe] = useState<'This year' | 'This month' | 'All time'>('This year');
   const [timeframeDropdownOpen, setTimeframeDropdownOpen] = useState(false);
+  const timeframeRef = useRef<HTMLDivElement>(null);
 
   // Interactive filters
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDayFilter, setSelectedDayFilter] = useState<string | null>(null);
 
   // Fetch disputes and live analytics from real SQLite database
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       const [disputesRes, analyticsRes] = await Promise.all([
         fetch('/api/disputes'),
@@ -72,17 +82,57 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [lastEvent]);
+  }, [fetchDashboardData, lastEvent]);
 
-  // Periodic polling fallback
+  // Periodic polling fallback — pauses when tab is hidden to save bandwidth
   useEffect(() => {
-    const interval = setInterval(fetchDashboardData, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const startPolling = () => {
+      if (!interval) {
+        interval = setInterval(fetchDashboardData, 5000);
+      }
+    };
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        fetchDashboardData(); // Refresh immediately on return
+        startPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchDashboardData]);
+
+  // Close timeframe dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (timeframeRef.current && !timeframeRef.current.contains(event.target as Node)) {
+        setTimeframeDropdownOpen(false);
+      }
+    };
+    if (timeframeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [timeframeDropdownOpen]);
 
   const handleSimulateDispute = async () => {
     setSimulating(true);
@@ -149,7 +199,7 @@ export default function DashboardPage() {
   // Real data calculations for 2x2 Metric Cards from SQLite
   const totalSalesDisplay = useMemo(() => {
     if (kpis.totalProtectedCents > 0) {
-      return '$' + (kpis.totalProtectedCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return formatCurrency(kpis.totalProtectedCents, 'USD');
     }
     return '$0.00';
   }, [kpis.totalProtectedCents]);
@@ -203,13 +253,7 @@ export default function DashboardPage() {
     ];
   }, [analytics?.donutCategories, kpis.totalDisputes, kpis.totalAtRiskCents]);
 
-  // Security Defense Coverage Telemetry
-  const defenseInvariantsData = [
-    { name: 'Webhook Signature Check', metric: '100% Cryptographic', status: 'Active', percentage: 100, color: '#003087' },
-    { name: 'Replay Protection (Idempotent)', metric: '100% Unique Lock', status: 'Active', percentage: 100, color: '#0070BA' },
-    { name: 'Deterministic Policy Gate', metric: '100% Enforced', status: 'Active', percentage: 100, color: '#00A6E0' },
-    { name: 'Evidence Vault SHA-256', metric: '100% Verified', status: 'Active', percentage: 100, color: '#10B981' },
-  ];
+  // Security Defense Coverage Telemetry (static — defined outside component)
 
   // Custom Tooltip for Volume Flow Chart
   const CustomHabitTooltip = ({ active, payload, label }: any) => {
@@ -450,7 +494,7 @@ export default function DashboardPage() {
 
               <div className="flex items-center gap-4 flex-wrap">
                 {/* Timeframe Dropdown Pill (e.g. "This year ∨") */}
-                <div className="relative">
+                <div ref={timeframeRef} className="relative">
                   <button
                     onClick={() => setTimeframeDropdownOpen(!timeframeDropdownOpen)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 text-xs font-bold text-slate-700 transition-colors cursor-pointer"

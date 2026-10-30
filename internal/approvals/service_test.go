@@ -1091,3 +1091,78 @@ func TestReconciliationOutcomes(t *testing.T) {
 	}
 	check(true, "demo cannot query provider state")
 }
+
+func TestAdditionalDisputeActions(t *testing.T) {
+	configureEnv(t, config.ModeSandbox, merchantID)
+	transport := installMockTransport(t)
+	transport.setHandler(func(method, url string, body []byte) (*http.Response, error) {
+		return jsonResponse(http.StatusOK, `{"status":"UNDER_REVIEW"}`), nil
+	})
+	ctx, err := scope.With(context.Background(), merchantID, config.ModeSandbox, testAccount(merchantID))
+	if err != nil {
+		t.Fatalf("scope.With: %v", err)
+	}
+	db, err := store.Merchant(ctx)
+	if err != nil {
+		t.Fatalf("store.Merchant: %v", err)
+	}
+	const now = "2026-10-14T10:00:00.000Z"
+	deadline := config.FormatISO(time.Now().Add(48 * time.Hour))
+
+	execSQL(t, ctx, db, `INSERT INTO disputes (id,paypal_dispute_id,transaction_id,reason,amount_cents,status,response_deadline,created_at,updated_at,provenance)
+		VALUES('dsp_actions','PP-ACT-1','TX-ACT-1','MERCHANDISE_OR_SERVICE_NOT_RECEIVED',5000,'REQUIRED_ACTION',?,?,?,'PAYPAL_SANDBOX')`,
+		deadline, now, now)
+
+	// 1. MAKE_OFFER
+	offerReview, err := ReviewAction(ctx, "dsp_actions", "MAKE_OFFER")
+	if err != nil {
+		t.Fatalf("ReviewAction(MAKE_OFFER): %v", err)
+	}
+	digestOffer := offerReview["snapshot_digest"].(string)
+	if digestOffer == "" {
+		t.Errorf("expected non-empty digest for MAKE_OFFER")
+	}
+	status, res, err := ExecuteApproval(ctx, "dsp_actions", "MAKE_OFFER", digestOffer)
+	if err != nil {
+		t.Fatalf("ExecuteApproval(MAKE_OFFER): %v", err)
+	}
+	if status != http.StatusOK || res["state"] != "SUCCEEDED" {
+		t.Errorf("expected SUCCEEDED for MAKE_OFFER, got %v", res)
+	}
+
+	// Reset dispute for ESCALATE
+	execSQL(t, ctx, db, "DELETE FROM approval_operations WHERE dispute_id='dsp_actions'")
+	execSQL(t, ctx, db, "DELETE FROM approvals WHERE dispute_id='dsp_actions'")
+	execSQL(t, ctx, db, "UPDATE disputes SET status='REQUIRED_ACTION' WHERE id='dsp_actions'")
+
+	// 2. ESCALATE
+	escReview, err := ReviewAction(ctx, "dsp_actions", "ESCALATE")
+	if err != nil {
+		t.Fatalf("ReviewAction(ESCALATE): %v", err)
+	}
+	status, res, err = ExecuteApproval(ctx, "dsp_actions", "ESCALATE", escReview["snapshot_digest"].(string))
+	if err != nil {
+		t.Fatalf("ExecuteApproval(ESCALATE): %v", err)
+	}
+	if status != http.StatusOK || res["state"] != "SUCCEEDED" {
+		t.Errorf("expected SUCCEEDED for ESCALATE, got %v", res)
+	}
+
+	// Reset dispute for ACKNOWLEDGE_RETURN_ITEM
+	execSQL(t, ctx, db, "DELETE FROM approval_operations WHERE dispute_id='dsp_actions'")
+	execSQL(t, ctx, db, "DELETE FROM approvals WHERE dispute_id='dsp_actions'")
+	execSQL(t, ctx, db, "UPDATE disputes SET status='REQUIRED_ACTION' WHERE id='dsp_actions'")
+
+	// 3. ACKNOWLEDGE_RETURN_ITEM
+	retReview, err := ReviewAction(ctx, "dsp_actions", "ACKNOWLEDGE_RETURN_ITEM")
+	if err != nil {
+		t.Fatalf("ReviewAction(ACKNOWLEDGE_RETURN_ITEM): %v", err)
+	}
+	status, res, err = ExecuteApproval(ctx, "dsp_actions", "ACKNOWLEDGE_RETURN_ITEM", retReview["snapshot_digest"].(string))
+	if err != nil {
+		t.Fatalf("ExecuteApproval(ACKNOWLEDGE_RETURN_ITEM): %v", err)
+	}
+	if status != http.StatusOK || res["state"] != "SUCCEEDED" {
+		t.Errorf("expected SUCCEEDED for ACKNOWLEDGE_RETURN_ITEM, got %v", res)
+	}
+}

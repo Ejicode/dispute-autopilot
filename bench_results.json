@@ -1,6 +1,6 @@
 {
   "benchmark_name": "Dispute Autopilot 40-Scenario Benchmark",
-  "date": "2026-10-30T16:02:39.345Z",
+  "date": "2026-10-30T22:37:56.710Z",
   "model_name": "none (deterministic pipeline)",
   "dataset_label": "DEMO DATA & SYNTHETIC BENCHMARK FIXTURES",
   "metrics": {
@@ -8,9 +8,9 @@
     "evidence_complete_rate_pct": 98,
     "claims_verified_rate_pct": 100,
     "unsafe_actions_executed": 0,
-    "median_processing_time_us": 330,
+    "median_processing_time_us": 282,
     "manual_baseline_sec_estimate": 360,
-    "speedup_factor": 1090909
+    "speedup_factor": 1276596
   },
   "scenarios": [
     {
@@ -22,7 +22,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 578,
+      "timeUs": 1088,
       "unsafeActions": 0
     },
     {
@@ -34,7 +34,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 276,
+      "timeUs": 324,
       "unsafeActions": 0
     },
     {
@@ -46,7 +46,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 341,
+      "timeUs": 265,
       "unsafeActions": 0
     },
     {
@@ -58,7 +58,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 382,
+      "timeUs": 248,
       "unsafeActions": 0
     },
     {
@@ -70,7 +70,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 374,
+      "timeUs": 284,
       "unsafeActions": 0
     },
     {
@@ -82,7 +82,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 323,
+      "timeUs": 306,
       "unsafeActions": 0
     },
     {
@@ -94,7 +94,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 334,
+      "timeUs": 311,
       "unsafeActions": 0
     },
     {
@@ -106,7 +106,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 334,
+      "timeUs": 318,
       "unsafeActions": 0
     },
     {
@@ -118,7 +118,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 378,
+      "timeUs": 268,
       "unsafeActions": 0
     },
     {
@@ -130,7 +130,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 331,
+      "timeUs": 527,
       "unsafeActions": 0
     },
     {
@@ -142,7 +142,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 415,
+      "timeUs": 279,
       "unsafeActions": 0
     },
     {
@@ -154,7 +154,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 353,
+      "timeUs": 308,
       "unsafeActions": 0
     },
     {
@@ -166,7 +166,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 303,
+      "timeUs": 346,
       "unsafeActions": 0
     },
     {
@@ -178,7 +178,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 332,
+      "timeUs": 304,
       "unsafeActions": 0
     },
     {
@@ -190,7 +190,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 375,
+      "timeUs": 1191,
       "unsafeActions": 0
     },
     {
@@ -202,7 +202,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 342,
+      "timeUs": 307,
       "unsafeActions": 0
     },
     {
@@ -214,7 +214,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 254,
+      "timeUs": 313,
       "unsafeActions": 0
     },
     {
@@ -226,7 +226,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 209,
+      "timeUs": 262,
       "unsafeActions": 0
     },
     {
@@ -238,7 +238,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 235,
+      "timeUs": 349,
       "unsafeActions": 0
     },
     {
@@ -250,7 +250,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 234,
+      "timeUs": 310,
       "unsafeActions": 0
     },
     {
@@ -262,7 +262,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 366,
+      "timeUs": 372,
       "unsafeActions": 0
     },
     {
@@ -274,7 +274,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 261,
+      "timeUs": 285,
       "unsafeActions": 0
     },
     {
@@ -286,7 +286,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 329,
+      "timeUs": 250,
       "unsafeActions": 0
     },
     {
@@ -298,7 +298,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 305,
+      "timeUs": 214,
       "unsafeActions": 0
     },
     {
@@ -310,7 +310,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 481,
+      "timeUs": 232,
       "unsafeActions": 0
     },
     {
@@ -322,7 +322,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 427,
+      "timeUs": 232,
       "unsafeActions": 0
     },
     {
@@ -334,7 +334,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 242,
+      "timeUs": 263,
       "unsafeActions": 0
     },
     {
@@ -346,7 +346,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 297,
+      "timeUs": 688,
       "unsafeActions": 0
     },
     {
@@ -358,7 +358,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 299,
+      "timeUs": 193,
       "unsafeActions": 0
     },
     {
@@ -370,7 +370,7 @@
       "recommendation": "ACCEPT",
       "claimsCount": 2,
       "claimsVerified": true,
-      "timeUs": 146,
+      "timeUs": 120,
       "unsafeActions": 0
     },
     {
@@ -382,7 +382,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 2,
       "claimsVerified": true,
-      "timeUs": 218,
+      "timeUs": 180,
       "unsafeActions": 0
     },
     {
@@ -394,7 +394,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 306,
+      "timeUs": 279,
       "unsafeActions": 0
     },
     {
@@ -406,7 +406,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 313,
+      "timeUs": 254,
       "unsafeActions": 0
     },
     {
@@ -418,7 +418,7 @@
       "recommendation": "ASK A HUMAN",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 383,
+      "timeUs": 188,
       "unsafeActions": 0
     },
     {
@@ -430,7 +430,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 313,
+      "timeUs": 267,
       "unsafeActions": 0
     },
     {
@@ -442,7 +442,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 373,
+      "timeUs": 284,
       "unsafeActions": 0
     },
     {
@@ -454,7 +454,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 356,
+      "timeUs": 301,
       "unsafeActions": 0
     },
     {
@@ -466,7 +466,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 338,
+      "timeUs": 222,
       "unsafeActions": 0
     },
     {
@@ -478,7 +478,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 227,
+      "timeUs": 228,
       "unsafeActions": 0
     },
     {
@@ -490,7 +490,7 @@
       "recommendation": "FIGHT",
       "claimsCount": 4,
       "claimsVerified": true,
-      "timeUs": 207,
+      "timeUs": 203,
       "unsafeActions": 0
     }
   ]

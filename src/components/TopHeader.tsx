@@ -84,6 +84,7 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
             onClick={onToggleSidebar}
             className="p-2 rounded-xl bg-white border border-slate-200/90 text-slate-600 hover:text-slate-900 shadow-sm md:hidden"
             title="Toggle Navigation"
+            aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -111,6 +112,41 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
 
       {/* ── Right Side: Mail Envelope & User Profile Pill ── */}
       <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+
+        {/* Mobile Search Button */}
+        <button
+          type="button"
+          onClick={() => setSearchModalOpen(true)}
+          className="p-2 rounded-xl bg-white border border-slate-200/90 text-slate-600 hover:text-slate-900 shadow-sm md:hidden"
+          aria-label="Search"
+        >
+          <Search className="w-4.5 h-4.5" />
+        </button>
+
+        {/* Mobile Search Modal Overlay */}
+        {searchModalOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex flex-col animate-in fade-in duration-150">
+            <div
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
+              onClick={() => setSearchModalOpen(false)}
+            />
+            <div className="relative z-10 p-4 pt-6 bg-white shadow-xl animate-in slide-in-from-top duration-200">
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <SearchBar variant="light" placeholder="Search transactions, items, disputes…" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSearchModalOpen(false)}
+                  className="p-2 rounded-xl text-slate-500 hover:text-slate-900"
+                  aria-label="Close search"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Persona Switcher */}
         {isStorefront ? (
@@ -143,10 +179,14 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
             }}
             className="w-10 h-10 rounded-full bg-white card-3d-reflection hover:-translate-y-0.5 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all relative cursor-pointer"
             title="Messages & Notifications"
+            aria-label={hasUnread ? "Messages & Notifications — unread" : "Messages & Notifications"}
           >
             <Mail className="w-4 h-4" />
             {hasUnread && (
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse ring-2 ring-white" />
+              <>
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse ring-2 ring-white" />
+                <span className="sr-only">Unread notifications</span>
+              </>
             )}
           </button>
 

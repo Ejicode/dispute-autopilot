@@ -5,6 +5,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { ColDef, RowClickedEvent } from 'ag-grid-community';
 import Link from 'next/link';
 import { Dispute } from '@/lib/types';
+import { formatCurrency } from '@/lib/currency';
 import {
   AlertCircle,
   Clock,
@@ -92,12 +93,13 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
       }
     }
 
-    const headers = ['Dispute ID', 'Transaction ID', 'Reason', 'Amount (USD)', 'Status', 'Strength Score', 'Recommendation', 'Deadline'];
+    const headers = ['Dispute ID', 'Transaction ID', 'Reason', 'Amount', 'Currency', 'Status', 'Strength Score', 'Recommendation', 'Deadline'];
     const rows = filteredRowData.map((d) => [
       d.paypal_dispute_id,
       d.transaction_id,
       d.reason,
       (d.amount_cents / 100).toFixed(2),
+      d.currency || 'USD',
       d.status,
       d.strength_score,
       d.recommendation,
@@ -176,7 +178,7 @@ export default function QueueGrid({ disputes }: QueueGridProps) {
         const currency = params.data?.currency || 'USD';
         return (
           <div className="flex items-center h-full font-bold text-xs text-slate-900">
-            <span>${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+            <span>{formatCurrency(cents, currency)}</span>
             <span className="text-[10px] text-slate-400 font-normal ml-1">{currency}</span>
           </div>
         );

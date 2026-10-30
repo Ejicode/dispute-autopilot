@@ -142,11 +142,7 @@ export default function Sidebar({
                     </>
                   );
 
-                  return item.href.startsWith('/case/') ? (
-                    <a key={item.label} href={item.href} onClick={onNavigate} className={className} title={collapsed ? item.label : undefined}>
-                      {content}
-                    </a>
-                  ) : (
+                  return (
                     <Link key={item.label} href={item.href} onClick={onNavigate} className={className} title={collapsed ? item.label : undefined}>
                       {content}
                     </Link>

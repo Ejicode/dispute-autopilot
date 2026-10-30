@@ -54,15 +54,7 @@ import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, Approval
 import { useRealtime } from '@/components/RealtimeContext';
 import { useUser } from '@/components/UserContext';
 import EvidenceCard from '@/components/EvidenceCard';
-
-// Helper to format currency with thousand-separators
-function formatCurrency(cents: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
-}
+import { formatCurrency } from '@/lib/currency';
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -1007,6 +999,10 @@ export default function CaseDetailPage() {
               >
                 <option value="PROVIDE_EVIDENCE">Submit Rebuttal Evidence to PayPal</option>
                 <option value="ACCEPT_CLAIM">Accept Claim &amp; Authorize Buyer Refund</option>
+                <option value="APPEAL">Appeal Dispute Decision to PayPal</option>
+                <option value="MAKE_OFFER">Make Settlement Offer to Buyer</option>
+                <option value="ESCALATE">Escalate Dispute to PayPal Claim</option>
+                <option value="ACKNOWLEDGE_RETURN_ITEM">Acknowledge Return Item Receipt</option>
               </select>
             </label>
 

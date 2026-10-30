@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"strings"
@@ -175,8 +177,34 @@ type ProviderCall struct {
 	Result  any  `json:"result"`
 }
 
-// ProvideEvidence submits reviewed evidence to the Disputes API.
+// EvidenceDocument represents an optional binary document attachment (PDF, image)
+// uploaded as part of a PayPal dispute evidence submission.
+type EvidenceDocument struct {
+	Name        string `json:"name"`
+	ContentType string `json:"content_type"`
+	Data        []byte `json:"-"`
+}
+
+func copyPayload(m map[string]any) map[string]any {
+	b, err := json.Marshal(m)
+	if err != nil {
+		return m
+	}
+	var res map[string]any
+	if err := json.Unmarshal(b, &res); err != nil {
+		return m
+	}
+	return res
+}
+
+// ProvideEvidence submits reviewed evidence to the Disputes API without attachments.
 func (c *Client) ProvideEvidence(ctx context.Context, disputeID string, action types.ExactActionSnapshot, idempotencyKey string) (ProviderCall, error) {
+	return c.ProvideEvidenceWithDocuments(ctx, disputeID, action, idempotencyKey, nil)
+}
+
+// ProvideEvidenceWithDocuments submits reviewed evidence to the Disputes API,
+// attaching binary documents via multipart/form-data when present.
+func (c *Client) ProvideEvidenceWithDocuments(ctx context.Context, disputeID string, action types.ExactActionSnapshot, idempotencyKey string, documents []EvidenceDocument) (ProviderCall, error) {
 	if action.ActionType != string(types.ActionProvideEvidence) || action.ProviderPayload == nil {
 		return ProviderCall{}, fmt.Errorf("A reviewed evidence request is required.")
 	}
@@ -186,51 +214,132 @@ func (c *Client) ProvideEvidence(ctx context.Context, disputeID string, action t
 
 	sc, _ := scope.From(ctx)
 	if sc.Mode == config.ModeDemo {
-		if _, err := store.Audit(ctx, "paypal", "PAYPAL_API_PROVIDE_EVIDENCE_MOCK", map[string]any{
+		auditPayload := map[string]any{
 			"dispute_id":      disputeID,
 			"idempotency_key": idempotencyKey,
 			"payload":         action.ProviderPayload,
 			"status":          "SUCCESS",
-		}, &disputeID); err != nil {
+		}
+		if len(documents) > 0 {
+			docNames := make([]string, len(documents))
+			for i, d := range documents {
+				docNames[i] = d.Name
+			}
+			auditPayload["documents"] = docNames
+		}
+		if _, err := store.Audit(ctx, "paypal", "PAYPAL_API_PROVIDE_EVIDENCE_MOCK", auditPayload, &disputeID); err != nil {
 			return ProviderCall{}, err
 		}
-		return ProviderCall{Success: true, Result: map[string]any{
+		result := map[string]any{
 			"dispute_id":      disputeID,
 			"status":          "UNDER_REVIEW",
 			"acknowledged_at": config.NowISO(),
 			"idempotency_key": idempotencyKey,
 			"simulation":      true,
-		}}, nil
+		}
+		if len(documents) > 0 {
+			result["documents_count"] = len(documents)
+		}
+		return ProviderCall{Success: true, Result: result}, nil
 	}
 
 	token, err := c.GetAccessToken(ctx)
 	if err != nil {
 		return ProviderCall{}, err
 	}
-	requestBody, err := json.Marshal(action.ProviderPayload)
-	if err != nil {
-		return ProviderCall{}, err
-	}
 	endpoint := c.baseURL + "/v1/customer/disputes/" + url.PathEscape(action.PayPalDisputeID) + "/provide-evidence"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(requestBody))
-	if err != nil {
-		return ProviderCall{}, err
+
+	var req *http.Request
+	if len(documents) == 0 {
+		requestBody, err := json.Marshal(action.ProviderPayload)
+		if err != nil {
+			return ProviderCall{}, err
+		}
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(requestBody))
+		if err != nil {
+			return ProviderCall{}, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+	} else {
+		var buf bytes.Buffer
+		writer := multipart.NewWriter(&buf)
+
+		// Input JSON part
+		inputHeader := make(textproto.MIMEHeader)
+		inputHeader.Set("Content-Disposition", `form-data; name="input"`)
+		inputHeader.Set("Content-Type", "application/json")
+		inputPart, err := writer.CreatePart(inputHeader)
+		if err != nil {
+			return ProviderCall{}, err
+		}
+
+		payloadCopy := copyPayload(action.ProviderPayload)
+		if evidences, ok := payloadCopy["evidences"].([]any); ok && len(evidences) > 0 {
+			if firstEv, ok := evidences[0].(map[string]any); ok {
+				if _, hasDocs := firstEv["documents"]; !hasDocs {
+					docList := make([]map[string]any, 0, len(documents))
+					for _, doc := range documents {
+						docList = append(docList, map[string]any{"name": doc.Name})
+					}
+					firstEv["documents"] = docList
+				}
+			}
+		}
+		inputJSON, err := json.Marshal(payloadCopy)
+		if err != nil {
+			return ProviderCall{}, err
+		}
+		if _, err := inputPart.Write(inputJSON); err != nil {
+			return ProviderCall{}, err
+		}
+
+		// Document file parts: file1, file2, etc.
+		for i, doc := range documents {
+			fieldName := fmt.Sprintf("file%d", i+1)
+			fileHeader := make(textproto.MIMEHeader)
+			fileHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name=%q; filename=%q`, fieldName, doc.Name))
+			ct := doc.ContentType
+			if ct == "" {
+				ct = "application/pdf"
+			}
+			fileHeader.Set("Content-Type", ct)
+			part, err := writer.CreatePart(fileHeader)
+			if err != nil {
+				return ProviderCall{}, err
+			}
+			if _, err := part.Write(doc.Data); err != nil {
+				return ProviderCall{}, err
+			}
+		}
+		if err := writer.Close(); err != nil {
+			return ProviderCall{}, err
+		}
+
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &buf)
+		if err != nil {
+			return ProviderCall{}, err
+		}
+		req.Header.Set("Content-Type", writer.FormDataContentType())
 	}
+
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("PayPal-Request-Id", idempotencyKey)
 
-	res, err := doJSON(req, 30000)
+	res, err := doJSON(req, 45000)
 	if err != nil {
 		return ProviderCall{}, err
 	}
 	result := decodeLoose(res.body, res.text)
-	if _, err := store.Audit(ctx, "paypal", "PAYPAL_API_PROVIDE_EVIDENCE", map[string]any{
+	auditPayload := map[string]any{
 		"dispute_id":      disputeID,
 		"http_status":     res.status,
 		"idempotency_key": idempotencyKey,
 		"response":        result,
-	}, &disputeID); err != nil {
+	}
+	if len(documents) > 0 {
+		auditPayload["documents_count"] = len(documents)
+	}
+	if _, err := store.Audit(ctx, "paypal", "PAYPAL_API_PROVIDE_EVIDENCE", auditPayload, &disputeID); err != nil {
 		return ProviderCall{}, err
 	}
 	if res.status < 200 || res.status >= 300 {
@@ -296,6 +405,226 @@ func (c *Client) AcceptClaim(ctx context.Context, disputeID string, action types
 	}
 	if res.status < 200 || res.status >= 300 {
 		return ProviderCall{}, fmt.Errorf("PayPal API accept-claim failed (%d): %s", res.status, res.text)
+	}
+	return ProviderCall{Success: true, Result: result}, nil
+}
+
+func (c *Client) executeDisputeAction(ctx context.Context, disputeID string, action types.ExactActionSnapshot, idempotencyKey, subPath, auditTag string) (ProviderCall, error) {
+	if action.ProviderPayload == nil {
+		return ProviderCall{}, fmt.Errorf("A reviewed %s request is required.", subPath)
+	}
+	if err := c.assertAction(ctx, disputeID, action); err != nil {
+		return ProviderCall{}, err
+	}
+
+	sc, _ := scope.From(ctx)
+	if sc.Mode == config.ModeDemo {
+		if _, err := store.Audit(ctx, "paypal", "PAYPAL_API_"+auditTag+"_MOCK", map[string]any{
+			"dispute_id":      disputeID,
+			"idempotency_key": idempotencyKey,
+			"notes":           action.Notes,
+			"payload":         action.ProviderPayload,
+		}, &disputeID); err != nil {
+			return ProviderCall{}, err
+		}
+		return ProviderCall{Success: true, Result: map[string]any{
+			"dispute_id": disputeID,
+			"status":     "UNDER_REVIEW",
+			"simulation": true,
+		}}, nil
+	}
+
+	token, err := c.GetAccessToken(ctx)
+	if err != nil {
+		return ProviderCall{}, err
+	}
+	requestBody, err := json.Marshal(action.ProviderPayload)
+	if err != nil {
+		return ProviderCall{}, err
+	}
+	endpoint := c.baseURL + "/v1/customer/disputes/" + url.PathEscape(action.PayPalDisputeID) + "/" + subPath
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(requestBody))
+	if err != nil {
+		return ProviderCall{}, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("PayPal-Request-Id", idempotencyKey)
+
+	res, err := doJSON(req, 30000)
+	if err != nil {
+		return ProviderCall{}, err
+	}
+	result := decodeLoose(res.body, res.text)
+	if _, err := store.Audit(ctx, "paypal", "PAYPAL_API_"+auditTag, map[string]any{
+		"dispute_id":      disputeID,
+		"http_status":     res.status,
+		"idempotency_key": idempotencyKey,
+		"response":        result,
+	}, &disputeID); err != nil {
+		return ProviderCall{}, err
+	}
+	if res.status < 200 || res.status >= 300 {
+		return ProviderCall{}, fmt.Errorf("PayPal API %s failed (%d): %s", subPath, res.status, res.text)
+	}
+	return ProviderCall{Success: true, Result: result}, nil
+}
+
+// AppealDispute appeals a dispute decision with new evidence or notes.
+func (c *Client) AppealDispute(ctx context.Context, disputeID string, action types.ExactActionSnapshot, idempotencyKey string) (ProviderCall, error) {
+	if action.ActionType != string(types.ActionAppeal) {
+		return ProviderCall{}, fmt.Errorf("A reviewed appeal request is required.")
+	}
+	return c.executeDisputeAction(ctx, disputeID, action, idempotencyKey, "appeal", "APPEAL")
+}
+
+// MakeOffer proposes a settlement or partial refund offer to the buyer.
+func (c *Client) MakeOffer(ctx context.Context, disputeID string, action types.ExactActionSnapshot, idempotencyKey string) (ProviderCall, error) {
+	if action.ActionType != string(types.ActionMakeOffer) {
+		return ProviderCall{}, fmt.Errorf("A reviewed make-offer request is required.")
+	}
+	return c.executeDisputeAction(ctx, disputeID, action, idempotencyKey, "make-offer", "MAKE_OFFER")
+}
+
+// EscalateDispute escalates an inquiry to a full PayPal dispute claim.
+func (c *Client) EscalateDispute(ctx context.Context, disputeID string, action types.ExactActionSnapshot, idempotencyKey string) (ProviderCall, error) {
+	if action.ActionType != string(types.ActionEscalate) {
+		return ProviderCall{}, fmt.Errorf("A reviewed escalate request is required.")
+	}
+	return c.executeDisputeAction(ctx, disputeID, action, idempotencyKey, "escalate", "ESCALATE")
+}
+
+// AcknowledgeReturnItem acknowledges receipt of returned merchandise.
+func (c *Client) AcknowledgeReturnItem(ctx context.Context, disputeID string, action types.ExactActionSnapshot, idempotencyKey string) (ProviderCall, error) {
+	if action.ActionType != string(types.ActionAcknowledgeReturn) {
+		return ProviderCall{}, fmt.Errorf("A reviewed return acknowledgement is required.")
+	}
+	return c.executeDisputeAction(ctx, disputeID, action, idempotencyKey, "acknowledge-return-item", "ACKNOWLEDGE_RETURN_ITEM")
+}
+
+// TrackerInfo describes carrier shipment tracking pushed to PayPal's Shipping Trackers API.
+type TrackerInfo struct {
+	TransactionID  string `json:"transaction_id"`
+	TrackingNumber string `json:"tracking_number"`
+	Status         string `json:"status"` // SHIPPED, IN_TRANSIT, DELIVERED, RETURNED, CANCELLED
+	Carrier        string `json:"carrier"` // USPS, FEDEX, UPS, DHL, etc.
+	NotifyBuyer    bool   `json:"notify_buyer"`
+}
+
+// MapCarrierStatusToPayPal translates internal carrier milestone names to PayPal Tracker statuses.
+func MapCarrierStatusToPayPal(status string) string {
+	switch strings.ToUpper(strings.TrimSpace(status)) {
+	case "LABEL_CREATED", "PICKED_UP", "SHIPPED":
+		return "SHIPPED"
+	case "IN_TRANSIT", "OUT_FOR_DELIVERY":
+		return "IN_TRANSIT"
+	case "DELIVERED":
+		return "DELIVERED"
+	case "RETURNED":
+		return "RETURNED"
+	case "CANCELLED":
+		return "CANCELLED"
+	default:
+		return "SHIPPED"
+	}
+}
+
+// NormalizeCarrierForPayPal validates and canonicalizes carrier names for PayPal.
+func NormalizeCarrierForPayPal(carrier string) string {
+	c := strings.ToUpper(strings.TrimSpace(carrier))
+	switch c {
+	case "USPS", "FEDEX", "UPS", "DHL", "ONTRACT":
+		return c
+	default:
+		return "USPS"
+	}
+}
+
+// SendTracker pushes proactive carrier tracking information to PayPal's Shipping Trackers API
+// (POST /v1/shipping/trackers-batch).
+func (c *Client) SendTracker(ctx context.Context, tracker TrackerInfo) (ProviderCall, error) {
+	if tracker.TransactionID == "" || tracker.TrackingNumber == "" {
+		return ProviderCall{}, fmt.Errorf("transaction_id and tracking_number are required")
+	}
+
+	sc, _ := scope.From(ctx)
+	carrierName := NormalizeCarrierForPayPal(tracker.Carrier)
+	trackerStatus := MapCarrierStatusToPayPal(tracker.Status)
+
+	if sc.Mode == config.ModeDemo || !c.IsConfigured() {
+		if _, err := store.Audit(ctx, "paypal", "PAYPAL_API_SEND_TRACKER_MOCK", map[string]any{
+			"transaction_id":  tracker.TransactionID,
+			"tracking_number": tracker.TrackingNumber,
+			"carrier":         carrierName,
+			"status":          trackerStatus,
+			"simulation":      true,
+		}, nil); err != nil {
+			return ProviderCall{}, err
+		}
+		return ProviderCall{
+			Success: true,
+			Result: map[string]any{
+				"transaction_id":  tracker.TransactionID,
+				"tracking_number": tracker.TrackingNumber,
+				"status":          trackerStatus,
+				"carrier":         carrierName,
+				"acknowledged_at": config.NowISO(),
+				"simulation":      true,
+			},
+		}, nil
+	}
+
+	token, err := c.GetAccessToken(ctx)
+	if err != nil {
+		return ProviderCall{}, err
+	}
+
+	payload := map[string]any{
+		"trackers": []any{
+			map[string]any{
+				"transaction_id":  tracker.TransactionID,
+				"tracking_number": tracker.TrackingNumber,
+				"status":          trackerStatus,
+				"carrier":         carrierName,
+				"notify_buyer":    tracker.NotifyBuyer,
+			},
+		},
+	}
+	requestBody, err := json.Marshal(payload)
+	if err != nil {
+		return ProviderCall{}, err
+	}
+
+	endpoint := c.baseURL + "/v1/shipping/trackers-batch"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(requestBody))
+	if err != nil {
+		return ProviderCall{}, err
+	}
+
+	idemp := store.RandomID("trk_", 10)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("PayPal-Request-Id", idemp)
+
+	res, err := doJSON(req, 20000)
+	if err != nil {
+		return ProviderCall{}, err
+	}
+	result := decodeLoose(res.body, res.text)
+	if _, err := store.Audit(ctx, "paypal", "PAYPAL_API_SEND_TRACKER", map[string]any{
+		"transaction_id":  tracker.TransactionID,
+		"tracking_number": tracker.TrackingNumber,
+		"status":          trackerStatus,
+		"carrier":         carrierName,
+		"http_status":     res.status,
+		"idempotency_key": idemp,
+		"response":        result,
+	}, nil); err != nil {
+		return ProviderCall{}, err
+	}
+
+	if res.status < 200 || res.status >= 300 {
+		return ProviderCall{}, fmt.Errorf("PayPal Shipping Trackers API failed (%d): %s", res.status, res.text)
 	}
 	return ProviderCall{Success: true, Result: result}, nil
 }

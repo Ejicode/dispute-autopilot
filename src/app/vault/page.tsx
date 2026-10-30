@@ -119,7 +119,27 @@ export default function EvidenceVaultPage() {
           </span>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <a
+            href="/api/vault/dossier"
+            download
+            className="px-4 py-2 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 btn-press cursor-pointer"
+            title="Download Cryptographically Certified Evidence Dossier PDF"
+          >
+            <Download className="w-3.5 h-3.5 text-[#FFC439]" />
+            <span>Export Dossier PDF</span>
+          </a>
+
+          <a
+            href="/api/vault/dossier?format=json"
+            download
+            className="px-3.5 py-2 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Export Tamper-Evident SHA-256 JSON Audit Trail"
+          >
+            <FileCode className="w-3.5 h-3.5 text-slate-500" />
+            <span>JSON Audit</span>
+          </a>
+
           <Link
             href="/trust-lab"
             className="px-4 py-2 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5"

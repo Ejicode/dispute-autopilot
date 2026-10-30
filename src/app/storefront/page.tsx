@@ -26,6 +26,7 @@ import {
 import { DemoOrder } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { PRODUCTS, Product } from '@/lib/storefront/catalog';
+import { formatCurrency, SUPPORTED_CURRENCIES } from '@/lib/currency';
 
 const MILESTONES = ["LABEL_CREATED", "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
 
@@ -79,8 +80,9 @@ export default function StorefrontPage() {
     address: '742 Evergreen Terrace, Springfield, OR 97477',
   });
 
-  // Simulated PayPal Fake Money Wallet Balance (starts at $5,000.00 = 500000 cents)
+  // Simulated PayPal Fake Money Wallet Balance (starts at 500,000 minor units / cents)
   const [paypalBalance, setPaypalBalance] = useState<number>(500000);
+  const [walletCurrency, setWalletCurrency] = useState<string>('USD');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -89,6 +91,8 @@ export default function StorefrontPage() {
         const parsed = parseInt(stored, 10);
         if (!isNaN(parsed)) setPaypalBalance(parsed);
       }
+      const storedCur = localStorage.getItem('paypal_sandbox_fake_currency');
+      if (storedCur) setWalletCurrency(storedCur);
     }
   }, []);
 
@@ -96,6 +100,13 @@ export default function StorefrontPage() {
     setPaypalBalance(cents);
     if (typeof window !== 'undefined') {
       localStorage.setItem('paypal_sandbox_fake_balance', String(cents));
+    }
+  };
+
+  const updateCurrency = (curr: string) => {
+    setWalletCurrency(curr);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paypal_sandbox_fake_currency', curr);
     }
   };
 
@@ -110,6 +121,7 @@ export default function StorefrontPage() {
       else inTransit++;
     }
     return {
+      totalCents,
       totalRevenue: (totalCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 }),
       totalOrders: orders.length,
       delivered,
@@ -230,6 +242,7 @@ export default function StorefrontPage() {
           buyer_name: name,
           buyer_email: email,
           shipping_address: address,
+          currency: walletCurrency,
           items: [
             {
               name: product.name,
@@ -391,14 +404,25 @@ export default function StorefrontPage() {
                   Shopper: <strong>Jordan Miller</strong> (Verified Demo Buyer)
                 </span>
               </div>
-              <div className="flex items-baseline gap-2 mt-1">
+              <div className="flex items-center gap-2.5 mt-1">
                 <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                  ${(paypalBalance / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  {formatCurrency(paypalBalance, walletCurrency)}
                 </span>
-                <span className="text-xs font-bold text-blue-200">USD PayPal Fake Money</span>
+                <select
+                  value={walletCurrency}
+                  onChange={(e) => updateCurrency(e.target.value)}
+                  className="bg-white/15 hover:bg-white/25 text-white font-bold text-xs rounded-xl px-2.5 py-1 border border-white/20 outline-none cursor-pointer transition-colors"
+                  title="Switch PayPal Wallet Currency"
+                >
+                  {SUPPORTED_CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code} className="text-slate-900 bg-white">
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <p className="text-[11px] text-blue-100/80 mt-0.5">
-                Use your fake PayPal money to purchase any product. The order and cryptographic proof are immediately sent to the Merchant Console.
+                Use your fake PayPal money to purchase any product in any PayPal-supported currency. The order and cryptographic proof are immediately sent to the Merchant Console.
               </p>
             </div>
           </div>
@@ -408,10 +432,10 @@ export default function StorefrontPage() {
               type="button"
               onClick={() => updateBalance(paypalBalance + 100000)}
               className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-bold transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
-              title="Add $1,000 Fake Money to PayPal Wallet"
+              title="Add 1,000 Fake Money to PayPal Wallet"
             >
               <Zap className="w-3.5 h-3.5 text-[#FFC439]" />
-              <span>+ $1,000 Fake $</span>
+              <span>+ 1,000 Fake Money</span>
             </button>
             <Link
               href="/"
@@ -428,7 +452,7 @@ export default function StorefrontPage() {
           <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Gross Revenue</span>
-              <span className="text-xl font-extrabold text-slate-900 block mt-0.5">${stats.totalRevenue}</span>
+              <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{formatCurrency(stats.totalCents, walletCurrency)}</span>
               <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Live captured sales
@@ -662,9 +686,9 @@ export default function StorefrontPage() {
                   <div className="flex items-baseline justify-between mb-2.5">
                     <div>
                       <span className="text-lg font-extrabold text-slate-900">
-                        ${(prod.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatCurrency(prod.price_cents, walletCurrency)}
                       </span>
-                      <span className="text-[11px] text-slate-400 ml-1">USD</span>
+                      <span className="text-[11px] text-slate-400 ml-1">{walletCurrency}</span>
                     </div>
                     <span className="text-[10px] text-slate-400 font-medium">Free 2-Day Shipping</span>
                   </div>
@@ -681,7 +705,7 @@ export default function StorefrontPage() {
                         ) : (
                           <ShoppingBag className="w-3.5 h-3.5 text-[#FFC439]" />
                         )}
-                        <span>Pay with PayPal (Fake $)</span>
+                        <span>Pay with PayPal ({walletCurrency})</span>
                       </button>
                     <button
                       onClick={() => { setCheckoutError(null); setSelectedProduct(prod); }}
@@ -836,7 +860,7 @@ export default function StorefrontPage() {
               <div>
                 <span className="text-xs text-slate-400 block font-medium">Total Checkout Price</span>
                 <span className="text-2xl font-extrabold text-slate-900">
-                  ${(selectedProduct.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  {formatCurrency(selectedProduct.price_cents, walletCurrency)}
                 </span>
               </div>
 
@@ -927,7 +951,7 @@ export default function StorefrontPage() {
                       </div>
                       <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
                         <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Spend</span>
-                        <span className="font-extrabold text-[#003087]">${(cust.totalSpentCents / 100).toFixed(2)}</span>
+                        <span className="font-extrabold text-[#003087]">{formatCurrency(cust.totalSpentCents, walletCurrency)}</span>
                       </div>
                     </div>
                   </div>
@@ -989,7 +1013,7 @@ export default function StorefrontPage() {
                         <span className="font-extrabold text-slate-900">{ord.order_number}</span>
                         <span className="text-slate-400 text-xs">·</span>
                         <span className="font-extrabold text-slate-900 text-base">
-                          ${(ord.total_cents / 100).toFixed(2)} {ord.currency}
+                          {formatCurrency(ord.total_cents, ord.currency)}
                         </span>
                         <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold">
                           {ord.tracking_number}

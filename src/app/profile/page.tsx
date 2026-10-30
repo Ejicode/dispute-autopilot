@@ -34,6 +34,7 @@ import {
 import { useUser } from '@/components/UserContext';
 import { useRealtime } from '@/components/RealtimeContext';
 import { useRouter } from 'next/navigation';
+import { formatCurrency } from '@/lib/currency';
 
 export default function MerchantProfilePage() {
   const { activeUser, loading: userLoading, openCreateModal, logout } = useUser();
@@ -97,7 +98,7 @@ export default function MerchantProfilePage() {
 
   // All KPIs come directly from the analytics API — no formulas here
   const totalProtectedDollars = kpis?.totalProtectedCents != null
-    ? (kpis.totalProtectedCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    ? formatCurrency(kpis.totalProtectedCents, 'USD')
     : loading ? '—' : '$0.00';
 
   const winRate = kpis?.winRate != null ? `${kpis.winRate}%` : loading ? '—' : 'N/A';
@@ -402,7 +403,7 @@ export default function MerchantProfilePage() {
                       {d.reason?.replace(/_/g, ' ')}
                     </td>
                     <td className="py-3 px-3 font-bold text-slate-900 font-mono">
-                      ${(d.amount_cents / 100).toFixed(2)} {d.currency}
+                      {formatCurrency(d.amount_cents, d.currency)}
                     </td>
                     <td className="py-3 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
