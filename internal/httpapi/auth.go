@@ -8,6 +8,7 @@ import (
 
 	"github.com/Ejicode/dispute-autopilot/internal/auth"
 	"github.com/Ejicode/dispute-autopilot/internal/config"
+	"github.com/Ejicode/dispute-autopilot/internal/demo"
 	"github.com/Ejicode/dispute-autopilot/internal/httpx"
 	"github.com/Ejicode/dispute-autopilot/internal/scope"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
@@ -155,7 +156,15 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err := auth.Throttle(email); err != nil {
+	mode, err := config.ApplicationMode()
+	if err != nil {
+		return err
+	}
+	throttle := func() error { return auth.Throttle(email) }
+	if mode == config.ModeDemo && demo.IsDemoEmail(email) {
+		throttle = auth.ThrottleGlobal
+	}
+	if err := throttle(); err != nil {
 		return err
 	}
 	db, err := store.Auth()
@@ -182,6 +191,9 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) error {
 	}
 	if !valid {
 		return httpx.Errorf(http.StatusUnauthorized, "Invalid email or password.")
+	}
+	if err := auth.ResetThrottle(r.Context(), email); err != nil {
+		return err
 	}
 	if avatar.Valid {
 		value := avatar.String

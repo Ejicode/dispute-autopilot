@@ -53,21 +53,41 @@ func Credentials(body map[string]any, registration bool) (string, string, error)
 	return email, password, nil
 }
 
+type rateLimit struct {
+	key    string
+	max    int64
+	window int64
+}
+
+var globalLimit = rateLimit{"global", 120, 60000}
+
+func accountLimit(email string) rateLimit { return rateLimit{TokenHash(email), 8, 900000} }
+
 // Throttle enforces global and per-account authentication rate limits.
-func Throttle(email string) error {
+func Throttle(email string) error { return throttle(globalLimit, accountLimit(email)) }
+
+// ThrottleGlobal enforces only the global limit, for accounts whose
+// credentials are public (seeded demo accounts) where a per-account lockout
+// protects nothing and lets anyone deny access to everyone else.
+func ThrottleGlobal() error { return throttle(globalLimit) }
+
+// ResetThrottle clears an account's counter after a successful sign-in, so
+// only consecutive failures count toward its lockout.
+func ResetThrottle(ctx context.Context, email string) error {
+	db, err := store.Auth()
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(ctx, "DELETE FROM auth_attempts WHERE key = ?", accountLimit(email).key)
+	return err
+}
+
+func throttle(limits ...rateLimit) error {
 	db, err := store.Auth()
 	if err != nil {
 		return err
 	}
 	now := time.Now().UnixMilli()
-	limits := []struct {
-		key    string
-		max    int64
-		window int64
-	}{
-		{"global", 120, 60000},
-		{TokenHash(email), 8, 900000},
-	}
 	allowed := false
 	err = db.WithTx(context.Background(), func(ctx context.Context) error {
 		if _, err := db.Exec(ctx, "DELETE FROM auth_attempts WHERE resets_at <= ?", now); err != nil {

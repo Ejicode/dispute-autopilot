@@ -15,6 +15,7 @@ import (
 
 	"github.com/Ejicode/dispute-autopilot/internal/auth"
 	"github.com/Ejicode/dispute-autopilot/internal/config"
+	"github.com/Ejicode/dispute-autopilot/internal/demo"
 	"github.com/Ejicode/dispute-autopilot/internal/paypal"
 	"github.com/Ejicode/dispute-autopilot/internal/realtime"
 	"github.com/Ejicode/dispute-autopilot/internal/scope"
@@ -567,4 +568,21 @@ func TestHTTPApiEndToEnd(t *testing.T) {
 	}
 	check(do("POST", "/api/auth/login", "", origin, map[string]any{"email": "rate@example.test", "password": password}).status == 429,
 		"repeated sign-in attempts are rate limited")
+
+	successes := 0
+	for i := 0; i < 10; i++ {
+		if do("POST", "/api/auth/login", "", origin, map[string]any{"email": "b@example.test", "password": password}).status == 200 {
+			successes++
+		}
+	}
+	check(successes == 10, "successful sign-ins never lock an account out")
+
+	if err := demo.EnsureDemoAccounts(context.Background()); err != nil {
+		t.Fatalf("seed demo accounts: %v", err)
+	}
+	for i := 0; i < 10; i++ {
+		do("POST", "/api/auth/login", "", origin, map[string]any{"email": "admin@disputeautopilot.com", "password": "wrong password"})
+	}
+	check(do("POST", "/api/auth/login", "", origin, map[string]any{"email": "admin@disputeautopilot.com", "password": "Password12345678!"}).status == 200,
+		"failed attempts cannot lock out a public demo account")
 }

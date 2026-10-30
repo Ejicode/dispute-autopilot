@@ -177,6 +177,41 @@ func TestThrottlePerAccountLimit(t *testing.T) {
 	}
 }
 
+func TestResetThrottleClearsAccountCounter(t *testing.T) {
+	newAuthStore(t)
+	email := "reset@example.test"
+	for i := 0; i < 7; i++ {
+		if err := Throttle(email); err != nil {
+			t.Fatalf("attempt %d blocked: %v", i+1, err)
+		}
+	}
+	if err := ResetThrottle(context.Background(), email); err != nil {
+		t.Fatalf("ResetThrottle: %v", err)
+	}
+	// Without the reset, the 9th attempt would be refused.
+	for i := 0; i < 8; i++ {
+		if err := Throttle(email); err != nil {
+			t.Fatalf("attempt %d after reset blocked: %v", i+1, err)
+		}
+	}
+}
+
+func TestThrottleGlobalIgnoresAccountCounter(t *testing.T) {
+	newAuthStore(t)
+	db, err := store.Auth()
+	if err != nil {
+		t.Fatalf("store.Auth: %v", err)
+	}
+	if _, err := db.Exec(context.Background(),
+		"INSERT OR REPLACE INTO auth_attempts(key,count,resets_at) VALUES(?,8,?)",
+		TokenHash("public@example.test"), config.NowMillis()+900000); err != nil {
+		t.Fatalf("seed attempts: %v", err)
+	}
+	if err := ThrottleGlobal(); err != nil {
+		t.Fatalf("global-only throttle blocked by an account counter: %v", err)
+	}
+}
+
 func TestSessionLifecycle(t *testing.T) {
 	newAuthStore(t)
 	insertAccount(t, "usr_00000000000000000000000000000001", "merchant@example.test")

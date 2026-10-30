@@ -411,49 +411,61 @@ type orderConfirmation2 struct {
 	ShippingAddress string `json:"shipping_address"`
 }
 
+// demoUsers are the seeded demo accounts. Their passwords are published in the
+// README so evaluators can sign in.
+var demoUsers = []struct {
+	ID        string
+	Email     string
+	Name      string
+	StoreName string
+	Password  string
+}{
+	{
+		ID:        "usr_demo_da_admin",
+		Email:     "admin@disputeautopilot.com",
+		Name:      "DA Admin",
+		StoreName: "DA Store",
+		Password:  "Password12345678!",
+	},
+	{
+		ID:        "usr_demo_auditor_2026",
+		Email:     "auditor@paypal.test",
+		Name:      "PayPal Risk Auditor",
+		StoreName: "DA Store",
+		Password:  "Password12345678!",
+	},
+	{
+		ID:        "usr_demo_merchant_default",
+		Email:     "demo@merchant.com",
+		Name:      "Demo Merchant",
+		StoreName: "DA Store",
+		Password:  "Password12345678!",
+	},
+	{
+		ID:        "usr_demo_buyer_shopper",
+		Email:     "buyer@disputeautopilot.com",
+		Name:      "Jordan Miller (PayPal Buyer)",
+		StoreName: "Dispute Autopilot Store",
+		Password:  "Password12345678!",
+	},
+}
+
+// IsDemoEmail reports whether email belongs to a seeded demo account.
+func IsDemoEmail(email string) bool {
+	for _, u := range demoUsers {
+		if u.Email == email {
+			return true
+		}
+	}
+	return false
+}
+
 // EnsureDemoAccounts pre-seeds the demo merchant accounts in auth.db so login works out-of-the-box.
 func EnsureDemoAccounts(ctx context.Context) error {
 	db, err := store.Auth()
 	if err != nil {
 		return err
 	}
-	demoUsers := []struct {
-		ID        string
-		Email     string
-		Name      string
-		StoreName string
-		Password  string
-	}{
-		{
-			ID:        "usr_demo_da_admin",
-			Email:     "admin@disputeautopilot.com",
-			Name:      "DA Admin",
-			StoreName: "DA Store",
-			Password:  "Password12345678!",
-		},
-		{
-			ID:        "usr_demo_auditor_2026",
-			Email:     "auditor@paypal.test",
-			Name:      "PayPal Risk Auditor",
-			StoreName: "DA Store",
-			Password:  "Password12345678!",
-		},
-		{
-			ID:        "usr_demo_merchant_default",
-			Email:     "demo@merchant.com",
-			Name:      "Demo Merchant",
-			StoreName: "DA Store",
-			Password:  "Password12345678!",
-		},
-		{
-			ID:        "usr_demo_buyer_shopper",
-			Email:     "buyer@disputeautopilot.com",
-			Name:      "Jordan Miller (PayPal Buyer)",
-			StoreName: "Dispute Autopilot Store",
-			Password:  "Password12345678!",
-		},
-	}
-
 	// Retired account whose credentials were once committed; purge it from
 	// databases seeded before its removal.
 	_, _ = db.Exec(ctx, "DELETE FROM sessions WHERE user_id = ?", "usr_demo_sandbox_merchant")
