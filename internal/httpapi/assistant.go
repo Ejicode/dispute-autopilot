@@ -629,10 +629,9 @@ Respond helpfully, concisely, and cite exact numbers from the data where relevan
 
 // candidateGeminiModels are tried in sequence to prevent 503 high-demand or model deprecation errors.
 var candidateGeminiModels = []string{
-	"gemini-3.5-flash",
-	"gemini-3.5-flash-lite",
 	"gemini-3.1-flash-lite",
-	"gemini-3-flash-preview",
+	"gemini-flash-lite-latest",
+	"gemini-3.1-flash-lite-preview",
 }
 
 // callGemini asks the configured LLM using resilient multi-model cascading.
@@ -682,7 +681,9 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 	if preferred == "" {
 		preferred = os.Getenv("AI_MODEL_NAME")
 	}
-	if preferred != "" && preferred != "DisputeAutopilot-Agent-v1" && preferred != "DisputeAutopilot-Deterministic-v2" && preferred != "gemini-2.0-flash" && preferred != "gemini-3.8-flash" {
+	if preferred != "" && preferred != "DisputeAutopilot-Agent-v1" && preferred != "DisputeAutopilot-Deterministic-v2" &&
+		preferred != "gemini-2.0-flash" && preferred != "gemini-2.5-flash" && preferred != "gemini-3.8-flash" &&
+		preferred != "gemini-3.5-flash" && preferred != "gemini-3.5-flash-lite" {
 		modelsToTry = append(modelsToTry, preferred)
 	}
 	for _, m := range candidateGeminiModels {
@@ -696,6 +697,9 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 		if !duplicate {
 			modelsToTry = append(modelsToTry, m)
 		}
+	}
+	if len(modelsToTry) > 2 {
+		modelsToTry = modelsToTry[:2] // Cap at 2 models for fast failover (<8s worst-case)
 	}
 
 	var lastErr error
@@ -713,7 +717,7 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 		request.Header.Set("Content-Type", "application/json")
 		request.Header.Set("x-goog-api-key", apiKey)
 
-		response, err := (&http.Client{Timeout: 12 * time.Second}).Do(request)
+		response, err := (&http.Client{Timeout: 4 * time.Second}).Do(request)
 		if err != nil {
 			cancel()
 			lastErr = err

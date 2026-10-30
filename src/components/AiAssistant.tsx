@@ -443,15 +443,20 @@ export default function AiAssistant() {
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const res = await fetch("/api/ai-assistant", {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: msg,
           user_id: activeUser.id,
         }),
       });
+      clearTimeout(timeoutId);
       const data = await res.json();
       if (data.message) {
         const assistantMsg: Message = {
@@ -478,6 +483,7 @@ export default function AiAssistant() {
         }, 50);
       }
     } catch (_) {
+      clearTimeout(timeoutId);
       const fallback = "I am actively monitoring your store. How can I help you resolve this?";
       setMessages((prev) => [...prev, {
         id: "err_" + Date.now(),
@@ -547,8 +553,7 @@ export default function AiAssistant() {
     <>
       {!open && (
         <div 
-          className="fixed-floating-assistant group select-none"
-          style={{ position: 'fixed', right: '24px', bottom: '24px', left: 'auto', top: 'auto', zIndex: 9999 }}
+          className="fixed-floating-assistant group select-none fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999]"
         >
           {/* Ambient Living AI Glow Blur Halo underneath & radiating outward */}
           <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-[#0070BA] via-indigo-500 to-cyan-400 opacity-75 blur-xl group-hover:opacity-100 group-hover:blur-2xl animate-pulse pointer-events-none transition-all duration-700" />
@@ -576,14 +581,13 @@ export default function AiAssistant() {
 
       {open && (
         <div
-          className="fixed-floating-assistant select-none"
-          style={{ position: 'fixed', right: '24px', bottom: '24px', left: 'auto', top: 'auto', zIndex: 9999 }}
+          className="fixed-floating-assistant select-none fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[9999] max-w-[calc(100vw-24px)]"
         >
           {/* Ambient Ethereal Glow Blur around the open AI card */}
           <div className="absolute -inset-3 rounded-[36px] bg-gradient-to-tr from-[#0070BA]/40 via-indigo-500/30 to-cyan-400/35 blur-2xl pointer-events-none -z-10 animate-pulse-soft" />
 
           <div
-            className="card-3d-reflection w-[360px] sm:w-[380px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-100px)] sm:max-h-[min(540px,calc(100vh-100px))] h-auto rounded-[28px] flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95 origin-bottom-right relative"
+            className="card-3d-reflection w-[calc(100vw-24px)] sm:w-[380px] max-w-[380px] max-h-[calc(100dvh-64px)] sm:max-h-[min(540px,calc(100vh-100px))] h-auto rounded-[24px] sm:rounded-[28px] flex flex-col overflow-hidden shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95 origin-bottom-right relative"
           >
             {/* ── Sleek Gradient Header with AI Sparkles ── */}
             <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-4 py-3 flex items-center justify-between shrink-0 text-white select-none">
