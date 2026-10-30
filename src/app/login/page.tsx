@@ -62,10 +62,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col md:flex-row bg-white select-none overflow-hidden">
+    <div className="min-h-screen md:h-screen w-full flex flex-col md:flex-row bg-white select-none overflow-y-auto md:overflow-hidden">
       
       {/* LEFT PANEL */}
-      <div className="w-full md:w-5/12 lg:w-1/2 bg-gradient-to-br from-[#001433] via-[#001C48] to-[#003087] p-8 sm:p-12 lg:p-16 flex flex-col justify-between text-white shrink-0 h-auto md:h-full">
+      <div className="w-full md:w-5/12 lg:w-1/2 bg-gradient-to-br from-[#001433] via-[#001C48] to-[#003087] p-8 sm:p-12 lg:p-16 flex flex-col justify-between text-white shrink-0 min-h-[160px] md:h-full">
         <Logo variant="light" size="lg" href="/login" />
         
         <div className="my-auto py-8">
@@ -80,7 +80,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="w-full md:w-7/12 lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-16 h-full bg-white overflow-y-auto">
+      <div className="w-full md:w-7/12 lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-16 min-h-0 md:h-full bg-white overflow-y-auto">
         <div className="w-full max-w-sm space-y-6">
           
           <div>

@@ -3,68 +3,68 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, Building2, Mail, User, Image as ImageIcon, Check, Loader2, AlertCircle } from 'lucide-react';
+import { User, Building2, Mail, Lock, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 import { useUser } from '@/components/UserContext';
-
-const AVATAR_PHOTOS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&q=80',
-];
-
 import Logo from '@/components/Logo';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { users, loading: userLoading, createAccount, refreshUsers } = useUser();
+  const { activeUser, loading, createAccount } = useUser();
 
-  const [form, setForm] = useState({ name: '', email: '', password: '', store_name: '', avatar_url: AVATAR_PHOTOS[0] });
-  const [useCustomUrl, setUseCustomUrl] = useState(false);
+  const [name, setName] = useState('');
+  const [storeName, setStoreName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // If users already exist, redirect to home (they're already registered)
+  // If already logged in, redirect to appropriate destination
   useEffect(() => {
-    if (!userLoading && users.length > 0) {
-      router.replace('/');
+    if (!loading && activeUser) {
+      if (activeUser.email.includes('buyer')) {
+        router.replace('/storefront?mode=buyer');
+      } else {
+        router.replace('/');
+      }
     }
-  }, [userLoading, users, router]);
-
-  // Also check: if user just created account successfully, the UserContext reloads
-  // and users.length > 0 will trigger the redirect above
+  }, [loading, activeUser, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSubmitting(true);
 
-    if (!form.name.trim() || !form.email.trim() || !form.store_name.trim()) {
+    const trimmedName = name.trim();
+    const trimmedStore = storeName.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedName || !trimmedStore || !trimmedEmail || !password) {
       setError('All fields are required.');
-      setSubmitting(false);
       return;
     }
 
+    if (password.length < 15) {
+      setError('Password must be at least 15 characters.');
+      return;
+    }
+
+    setSubmitting(true);
     const result = await createAccount({
-      password: form.password,
-      name: form.name.trim(),
-      email: form.email.trim().toLowerCase(),
-      store_name: form.store_name.trim(),
-      avatar_url: form.avatar_url || undefined,
+      name: trimmedName,
+      store_name: trimmedStore,
+      email: trimmedEmail,
+      password,
     });
+    setSubmitting(false);
 
     if (result.success) {
-      await refreshUsers();
       router.replace('/');
     } else {
       setError(result.error || 'Failed to create account. Please try again.');
     }
-    setSubmitting(false);
   };
 
-  if (userLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#F4F6F8] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-[#003087]" />
@@ -72,221 +72,162 @@ export default function RegisterPage() {
     );
   }
 
-  const initials = form.name.trim() ? form.name.trim().charAt(0).toUpperCase() : '?';
-
   return (
-    <div className="min-h-screen bg-[#F4F6F8] flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Header */}
-        <div className="text-center mb-6 space-y-2">
-          <div className="inline-flex items-center justify-center mb-1">
-            <Logo size="lg" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Create Merchant Account
+    <div className="min-h-screen md:h-screen w-full flex flex-col md:flex-row bg-white select-none overflow-y-auto md:overflow-hidden">
+      
+      {/* LEFT PANEL */}
+      <div className="w-full md:w-5/12 lg:w-1/2 bg-gradient-to-br from-[#001433] via-[#001C48] to-[#003087] p-8 sm:p-12 lg:p-16 flex flex-col justify-between text-white shrink-0 min-h-[160px] md:h-full">
+        <Logo variant="light" size="lg" href="/login" />
+        
+        <div className="my-auto py-8">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
+            Dispute Autopilot
           </h1>
-          <p className="text-slate-500 text-xs sm:text-sm font-medium">
-            Join the DA (Dispute Autopilot) merchant dispute and revenue protection network
-          </p>
         </div>
 
-        {/* Registration Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden card-3d-reflection">
-          <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-4 sm:px-6 py-4">
-            <h2 className="text-white font-bold text-base">Merchant Registration</h2>
-            <p className="text-white/70 text-xs mt-0.5">Secure registration with live PayPal sandbox credentials</p>
+        <div className="text-xs text-blue-200/80 font-medium">
+          PayPal Operations Platform
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="w-full md:w-7/12 lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-16 min-h-0 md:h-full bg-white overflow-y-auto">
+        <div className="w-full max-w-sm space-y-6 my-auto py-4">
+          
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Sign Up
+            </h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
-            {error && (
-              <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
+          {error && (
+            <div role="alert" className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{error}</span>
+            </div>
+          )}
 
-            {/* Name */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Your Full Name <span className="text-rose-500">*</span>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Full Name */}
+            <div className="space-y-1">
+              <label htmlFor="reg-name" className="block text-xs font-bold text-slate-700">
+                Full Name
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <User className="w-4 h-4" />
+                </div>
                 <input
+                  id="reg-name"
                   type="text"
+                  autoComplete="name"
                   required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Jordan Smith"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all font-medium text-slate-900"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Jordan Smith"
+                  className="w-full box-border rounded-xl bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white text-slate-900"
                 />
               </div>
             </div>
 
             {/* Store Name */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Business / Store Name <span className="text-rose-500">*</span>
+            <div className="space-y-1">
+              <label htmlFor="reg-store" className="block text-xs font-bold text-slate-700">
+                Store Name
               </label>
               <div className="relative">
-                <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Building2 className="w-4 h-4" />
+                </div>
                 <input
+                  id="reg-store"
                   type="text"
+                  autoComplete="organization"
                   required
-                  value={form.store_name}
-                  onChange={(e) => setForm({ ...form, store_name: e.target.value })}
-                  placeholder="e.g. DA Store"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all font-medium text-slate-900"
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                  placeholder="Apex Audio Gear"
+                  className="w-full box-border rounded-xl bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white text-slate-900"
                 />
               </div>
             </div>
 
             {/* Email */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Business Email <span className="text-rose-500">*</span>
+            <div className="space-y-1">
+              <label htmlFor="reg-email" className="block text-xs font-bold text-slate-700">
+                Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Mail className="w-4 h-4" />
+                </div>
                 <input
+                  id="reg-email"
                   type="email"
+                  autoComplete="email"
                   required
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="e.g. you@yourbusiness.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all font-medium text-slate-900"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="merchant@example.com"
+                  className="w-full box-border rounded-xl bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white text-slate-900"
                 />
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="form-password" className="block text-xs font-bold text-slate-700">Password</label>
+            {/* Password */}
+            <div className="space-y-1">
+              <label htmlFor="reg-password" className="block text-xs font-bold text-slate-700">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  id="reg-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  required
+                  minLength={15}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 15 characters"
+                  className="w-full box-border rounded-xl bg-slate-50 border border-slate-200 pl-10 pr-16 py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003087]/20 focus:border-[#003087] focus:bg-white text-slate-900"
+                />
                 <button
                   type="button"
-                  onClick={() => setForm({
-                    name: 'DA Admin',
-                    store_name: 'DA Store',
-                    email: `demo.${Math.floor(1000 + Math.random() * 9000)}@da-store.com`,
-                    password: 'StrongDemoPassword2026!',
-                    avatar_url: form.avatar_url,
-                  })}
-                  className="text-[11px] font-bold text-[#003087] hover:underline"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[10px] font-extrabold text-[#0070BA] hover:text-[#003087] cursor-pointer"
                 >
-                  ⚡ Auto-Fill Demo Details
+                  {showPassword ? 'HIDE' : 'SHOW'}
                 </button>
               </div>
-              <input id="form-password" type="password" required minLength={15} maxLength={128} autoComplete="new-password"
-                value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20" />
-              <p className="text-xs text-slate-500 mt-1">Use at least 15 characters.</p>
             </div>
 
-            {/* Profile Photo */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Profile Photo
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setUseCustomUrl(!useCustomUrl)}
-                  className="text-[11px] font-semibold text-[#003087] hover:underline"
-                >
-                  {useCustomUrl ? 'Choose from gallery' : 'Use custom URL'}
-                </button>
-              </div>
-
-              {!useCustomUrl ? (
-                <div className="grid grid-cols-6 gap-2">
-                  {AVATAR_PHOTOS.map((url, i) => {
-                    const isSelected = form.avatar_url === url;
-                    return (
-                      <button
-                        type="button"
-                        key={i}
-                        onClick={() => setForm({ ...form, avatar_url: url })}
-                        className={`relative rounded-full aspect-square overflow-hidden transition-all duration-200 ${
-                          isSelected ? 'ring-4 ring-[#003087] ring-offset-2 scale-105' : 'opacity-70 hover:opacity-100 hover:scale-105'
-                        }`}
-                      >
-                        <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-[#003087]/40 flex items-center justify-center">
-                            <Check className="w-4 h-4 text-white stroke-[3]" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="relative">
-                  <ImageIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                  <input
-                    type="url"
-                    value={form.avatar_url}
-                    onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
-                    placeholder="https://your-photo-url.com/photo.jpg"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/20 transition-all font-mono text-slate-900"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Live Preview */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center gap-3.5">
-              <div className="relative shrink-0">
-                {form.avatar_url ? (
-                  <img src={form.avatar_url} alt="Preview" className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-[#003087] flex items-center justify-center text-white text-xl font-extrabold ring-2 ring-white shadow-sm">
-                    {initials}
-                  </div>
-                )}
-                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-white" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-sm text-slate-900 truncate">
-                    {form.name || 'Your Name'}
-                  </span>
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#003087] shrink-0" />
-                </div>
-                <span className="text-xs text-slate-500 font-medium block truncate">
-                  {form.store_name || 'Your Store'}
-                </span>
-                <span className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider block mt-0.5">
-                  ● PayPal Seller Protection Active
-                </span>
-              </div>
-            </div>
-
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 px-6 rounded-xl bg-[#003087] hover:bg-[#001C48] text-white font-bold text-sm transition-all shadow-md shadow-blue-950/20 flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-[#003087] hover:bg-[#001C48] py-3 font-bold text-white text-xs sm:text-sm transition-all shadow-md shadow-[#003087]/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Creating Account…</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4 text-[#FFC439]" />
-                  <span>Create Merchant Account &amp; Launch</span>
-                </>
-              )}
+              <span>{submitting ? 'Creating Account…' : 'Create Account'}</span>
+              {!submitting && <ArrowRight className="w-4 h-4" />}
             </button>
 
-            <p className="text-center text-xs text-slate-500 font-medium">
-              Already have an account? <Link href="/login" className="text-[#003087] font-bold underline hover:text-[#001C48]">Sign in</Link>
-            </p>
           </form>
+
+          {/* Link to Sign In */}
+          <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <span>Already have an account? </span>
+            <Link href="/login" className="font-bold text-[#003087] hover:text-[#0070BA] hover:underline">
+              Sign in
+            </Link>
+          </div>
+
         </div>
       </div>
+
     </div>
   );
 }
