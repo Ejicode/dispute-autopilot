@@ -79,4 +79,3 @@ func (a *API) demoSeed(w http.ResponseWriter, r *http.Request, _ *types.UserAcco
 	httpx.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "Demo workspace seeded with realistic disputes."})
 	return nil
 }
-
