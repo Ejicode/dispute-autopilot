@@ -504,4 +504,3 @@ func EnsureDemoAccounts(ctx context.Context) error {
 	}
 	return nil
 }
-

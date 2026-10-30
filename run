@@ -32,7 +32,7 @@ echo -e "${BLUE}  --------------------------------------------------------------
 # 1. Check Go
 if ! command -v go >/dev/null 2>&1; then
   echo -e "${YELLOW}[!] Go is not installed or not in PATH.${RESET}"
-  echo "    Please install Go 1.21+ from https://go.dev/dl/"
+  echo "    Please install Go 1.26+ (required by go.mod) from https://go.dev/dl/"
   exit 1
 fi
 
