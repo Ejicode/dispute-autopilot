@@ -326,9 +326,9 @@ export default function AiAssistant() {
     if (!action) return;
 
     if (action === "RESOLVE_DISPUTE") {
-      setActiveAction({ label: "Opening Case & Preparing Verified Rebuttal...", status: "running" });
+      setActiveAction({ label: "Opening Case...", status: "running" });
       setTimeout(() => {
-        setActiveAction({ label: "Rebuttal Verified & Loaded", status: "done" });
+        setActiveAction({ label: "Case Opened", status: "done" });
         if (target) {
           router.push(target);
         }
@@ -339,7 +339,7 @@ export default function AiAssistant() {
     if (action === "CREATE_SALE") {
       setActiveAction({ label: "Capturing Demo Sale & Vaulting Evidence...", status: "running" });
       try {
-        await fetch("/api/storefront/checkout", {
+        const res = await fetch("/api/storefront/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -357,6 +357,7 @@ export default function AiAssistant() {
             carrier: "USPS",
           }),
         });
+        if (!res.ok) throw new Error(`checkout failed (${res.status})`);
         setActiveAction({ label: "Sale Captured & Hashed (SHA-256)", status: "done" });
         setTimeout(() => router.push("/storefront"), 1000);
       } catch {
@@ -368,11 +369,15 @@ export default function AiAssistant() {
     if (action === "RUN_ATTACKS") {
       setActiveAction({ label: "Running Trust Lab Penetration Suite...", status: "running" });
       try {
-        await fetch("/api/trust-lab/attacks/run-all", { method: "POST" });
-        setActiveAction({ label: "All 6 Attacks Blocked (100% Defense)", status: "done" });
+        const res = await fetch("/api/trust-lab/run", { method: "POST" });
+        if (!res.ok) throw new Error(`trust lab failed (${res.status})`);
+        const data: { results?: { blocked: boolean }[] } = await res.json();
+        const results = data.results ?? [];
+        const blocked = results.filter((r) => r.blocked).length;
+        setActiveAction({ label: `${blocked} of ${results.length} Attacks Blocked`, status: "done" });
         setTimeout(() => router.push("/trust-lab"), 1200);
       } catch {
-        setActiveAction({ label: "Security test complete", status: "done" });
+        setActiveAction(null);
       }
       return;
     }
@@ -380,7 +385,7 @@ export default function AiAssistant() {
     if (action === "SIMULATE_DISPUTE") {
       setActiveAction({ label: "Simulating Incoming PayPal Dispute...", status: "running" });
       try {
-        await fetch("/api/disputes", {
+        const res = await fetch("/api/disputes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -390,6 +395,7 @@ export default function AiAssistant() {
             buyer_message: "Buyer opened inquiry for item not received.",
           }),
         });
+        if (!res.ok) throw new Error(`dispute simulation failed (${res.status})`);
         setActiveAction({ label: "Dispute Ingested & Vaulted with SHA-256", status: "done" });
         setTimeout(() => router.push("/"), 1200);
       } catch {
@@ -399,9 +405,13 @@ export default function AiAssistant() {
     }
 
     if (action === "SEED_DEMO") {
+      if (!window.confirm("Reset the demo? This erases every dispute, order and audit record in this workspace and reloads the sample data.")) {
+        return;
+      }
       setActiveAction({ label: "Seeding Demo Database...", status: "running" });
       try {
-        await fetch("/api/demo/seed", { method: "POST" });
+        const res = await fetch("/api/demo/seed", { method: "POST" });
+        if (!res.ok) throw new Error(`reset failed (${res.status})`);
         setActiveAction({ label: "Database Synchronized", status: "done" });
       } catch {
         setActiveAction(null);

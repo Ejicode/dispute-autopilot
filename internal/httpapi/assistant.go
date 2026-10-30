@@ -18,11 +18,9 @@ import (
 	"time"
 
 	"github.com/Ejicode/dispute-autopilot/internal/config"
-	"github.com/Ejicode/dispute-autopilot/internal/demo"
 	"github.com/Ejicode/dispute-autopilot/internal/httpx"
 	"github.com/Ejicode/dispute-autopilot/internal/rag"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
-	"github.com/Ejicode/dispute-autopilot/internal/trustlab"
 	"github.com/Ejicode/dispute-autopilot/internal/types"
 )
 
@@ -800,7 +798,33 @@ func (a *API) assistantHistory(w http.ResponseWriter, r *http.Request, user *typ
 	return nil
 }
 
-// detectAndExecuteAction detects operational voice intents and executes platform actions.
+// draftStatus describes, from stored records, how far a dispute's defense is.
+func draftStatus(ctx context.Context, db *store.Store, disputeID string) string {
+	var evidence int
+	_ = db.QueryRow(ctx, "SELECT COUNT(*) FROM evidence_items WHERE dispute_id = ?", disputeID).Scan(&evidence)
+	var verified int64
+	err := db.QueryRow(ctx, "SELECT verified FROM ai_drafts WHERE dispute_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1", disputeID).Scan(&verified)
+	switch {
+	case err != nil:
+		return fmt.Sprintf("It has %d vault evidence item(s) and no rebuttal draft yet.", evidence)
+	case verified == 1:
+		return fmt.Sprintf("It has %d vault evidence item(s), and the code verifier passed every cited claim in its latest draft.", evidence)
+	default:
+		return fmt.Sprintf("It has %d vault evidence item(s), but its latest draft did not pass the code verifier.", evidence)
+	}
+}
+
+func containsAny(text string, phrases ...string) bool {
+	for _, phrase := range phrases {
+		if strings.Contains(text, phrase) {
+			return true
+		}
+	}
+	return false
+}
+
+// detectAndExecuteAction maps a message to a platform action. It only reads
+// data: the client performs the action, asking first when it is destructive.
 func detectAndExecuteAction(ctx context.Context, db *store.Store, snap *MerchantSnapshot, message string) (action string, target string, spokenText string) {
 	m := strings.ToLower(strings.TrimSpace(message))
 	norm := strings.NewReplacer("-", " ", "_", " ", "?", "", "!", "", ".", "", ",", "").Replace(m)
@@ -849,46 +873,35 @@ func detectAndExecuteAction(ctx context.Context, db *store.Store, snap *Merchant
 			disputeID := stringValue(row["id"])
 			paypalID := stringValue(row["paypal_dispute_id"])
 			amountCents := intValue(row["amount_cents"])
-			reason := stringValue(row["reason"])
-			formattedReason := strings.Title(strings.ToLower(strings.ReplaceAll(reason, "_", " ")))
-			spoken := fmt.Sprintf("I am pulling up urgent dispute %s for %s dollars (%s). The Evidence Vault has gathered the carrier proof of delivery, and our deterministic code verifier has verified all cited facts. Navigating to the dispute resolution console now so you can review and approve it.",
-				paypalID, formatAmount(amountCents), formattedReason)
+			reason := strings.ToLower(strings.ReplaceAll(stringValue(row["reason"]), "_", " "))
+			spoken := fmt.Sprintf("Opening dispute %s for %s dollars (%s). %s Review it before approving anything.",
+				paypalID, formatAmount(amountCents), reason, draftStatus(ctx, db, disputeID))
 			return "RESOLVE_DISPUTE", "/case/" + disputeID, spoken
 		}
 		return "NAVIGATE", "/", "All disputes in your store are currently resolved. There are no open issues requiring action right now."
 	}
 
-	// 2. Run Trust Lab Attacks
-	if strings.Contains(norm, "attack") || strings.Contains(norm, "penetrat") || strings.Contains(norm, "test security") || strings.Contains(norm, "run trust lab") {
-		results, err := trustlab.RunAll(ctx)
-		if err == nil {
-			blockedCount := 0
-			for _, r := range results {
-				if r.Blocked {
-					blockedCount++
-				}
-			}
-			return "RUN_ATTACKS", "/trust-lab", fmt.Sprintf("I executed the Trust Lab security penetration suite right now. All %d live attack vectors were successfully blocked by our security invariants: Forged Webhook Signature, Replay Attack, Prompt Injection, Tampered Amount, Expired Action, and Race Condition.", blockedCount)
-		}
-		return "RUN_ATTACKS", "/trust-lab", "I executed the Trust Lab penetration attacks. All attack vectors were successfully blocked by our safety rules."
+	// 2. Run Trust Lab Attacks (the client runs the suite and reports its results)
+	if containsAny(norm, "run trust lab", "run the trust lab", "run attacks", "run the attacks",
+		"run security test", "test security", "run penetration test") {
+		return "RUN_ATTACKS", "/trust-lab", "Running the Trust Lab attack suite now. The results will open on the Trust Lab page."
 	}
 
 	// 3. Simulate Dispute
 	if strings.Contains(norm, "simulate dispute") || strings.Contains(norm, "create dispute") || strings.Contains(norm, "test dispute") || strings.Contains(norm, "new dispute") {
-		return "SIMULATE_DISPUTE", "/", "I'm simulating an incoming PayPal dispute right now. The claim has been ingested and vaulted with SHA-256 evidence."
+		return "SIMULATE_DISPUTE", "/", "Opening a simulated PayPal dispute now. It will appear in your dispute queue."
 	}
 
 	// 4. Create Demo Sale / Order
 	if ((strings.Contains(norm, "create") || strings.Contains(norm, "make") || strings.Contains(norm, "simulate") || strings.Contains(norm, "new") || strings.Contains(norm, "place") || strings.Contains(norm, "test")) &&
 		(strings.Contains(norm, "sale") || strings.Contains(norm, "order") || strings.Contains(norm, "checkout") || strings.Contains(norm, "purchase"))) ||
 		strings.Contains(norm, "buy product") || strings.Contains(norm, "buy item") {
-		return "CREATE_SALE", "/storefront", "I am generating a simulated customer purchase on your storefront now. The order is captured and its receipt, carrier tracking, and return policy are securely hashed in the Evidence Vault."
+		return "CREATE_SALE", "/storefront", "Placing a simulated customer purchase on your storefront now. Its receipt will be hashed into the Evidence Vault."
 	}
 
-	// 5. Seed Demo Data
-	if strings.Contains(norm, "seed") || strings.Contains(norm, "reset demo") || strings.Contains(norm, "load demo") {
-		_ = demo.SeedWorkspace(ctx)
-		return "SEED_DEMO", "/", "I have refreshed and seeded your database with live PayPal dispute cases, orders, and evidence vault records."
+	// 5. Reset Demo Data (destructive: the client asks the merchant to confirm)
+	if containsAny(norm, "reset demo", "seed demo", "reseed", "load demo data") {
+		return "SEED_DEMO", "/", "Resetting the demo erases every dispute, order and audit record in this workspace and reloads the sample data. Confirm in the dialog to continue."
 	}
 
 	// 6. Navigation

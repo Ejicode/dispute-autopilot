@@ -105,6 +105,9 @@ export default function DashboardPage() {
   };
 
   const handleSeedDemo = async () => {
+    if (!window.confirm('Reset the demo? This erases every dispute, order and audit record in this workspace and reloads the sample data.')) {
+      return;
+    }
     setSeeding(true);
     try {
       await fetch('/api/demo/seed', { method: 'POST' });
