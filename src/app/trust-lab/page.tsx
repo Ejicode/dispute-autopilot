@@ -142,16 +142,16 @@ export default function TrustLabPage() {
       name: "Tampered Approval Amount",
       type: "AMOUNT_TAMPERING",
       endpoint: "POST /api/disputes/{id}/approve",
-      expectedStatus: 422,
-      interceptor: "Deterministic code validation checking approved cents match dispute record",
-      desc: "Compromised frontend modifies the approved payout amount in the action payload from $120.00 to $9,999.99.",
+      expectedStatus: 409,
+      interceptor: "Server recomputes the reviewed snapshot digest; a tampered digest reserves nothing",
+      desc: "Compromised frontend modifies the reviewed amount in the approval snapshot to $9,999.99 before submitting it.",
     },
     {
       id: "att_5",
       name: "Approving an Expired Dispute",
       type: "EXPIRED_ACTION",
       endpoint: "POST /api/disputes/{id}/approve",
-      expectedStatus: 400,
+      expectedStatus: 422,
       interceptor: "response_deadline timestamp validation blocking post-expiry financial calls",
       desc: "Merchant attempts to approve and transmit evidence for a dispute whose official PayPal response deadline has already expired.",
     },
@@ -160,8 +160,8 @@ export default function TrustLabPage() {
       name: "Concurrent Double Submit",
       type: "RACE_CONDITION",
       endpoint: "POST /api/disputes/{id}/approve",
-      expectedStatus: 409,
-      interceptor: "Idempotency key lock table & atomic SQLite transaction",
+      expectedStatus: 200,
+      interceptor: "Reserved approval operation is replayed, never executed twice",
       desc: "User double-clicks Approve or race condition fires duplicate financial POSTs to PayPal API simultaneously.",
     },
   ];
@@ -222,12 +222,14 @@ export default function TrustLabPage() {
                 {allBlocked ? '6 OF 6 ATTACKS VERIFIED BLOCKED' : 'SOME ATTACKS WERE NOT BLOCKED'}
               </h3>
               <p className="text-xs text-slate-600 mt-0.5">
-                All 6 penetration vectors blocked by cryptographic verification and deterministic policy gates.
+                {allBlocked
+                  ? 'All 6 attacks ran against the real code paths and were blocked.'
+                  : 'At least one defense did not hold. See the failing card below.'}
               </p>
             </div>
           </div>
           <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-full bg-white border border-emerald-200 text-emerald-800 shrink-0 self-start sm:self-auto shadow-sm">
-            100% DEFENSE VERIFIED
+            {results?.filter((r) => r.blocked).length ?? 0} / {results?.length ?? 0} BLOCKED
           </span>
         </div>
       )}

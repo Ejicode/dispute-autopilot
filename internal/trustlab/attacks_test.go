@@ -117,3 +117,33 @@ func TestRunAllRequiresDemo(t *testing.T) {
 		t.Fatal("expected RunAll to reject non-demo mode")
 	}
 }
+
+// TestProbesLeaveNoFixtures ensures attacks that drive the real approval gate
+// roll back their fixture disputes and orders instead of filling the queue.
+func TestProbesLeaveNoFixtures(t *testing.T) {
+	ctx := testCtx(t)
+	results, err := RunAll(ctx)
+	if err != nil {
+		t.Fatalf("RunAll: %v", err)
+	}
+	for _, r := range results {
+		t.Logf("%s %-40s blocked=%v http=%d  %s", r.ID, r.Name, r.Blocked, r.HTTPStatus, r.Reason)
+	}
+	db, err := store.Merchant(ctx)
+	if err != nil {
+		t.Fatalf("Merchant: %v", err)
+	}
+	var disputes, orders, operations int
+	if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM disputes WHERE id LIKE 'dsp_tl_%'").Scan(&disputes); err != nil {
+		t.Fatalf("count disputes: %v", err)
+	}
+	if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM demo_orders WHERE id LIKE 'ord_tl_%'").Scan(&orders); err != nil {
+		t.Fatalf("count orders: %v", err)
+	}
+	if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM approval_operations").Scan(&operations); err != nil {
+		t.Fatalf("count operations: %v", err)
+	}
+	if disputes != 0 || orders != 0 || operations != 0 {
+		t.Fatalf("probe fixtures leaked: disputes=%d orders=%d operations=%d", disputes, orders, operations)
+	}
+}
