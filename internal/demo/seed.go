@@ -439,13 +439,6 @@ func EnsureDemoAccounts(ctx context.Context) error {
 			Password:  "Password12345678!",
 		},
 		{
-			ID:        "usr_demo_sandbox_merchant",
-			Email:     "sb-n0htc53113313@business.example.com",
-			Name:      "PayPal Sandbox Merchant",
-			StoreName: "DA Store",
-			Password:  "5k8g!_0O",
-		},
-		{
 			ID:        "usr_demo_merchant_default",
 			Email:     "demo@merchant.com",
 			Name:      "Demo Merchant",
@@ -460,6 +453,11 @@ func EnsureDemoAccounts(ctx context.Context) error {
 			Password:  "Password12345678!",
 		},
 	}
+
+	// Retired account whose credentials were once committed; purge it from
+	// databases seeded before its removal.
+	_, _ = db.Exec(ctx, "DELETE FROM sessions WHERE user_id = ?", "usr_demo_sandbox_merchant")
+	_, _ = db.Exec(ctx, "DELETE FROM accounts WHERE id = ?", "usr_demo_sandbox_merchant")
 
 	for _, u := range demoUsers {
 		var exists int

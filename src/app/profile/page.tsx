@@ -216,9 +216,6 @@ export default function MerchantProfilePage() {
           <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 font-mono text-[11px] text-[#003087]">
             App: <strong>NVP SOAP Webhooks</strong> (ID: BAAz8aintxI...)
           </span>
-          <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 font-mono text-[11px] text-[#003087]">
-            Account: <strong>sb-n0htc53113313@business.example.com</strong>
-          </span>
           <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
             Orders v2 Tracking: <strong className="text-emerald-600">ACTIVE</strong>
           </span>
