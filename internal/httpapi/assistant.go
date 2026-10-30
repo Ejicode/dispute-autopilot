@@ -105,12 +105,7 @@ func getMerchantSnapshot(ctx context.Context, db *store.Store, userID string) (*
 			resolvedDisputes = append(resolvedDisputes, d)
 		}
 	}
-	wonDisputes := 0
-	for _, d := range resolvedDisputes {
-		if stringValue(d["outcome"]) == "WON" || stringValue(d["recommendation"]) == string(types.RecommendFight) {
-			wonDisputes++
-		}
-	}
+	wonDisputes, _, rate := winStats(disputes)
 	var totalAtRisk int64
 	for _, d := range activeDisputes {
 		totalAtRisk += intValue(d["amount_cents"])
@@ -119,9 +114,9 @@ func getMerchantSnapshot(ctx context.Context, db *store.Store, userID string) (*
 	for _, o := range orders {
 		totalRevenue += intValue(o["total_cents"])
 	}
-	winRate := 0
-	if len(resolvedDisputes) > 0 {
-		winRate = int(roundHalfUp(float64(wonDisputes) / float64(len(resolvedDisputes)) * 100))
+	winRate := "N/A (no PayPal outcomes decided yet)"
+	if rate != nil {
+		winRate = fmt.Sprintf("%d%%", *rate)
 	}
 	urgentCount := 0
 	now := config.NowMillis()
@@ -183,7 +178,7 @@ FINANCIAL & DISPUTE METRICS:
 - Active / Action Required: %d
 - Resolved Disputes: %d
 - Disputes Won: %d
-- Measured Win Rate: %d%%
+- Measured Win Rate: %s
 - Total At-Risk Capital: $%.2f
 - Urgent (<48h Deadline): %d case(s)
 

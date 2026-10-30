@@ -232,7 +232,7 @@ func (a *API) analytics(w http.ResponseWriter, r *http.Request, _ *types.UserAcc
 	in48Hours := now + 48*3600*1000
 
 	var totalAtRiskCents, recoveredCents int64
-	var expiring48hCount, requiredActionCount, wonCount int
+	var expiring48hCount, requiredActionCount int
 	for _, d := range disputes {
 		status := stringValue(d["status"])
 		if status == string(types.StatusRequiredAction) || status == string(types.StatusUnderReview) {
@@ -242,27 +242,11 @@ func (a *API) analytics(w http.ResponseWriter, r *http.Request, _ *types.UserAcc
 			if deadline != 0 && deadline <= in48Hours && deadline >= now {
 				expiring48hCount++
 			}
-		} else if status == string(types.StatusResolved) {
+		} else if sellerWon(stringValue(d["outcome"])) {
 			recoveredCents += intValue(d["amount_cents"])
-			if stringValue(d["outcome"]) == "WON" || stringValue(d["recommendation"]) == string(types.RecommendFight) {
-				wonCount++
-			}
 		}
 	}
-
-	resolvedCount := 0
-	for _, d := range disputes {
-		if stringValue(d["status"]) == string(types.StatusResolved) {
-			resolvedCount++
-		}
-	}
-	winRate := 0
-	switch {
-	case resolvedCount > 0:
-		winRate = int(math.Round(float64(wonCount) / float64(resolvedCount) * 100))
-	case len(disputes) > 0:
-		winRate = int(math.Round(float64(len(disputes)-requiredActionCount) / float64(len(disputes)) * 100))
-	}
+	_, _, winRate := winStats(disputes)
 
 	avgResponseHours := 0.0
 	resolvedHours := 0.0
@@ -493,4 +477,30 @@ func (a *API) vaultList(w http.ResponseWriter, r *http.Request, _ *types.UserAcc
 		"count": len(items),
 	})
 	return nil
+}
+
+// sellerWon reports whether a PayPal outcome_code means the seller kept the funds.
+func sellerWon(outcome string) bool {
+	return outcome == "RESOLVED_SELLER_FAVOUR" || outcome == "CANCELED_BY_BUYER"
+}
+
+// winStats counts disputes PayPal has decided and how many the seller won.
+// rate is nil until at least one outcome is decided, so no win rate is shown
+// rather than a made-up one.
+func winStats(disputes []map[string]any) (won, decided int, rate *int) {
+	for _, d := range disputes {
+		switch outcome := stringValue(d["outcome"]); outcome {
+		case "", "PENDING", "NONE":
+		default:
+			decided++
+			if sellerWon(outcome) {
+				won++
+			}
+		}
+	}
+	if decided > 0 {
+		value := int(math.Round(float64(won) / float64(decided) * 100))
+		rate = &value
+	}
+	return won, decided, rate
 }
