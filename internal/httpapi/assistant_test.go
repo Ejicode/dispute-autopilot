@@ -2,6 +2,8 @@ package httpapi
 
 import (
 	"context"
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -77,5 +79,39 @@ func TestAssistantReportsStoredVerifierResult(t *testing.T) {
 	}
 	if got := draftStatus(ctx, db, "dsp_missing"); !strings.Contains(got, "no rebuttal draft") {
 		t.Errorf("missing draft reported as %q", got)
+	}
+}
+
+type recordingTransport struct{ requests []*http.Request }
+
+func (r *recordingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	r.requests = append(r.requests, req)
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(`{"candidates":[{"content":{"parts":[{"text":"ok"}]}}]}`)),
+		Request:    req,
+	}, nil
+}
+
+func TestGeminiKeyIsSentOnlyInHeader(t *testing.T) {
+	recorder := &recordingTransport{}
+	original := http.DefaultTransport
+	http.DefaultTransport = recorder
+	t.Cleanup(func() { http.DefaultTransport = original })
+
+	const key = "test-key-not-real"
+	if _, err := callGemini(context.Background(), "hello", "context", nil, key); err != nil {
+		t.Fatalf("callGemini: %v", err)
+	}
+	if len(recorder.requests) == 0 {
+		t.Fatal("no request sent")
+	}
+	req := recorder.requests[0]
+	if strings.Contains(req.URL.String(), key) {
+		t.Errorf("API key leaked into the URL: %s", req.URL)
+	}
+	if req.Header.Get("x-goog-api-key") != key {
+		t.Errorf("x-goog-api-key header = %q, want the key", req.Header.Get("x-goog-api-key"))
 	}
 }

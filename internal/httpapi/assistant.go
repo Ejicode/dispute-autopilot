@@ -700,7 +700,9 @@ func callGemini(ctx context.Context, message, contextText string, history []map[
 
 	var lastErr error
 	for _, model := range modelsToTry {
-		endpoint := "https://generativelanguage.googleapis.com/v1beta/models/" + url.PathEscape(model) + ":generateContent?key=" + url.QueryEscape(apiKey)
+		// The key travels only in the x-goog-api-key header: URLs end up in
+		// proxy and server logs.
+		endpoint := "https://generativelanguage.googleapis.com/v1beta/models/" + url.PathEscape(model) + ":generateContent"
 		reqCtx, cancel := context.WithTimeout(ctx, 12*time.Second)
 		request, err := http.NewRequestWithContext(reqCtx, http.MethodPost, endpoint, bytes.NewReader(payload))
 		if err != nil {
