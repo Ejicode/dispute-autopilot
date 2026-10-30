@@ -42,11 +42,11 @@ func New(webDir string) http.Handler {
 	mux.HandleFunc("POST /api/disputes", api.withMerchant(api.disputesCreate))
 	mux.HandleFunc("GET /api/disputes/{id}", api.withMerchant(api.disputeDetail))
 	mux.HandleFunc("GET /api/disputes/{id}/approve", api.withMerchant(api.approveReview))
-	mux.HandleFunc("POST /api/disputes/{id}/approve", api.withMerchant(api.approveExecute))
+	mux.HandleFunc("POST /api/disputes/{id}/approve", api.withMerchant(merchantOnly(api.approveExecute)))
 	mux.HandleFunc("GET /api/disputes/{id}/reconcile", api.withMerchant(api.reconcileHistory))
-	mux.HandleFunc("POST /api/disputes/{id}/reconcile", api.withMerchant(api.reconcileDispute))
-	mux.HandleFunc("POST /api/disputes/{id}/verify-draft", api.withMerchant(api.verifyDraft))
-	mux.HandleFunc("POST /api/disputes/{id}/regenerate-draft", api.withMerchant(api.regenerateDraft))
+	mux.HandleFunc("POST /api/disputes/{id}/reconcile", api.withMerchant(merchantOnly(api.reconcileDispute)))
+	mux.HandleFunc("POST /api/disputes/{id}/verify-draft", api.withMerchant(merchantOnly(api.verifyDraft)))
+	mux.HandleFunc("POST /api/disputes/{id}/regenerate-draft", api.withMerchant(merchantOnly(api.regenerateDraft)))
 	mux.HandleFunc("GET /api/disputes/{id}/packet", api.withMerchant(api.disputePacket))
 
 	mux.HandleFunc("GET /api/storefront/checkout", api.withMerchant(api.checkoutList))
@@ -58,10 +58,10 @@ func New(webDir string) http.Handler {
 	mux.HandleFunc("GET /api/vault", api.withMerchant(api.vaultList))
 
 	mux.HandleFunc("GET /api/trust-lab/run", api.withMerchant(api.trustLabList))
-	mux.HandleFunc("POST /api/trust-lab/run", api.withMerchant(api.trustLabRun))
+	mux.HandleFunc("POST /api/trust-lab/run", api.withMerchant(merchantOnly(api.trustLabRun)))
 	mux.HandleFunc("GET /api/bench/run", api.withMerchant(api.benchList))
-	mux.HandleFunc("POST /api/bench/run", api.withMerchant(api.benchRun))
-	mux.HandleFunc("POST /api/demo/seed", api.withMerchant(api.demoSeed))
+	mux.HandleFunc("POST /api/bench/run", api.withMerchant(merchantOnly(api.benchRun)))
+	mux.HandleFunc("POST /api/demo/seed", api.withMerchant(merchantOnly(api.demoSeed)))
 
 	mux.HandleFunc("GET /api/ai-assistant", api.withMerchant(api.assistantHistory))
 	mux.HandleFunc("POST /api/ai-assistant", api.withMerchant(api.assistantSend))
@@ -74,6 +74,18 @@ func New(webDir string) http.Handler {
 
 // merchantHandler is a handler that only runs inside an authenticated workspace.
 type merchantHandler func(w http.ResponseWriter, r *http.Request, user *types.UserAccount) error
+
+// merchantOnly refuses the demo buyer persona. In demo mode the buyer shares
+// the demo merchant's workspace to shop and open disputes, but must not act as
+// that merchant: approving, submitting, regenerating or resetting data.
+func merchantOnly(handler merchantHandler) merchantHandler {
+	return func(w http.ResponseWriter, r *http.Request, user *types.UserAccount) error {
+		if user.ID == store.DemoBuyerID {
+			return httpx.Errorf(http.StatusForbidden, "Buyer accounts cannot perform merchant actions.")
+		}
+		return handler(w, r, user)
+	}
+}
 
 // rawResponse is a response a handler chooses to return directly (with an
 // explicit status), matching Next's `NextResponse.json(..., {status})` returns

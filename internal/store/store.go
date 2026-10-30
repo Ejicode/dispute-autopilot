@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -112,6 +111,13 @@ func Auth() (*Store, error) {
 	return s, nil
 }
 
+// DemoBuyerID is the seeded demo buyer. In demo mode it shops in the
+// DemoMerchantID workspace so its purchases and disputes reach that merchant.
+const (
+	DemoBuyerID    = "usr_demo_buyer_shopper"
+	DemoMerchantID = "usr_demo_da_admin"
+)
+
 // Merchant returns the environment-classified database for the scoped merchant.
 func Merchant(ctx context.Context) (*Store, error) {
 	sc, err := scope.From(ctx)
@@ -123,8 +129,8 @@ func Merchant(ctx context.Context) (*Store, error) {
 		return nil, err
 	}
 	merchantID := sc.MerchantID
-	if sc.Mode == config.ModeDemo && (merchantID == "usr_demo_buyer_shopper" || strings.Contains(strings.ToLower(merchantID), "buyer")) {
-		merchantID = "usr_demo_da_admin"
+	if sc.Mode == config.ModeDemo && merchantID == DemoBuyerID {
+		merchantID = DemoMerchantID
 	}
 	filename := filepath.Join(directory, merchantID+".db")
 

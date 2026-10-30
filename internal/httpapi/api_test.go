@@ -585,4 +585,14 @@ func TestHTTPApiEndToEnd(t *testing.T) {
 	}
 	check(do("POST", "/api/auth/login", "", origin, map[string]any{"email": "admin@disputeautopilot.com", "password": "Password12345678!"}).status == 200,
 		"failed attempts cannot lock out a public demo account")
+
+	// --- Demo buyer persona ---
+	buyerLogin := do("POST", "/api/auth/login", "", origin, map[string]any{"email": "buyer@disputeautopilot.com", "password": "Password12345678!"})
+	check(buyerLogin.status == 200, "demo buyer signs in")
+	buyerToken := buyerLogin.cookie(t, auth.SessionCookie).Value
+	check(do("POST", "/api/storefront/checkout", buyerToken, origin, orderInput).status == 200, "demo buyer can shop")
+	for _, path := range []string{"/api/demo/seed", "/api/trust-lab/run", "/api/bench/run", "/api/disputes/any/approve",
+		"/api/disputes/any/reconcile", "/api/disputes/any/verify-draft", "/api/disputes/any/regenerate-draft"} {
+		check(do("POST", path, buyerToken, origin, map[string]any{}).status == 403, "demo buyer cannot POST "+path)
+	}
 }
