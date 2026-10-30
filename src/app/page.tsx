@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import QueueGrid from '@/components/QueueGrid';
+import dynamic from 'next/dynamic';
 import { Dispute } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { 
@@ -28,6 +28,12 @@ import {
   Pie, 
   Cell 
 } from 'recharts';
+
+// AG Grid is the heaviest dependency on this page; load it after first paint.
+const QueueGrid = dynamic(() => import('@/components/QueueGrid'), {
+  ssr: false,
+  loading: () => <div className="h-96 rounded-2xl bg-slate-100 animate-pulse" />,
+});
 
 export default function DashboardPage() {
   const { lastEvent } = useRealtime();
