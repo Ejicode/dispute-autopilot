@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Ejicode/dispute-autopilot/internal/ai"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
 )
 
@@ -120,12 +121,13 @@ func Retrieve(ctx context.Context, db *store.Store, userID string, query string)
 
 	if db != nil {
 		liveDocs, err := queryLiveCorpus(ctx, db, userID, query, tokens)
-		if err == nil {
-			for _, doc := range liveDocs {
-				score := scoreDocument(doc, tokens, query)
-				if score > 0 {
-					scoredResults = append(scoredResults, SearchResult{Doc: doc, Score: score + 1.5})
-				}
+		if err != nil {
+			return nil, err
+		}
+		for _, doc := range liveDocs {
+			score := scoreDocument(doc, tokens, query)
+			if score > 0 {
+				scoredResults = append(scoredResults, SearchResult{Doc: doc, Score: score + 1.5})
 			}
 		}
 	}
@@ -157,8 +159,16 @@ func Retrieve(ctx context.Context, db *store.Store, userID string, query string)
 			evidenceCount++
 		}
 
-		sb.WriteString(fmt.Sprintf("SOURCE [%s] — %s (%s):\n", doc.ID, doc.Title, doc.Section))
-		sb.WriteString(doc.Content)
+		if strings.HasPrefix(doc.Category, "LIVE_") {
+			// Database rows carry buyer- and webhook-supplied text (buyer
+			// names, item titles, evidence content), titles included: fence
+			// it all as data and keep only server-made fields outside.
+			sb.WriteString(fmt.Sprintf("SOURCE [%s] (%s):\n", doc.ID, doc.Section))
+			sb.WriteString(ai.WrapUntrustedData(doc.Category, doc.Title+"\n"+doc.Content))
+		} else {
+			sb.WriteString(fmt.Sprintf("SOURCE [%s] — %s (%s):\n", doc.ID, doc.Title, doc.Section))
+			sb.WriteString(doc.Content)
+		}
 		sb.WriteString("\n────────────────────────────────────────────────────────────────────\n")
 	}
 
@@ -189,82 +199,85 @@ func queryLiveCorpus(ctx context.Context, db *store.Store, userID string, rawQue
 	q := "%" + strings.TrimSpace(rawQuery) + "%"
 
 	disputeRows, err := db.Query(ctx, `
-		SELECT id, paypal_dispute_id, order_id, amount_cents, currency, reason, status, recommendation, response_deadline, buyer_notes
-		FROM disputes 
-		WHERE id LIKE ? OR paypal_dispute_id LIKE ? OR reason LIKE ? OR buyer_notes LIKE ?
-		ORDER BY rowid DESC LIMIT 4`, q, q, q, q)
-	if err == nil {
-		defer disputeRows.Close()
-		for disputeRows.Next() {
-			var id, ppID, orderID, currency, reason, status, rec, deadline, buyerNotes sql.NullString
-			var amountCents sql.NullInt64
-			if err := disputeRows.Scan(&id, &ppID, &orderID, &amountCents, &currency, &reason, &status, &rec, &deadline, &buyerNotes); err == nil {
-				amt := float64(amountCents.Int64) / 100
-				docs = append(docs, Document{
-					ID:       id.String,
-					Title:    fmt.Sprintf("Live Dispute %s ($%.2f %s)", ppID.String, amt, currency.String),
-					Category: "LIVE_DISPUTE",
-					Section:  "SQLite Database (Disputes Table)",
-					Content: fmt.Sprintf("Dispute ID: %s (Internal: %s). Order ID: %s. Amount: $%.2f %s. Reason: %s. Status: %s. AI Recommendation: %s. Deadline: %s. Buyer Notes: %s",
-						ppID.String, id.String, orderID.String, amt, currency.String, reason.String, status.String, rec.String, deadline.String, buyerNotes.String),
-					Keywords:  []string{strings.ToLower(ppID.String), strings.ToLower(id.String), strings.ToLower(reason.String), "dispute", "case"},
-					Reference: fmt.Sprintf("Dispute %s", ppID.String),
-				})
-			}
+		SELECT id, paypal_dispute_id, order_id, amount_cents, currency, reason, status, recommendation, response_deadline
+		FROM disputes
+		WHERE id LIKE ? OR paypal_dispute_id LIKE ? OR reason LIKE ?
+		ORDER BY rowid DESC LIMIT 4`, q, q, q)
+	if err != nil {
+		return nil, err
+	}
+	defer disputeRows.Close()
+	for disputeRows.Next() {
+		var id, ppID, orderID, currency, reason, status, rec, deadline sql.NullString
+		var amountCents sql.NullInt64
+		if err := disputeRows.Scan(&id, &ppID, &orderID, &amountCents, &currency, &reason, &status, &rec, &deadline); err == nil {
+			amt := float64(amountCents.Int64) / 100
+			docs = append(docs, Document{
+				ID:       id.String,
+				Title:    fmt.Sprintf("Live Dispute %s ($%.2f %s)", ppID.String, amt, currency.String),
+				Category: "LIVE_DISPUTE",
+				Section:  "SQLite Database (Disputes Table)",
+				Content: fmt.Sprintf("Dispute ID: %s (Internal: %s). Order ID: %s. Amount: $%.2f %s. Reason: %s. Status: %s. AI Recommendation: %s. Deadline: %s.",
+					ppID.String, id.String, orderID.String, amt, currency.String, reason.String, status.String, rec.String, deadline.String),
+				Keywords:  []string{strings.ToLower(ppID.String), strings.ToLower(id.String), strings.ToLower(reason.String), "dispute", "case"},
+				Reference: fmt.Sprintf("Dispute %s", ppID.String),
+			})
 		}
 	}
 
 	evidenceRows, err := db.Query(ctx, `
-		SELECT id, dispute_id, order_id, evidence_type, content, sha256_hash, verified, created_at
+		SELECT id, dispute_id, order_id, evidence_type, content, sha256_hash, captured_at
 		FROM evidence_items
 		WHERE id LIKE ? OR dispute_id LIKE ? OR order_id LIKE ? OR content LIKE ?
 		ORDER BY rowid DESC LIMIT 4`, q, q, q, q)
-	if err == nil {
-		defer evidenceRows.Close()
-		for evidenceRows.Next() {
-			var id, dID, oID, eType, content, sha, verified, createdAt sql.NullString
-			if err := evidenceRows.Scan(&id, &dID, &oID, &eType, &content, &sha, &verified, &createdAt); err == nil {
-				cleanContent := content.String
-				if len(cleanContent) > 300 {
-					cleanContent = cleanContent[:300] + "..."
-				}
-				docs = append(docs, Document{
-					ID:       id.String,
-					Title:    fmt.Sprintf("Vault Evidence [%s] — %s", id.String, eType.String),
-					Category: "LIVE_EVIDENCE",
-					Section:  "Evidence Vault (SHA-256 Hashed)",
-					Content: fmt.Sprintf("Evidence ID: %s. Linked Dispute: %s. Linked Order: %s. Type: %s. SHA-256: %s. Verified: %s. Content: %s",
-						id.String, dID.String, oID.String, eType.String, sha.String, verified.String, cleanContent),
-					Keywords:  []string{strings.ToLower(id.String), strings.ToLower(eType.String), "vault", "evidence", "tracking", "proof"},
-					Reference: fmt.Sprintf("Evidence Vault [%s]", id.String),
-				})
+	if err != nil {
+		return nil, err
+	}
+	defer evidenceRows.Close()
+	for evidenceRows.Next() {
+		var id, dID, oID, eType, content, sha, capturedAt sql.NullString
+		if err := evidenceRows.Scan(&id, &dID, &oID, &eType, &content, &sha, &capturedAt); err == nil {
+			cleanContent := content.String
+			if len(cleanContent) > 300 {
+				cleanContent = cleanContent[:300] + "..."
 			}
+			docs = append(docs, Document{
+				ID:       id.String,
+				Title:    fmt.Sprintf("Vault Evidence [%s] — %s", id.String, eType.String),
+				Category: "LIVE_EVIDENCE",
+				Section:  "Evidence Vault (SHA-256 Hashed)",
+				Content: fmt.Sprintf("Evidence ID: %s. Linked Dispute: %s. Linked Order: %s. Type: %s. SHA-256: %s. Captured: %s. Content: %s",
+					id.String, dID.String, oID.String, eType.String, sha.String, capturedAt.String, cleanContent),
+				Keywords:  []string{strings.ToLower(id.String), strings.ToLower(eType.String), "vault", "evidence", "tracking", "proof"},
+				Reference: fmt.Sprintf("Evidence Vault [%s]", id.String),
+			})
 		}
 	}
 
 	orderRows, err := db.Query(ctx, `
-		SELECT id, buyer_name, total_cents, items, tracking_number, carrier, status
+		SELECT id, buyer_name, total_cents, items, tracking_number, carrier, delivery_status
 		FROM demo_orders
 		WHERE id LIKE ? OR buyer_name LIKE ? OR tracking_number LIKE ? OR items LIKE ?
 		ORDER BY rowid DESC LIMIT 3`, q, q, q, q)
-	if err == nil {
-		defer orderRows.Close()
-		for orderRows.Next() {
-			var id, buyer, tracking, carrier, status, items sql.NullString
-			var totalCents sql.NullInt64
-			if err := orderRows.Scan(&id, &buyer, &totalCents, &items, &tracking, &carrier, &status); err == nil {
-				amt := float64(totalCents.Int64) / 100
-				docs = append(docs, Document{
-					ID:       id.String,
-					Title:    fmt.Sprintf("Storefront Order %s — %s ($%.2f)", id.String, buyer.String, amt),
-					Category: "LIVE_ORDER",
-					Section:  "Merchant Storefront Orders",
-					Content: fmt.Sprintf("Order ID: %s. Buyer: %s. Amount: $%.2f. Status: %s. Carrier: %s. Tracking: %s. Items: %s",
-						id.String, buyer.String, amt, status.String, carrier.String, tracking.String, items.String),
-					Keywords:  []string{strings.ToLower(id.String), strings.ToLower(buyer.String), strings.ToLower(tracking.String), "order", "purchase", "sale"},
-					Reference: fmt.Sprintf("Order %s", id.String),
-				})
-			}
+	if err != nil {
+		return nil, err
+	}
+	defer orderRows.Close()
+	for orderRows.Next() {
+		var id, buyer, tracking, carrier, status, items sql.NullString
+		var totalCents sql.NullInt64
+		if err := orderRows.Scan(&id, &buyer, &totalCents, &items, &tracking, &carrier, &status); err == nil {
+			amt := float64(totalCents.Int64) / 100
+			docs = append(docs, Document{
+				ID:       id.String,
+				Title:    fmt.Sprintf("Storefront Order %s — %s ($%.2f)", id.String, buyer.String, amt),
+				Category: "LIVE_ORDER",
+				Section:  "Merchant Storefront Orders",
+				Content: fmt.Sprintf("Order ID: %s. Buyer: %s. Amount: $%.2f. Status: %s. Carrier: %s. Tracking: %s. Items: %s",
+					id.String, buyer.String, amt, status.String, carrier.String, tracking.String, items.String),
+				Keywords:  []string{strings.ToLower(id.String), strings.ToLower(buyer.String), strings.ToLower(tracking.String), "order", "purchase", "sale"},
+				Reference: fmt.Sprintf("Order %s", id.String),
+			})
 		}
 	}
 
