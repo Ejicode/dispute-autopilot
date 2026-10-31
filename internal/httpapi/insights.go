@@ -248,7 +248,10 @@ func (a *API) analytics(w http.ResponseWriter, r *http.Request, _ *types.UserAcc
 	}
 	_, _, winRate := winStats(disputes)
 
-	avgResponseHours := 0.0
+	// Average hours from opening to resolution, over resolved disputes only.
+	// nil (shown as N/A) until one resolves: the age of open disputes is a
+	// different measure and must not stand in for it.
+	var avgResponseHours *float64
 	resolvedHours := 0.0
 	resolvedWithTimes := 0
 	for _, d := range disputes {
@@ -260,19 +263,8 @@ func (a *API) analytics(w http.ResponseWriter, r *http.Request, _ *types.UserAcc
 		}
 	}
 	if resolvedWithTimes > 0 {
-		avgResponseHours = math.Round(resolvedHours/float64(resolvedWithTimes)*10) / 10
-	} else {
-		activeHours := 0.0
-		activeTimes := 0
-		for _, d := range disputes {
-			if stringValue(d["created_at"]) != "" {
-				activeHours += float64(now-parseISOMillis(stringValue(d["created_at"]))) / (1000 * 60 * 60)
-				activeTimes++
-			}
-		}
-		if activeTimes > 0 {
-			avgResponseHours = math.Round(activeHours/float64(activeTimes)*10) / 10
-		}
+		value := math.Round(resolvedHours/float64(resolvedWithTimes)*10) / 10
+		avgResponseHours = &value
 	}
 
 	var totalProtectedCents int64

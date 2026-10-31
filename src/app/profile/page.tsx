@@ -262,7 +262,7 @@ export default function MerchantProfilePage() {
           <div className="text-2xl font-extrabold text-slate-900 mb-1">
             {loading ? <span className="animate-pulse bg-slate-200 h-7 w-20 rounded block" /> : avgResponse}
           </div>
-          <div className="text-xs text-slate-500 font-medium">Autonomous AI packet generation</div>
+          <div className="text-xs text-slate-500 font-medium">Opened to resolved, across resolved disputes</div>
         </div>
 
         {/* Card 4: Active Cases — real count from DB */}

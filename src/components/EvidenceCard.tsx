@@ -99,9 +99,13 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
           <div className="min-w-0">
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Payment</span>
             <span className="font-bold text-emerald-600 text-sm block">
-              ${data.total_cents ? (data.total_cents / 100).toFixed(2) : '0.00'} {data.currency || 'USD'}
+              {(() => {
+                // Receipts record the total as total_cents (checkout) or amount_cents (seed data).
+                const cents = data.total_cents ?? data.amount_cents;
+                return typeof cents === 'number' ? `$${(cents / 100).toFixed(2)} ${data.currency || 'USD'}` : 'Amount not recorded';
+              })()}
             </span>
-            <span className="text-[11px] text-slate-500 truncate block">{data.payment_method || 'PayPal Express Checkout'}</span>
+            <span className="text-[11px] text-slate-500 truncate block">{data.payment_method || 'Payment method not recorded'}</span>
           </div>
         </div>
       </div>
@@ -225,7 +229,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
               {isSignatureThreshold ? 'Adult Signature Required' : '30-Day Inspection Window'}
             </span>
             <span className="text-[11px] text-emerald-700 font-medium block">
-              {isSignatureThreshold ? 'Carrier Tracking Intakes' : 'Verified at Checkout ✓'}
+              {isSignatureThreshold ? 'Carrier Tracking Intakes' : 'Captured at checkout'}
             </span>
           </div>
         </div>

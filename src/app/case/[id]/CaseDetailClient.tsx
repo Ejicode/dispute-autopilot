@@ -36,20 +36,6 @@ import {
   Shield,
   Info
 } from 'lucide-react';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts';
 import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, ApprovalReview } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { useUser } from '@/components/UserContext';
@@ -153,14 +139,13 @@ export default function CaseDetailPage() {
     }
 
     return {
-      orderNumber: parsedOrder.order_number || parsedOrder.OrderNumber || dispute?.order_id || 'ORD-2026-98214',
-      buyerName: parsedOrder.buyer_name || parsedOrder.BuyerName || 'Jordan Miller',
-      buyerEmail: parsedOrder.email || parsedOrder.buyer_email || 'jordan.miller@example.com',
-      shippingAddress: parsedOrder.shipping_address || parsedOrder.ShippingAddress || '742 Evergreen Terrace, Springfield, OR 97477',
-      paymentMethod: parsedOrder.payment_method || 'PayPal Express Checkout',
-      itemSKU: parsedOrder.sku || parsedOrder.item_sku || 'DRONE-4K-PRO (Pro Aerial 4K Drone Kit)',
-      gpsCoordinates: parsedPod.gps_coordinates || parsedPod.GPSCoordinates || '44.0462° N, 123.0220° W',
-      signedBy: parsedPod.recipient_signature || parsedPod.SignedBy || 'J. MILLER (SIGNATURE_VERIFIED)',
+      // Only facts recorded in the vault; never placeholders that read as evidence.
+      orderNumber: parsedOrder.order_number || parsedOrder.OrderNumber || dispute?.order_id || '',
+      buyerName: parsedOrder.buyer_name || parsedOrder.BuyerName || '',
+      buyerEmail: parsedOrder.email || parsedOrder.buyer_email || '',
+      shippingAddress: parsedOrder.shipping_address || parsedOrder.ShippingAddress || parsedPod.delivery_address || '',
+      itemSKU: parsedOrder.sku || parsedOrder.item_sku || '',
+      gpsCoordinates: parsedPod.gps_coordinates || parsedPod.GPSCoordinates || '',
     };
   }, [evidenceItems, dispute]);
 
@@ -178,12 +163,12 @@ export default function CaseDetailPage() {
     setTimeout(() => setCopiedDraft(false), 2000);
   };
 
-  // Dynamically extract real carrier transit telemetry milestones from SQLite evidence vault
-  const { carrierName, trackingNumber, transitVelocityData } = useMemo(() => {
+  // Carrier tracking events exactly as recorded in the vault (none when absent)
+  const { carrierName, trackingNumber, trackingEvents } = useMemo(() => {
     const trackingItem = evidenceItems.find((e) => e.evidence_type === 'TRACKING_HISTORY');
-    let name = 'USPS Priority Mail Express';
-    let trackNum = 'TRK-98214-USPS';
-    let data: any[] = [];
+    let name = '';
+    let trackNum = '';
+    let data: { time: string; stage: string; location: string }[] = [];
 
     if (trackingItem) {
       try {
@@ -193,12 +178,6 @@ export default function CaseDetailPage() {
 
         if (parsed.events && Array.isArray(parsed.events)) {
           data = parsed.events.map((ev: any) => {
-            let velocity = 0;
-            if (ev.status === 'PICKED_UP') velocity = 38;
-            else if (ev.status === 'IN_TRANSIT') velocity = 65;
-            else if (ev.status === 'OUT_FOR_DELIVERY') velocity = 24;
-            else velocity = 0;
-
             const dObj = new Date(ev.timestamp);
             const timeLabel = !isNaN(dObj.getTime())
               ? dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + dObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -206,9 +185,8 @@ export default function CaseDetailPage() {
 
             return {
               time: timeLabel,
-              stage: ev.status.replace(/_/g, ' '),
-              velocity,
-              location: ev.location || 'Carrier Logistics Center',
+              stage: String(ev.status || '').replace(/_/g, ' '),
+              location: ev.location || '',
             };
           });
         }
@@ -217,17 +195,7 @@ export default function CaseDetailPage() {
       }
     }
 
-    if (data.length === 0) {
-      data = [
-        { time: 'Intake', stage: 'Label Created', velocity: 0, location: 'Carrier Intake Facility' },
-        { time: 'Dispatch', stage: 'Dispatched', velocity: 45, location: 'Regional Logistics Center' },
-        { time: 'In Transit', stage: 'In Transit', velocity: 65, location: 'Carrier Sorting Hub' },
-        { time: 'Final Mile', stage: 'Out for Delivery', velocity: 22, location: 'Delivery Vehicle' },
-        { time: 'Delivered', stage: 'Delivered', velocity: 0, location: 'Verified Destination' },
-      ];
-    }
-
-    return { carrierName: name, trackingNumber: trackNum, transitVelocityData: data };
+    return { carrierName: name, trackingNumber: trackNum, trackingEvents: data };
   }, [evidenceItems]);
 
   useEffect(() => {
@@ -328,16 +296,33 @@ export default function CaseDetailPage() {
   }
 
   const isResolved = dispute.status === 'RESOLVED';
-  const rawHoursLeft = Math.floor((new Date(dispute.response_deadline).getTime() - Date.now()) / (3600 * 1000));
+  const msLeft = new Date(dispute.response_deadline).getTime() - Date.now();
+  const rawHoursLeft = Math.floor(msLeft / (3600 * 1000));
   const deadlineText = isResolved
     ? 'Resolved'
+    : !(msLeft > 0)
+    ? 'Deadline passed'
     : rawHoursLeft > 24
     ? `${Math.floor(rawHoursLeft / 24)}d ${rawHoursLeft % 24}h remaining`
     : rawHoursLeft > 0
     ? `${rawHoursLeft}h remaining (Urgent)`
-    : '18h remaining (Urgent Window)';
+    : 'Under 1h remaining (Urgent)';
 
-  const essScore = dispute.strength_score ?? 100;
+  const essScore = dispute.strength_score ?? 0;
+
+  // Seller Protection status from the vault, mirroring the Go triage checks
+  // (internal/ai/triage.go): delivery proof, plus a recorded signature at $750+.
+  const evidenceText = (item: EvidenceItem) =>
+    typeof item.content === 'string' ? item.content : JSON.stringify(item.content ?? '');
+  const hasDeliveryProof = evidenceItems.some((item) => item.evidence_type === 'PROOF_OF_DELIVERY');
+  const hasSignature = evidenceItems.some((item) => /Signature|SIGNATURE_VERIFIED/.test(evidenceText(item)));
+  const needsSignature = dispute.amount_cents >= 75000;
+  const protectionCovered = dispute.reason === 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED' || dispute.reason === 'UNAUTHORISED';
+  const missingProtection = [
+    !hasDeliveryProof && 'delivery proof',
+    needsSignature && !hasSignature && 'signature confirmation',
+  ].filter(Boolean) as string[];
+  const protectionMet = protectionCovered && missingProtection.length === 0;
   const filteredEvidence = evidenceFilter === 'ALL'
     ? evidenceItems
     : evidenceItems.filter((item) => item.evidence_type === evidenceFilter);
@@ -420,10 +405,12 @@ export default function CaseDetailPage() {
                 <span>⚡ {dispute.recommendation} DISPUTE</span>
               </span>
 
-              <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#E6F0FA] text-[#003087] border border-[#C9E0FA] flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA]" />
-                <span>PayPal Seller Protection Active</span>
-              </span>
+              {protectionMet && (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#E6F0FA] text-[#003087] border border-[#C9E0FA] flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA]" />
+                  <span>Seller Protection evidence complete</span>
+                </span>
+              )}
             </div>
 
             {/* Big Amount Typography */}
@@ -473,7 +460,7 @@ export default function CaseDetailPage() {
                 </span>
                 <span>{deadlineText}</span>
               </div>
-              <span className="text-[9px] font-bold text-amber-700 block mt-0.5">Automated submission gate</span>
+              <span className="text-[9px] font-bold text-amber-700 block mt-0.5">Human approval required to submit</span>
             </div>
 
             {/* Evidence Packet PDF Download Button */}
@@ -498,8 +485,10 @@ export default function CaseDetailPage() {
             </div>
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Buyer / Customer</span>
-              <span className="text-xs font-bold text-slate-900 block truncate">{orderDossier.buyerName}</span>
-              <span className="text-[11px] text-slate-500 block truncate font-mono">{orderDossier.buyerEmail}</span>
+              <span className="text-xs font-bold text-slate-900 block truncate">{orderDossier.buyerName || 'Not recorded'}</span>
+              {orderDossier.buyerEmail && (
+                <span className="text-[11px] text-slate-500 block truncate font-mono">{orderDossier.buyerEmail}</span>
+              )}
             </div>
           </div>
 
@@ -509,13 +498,15 @@ export default function CaseDetailPage() {
               <MapPin className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Verified Destination</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Shipping Destination</span>
               <span className="text-xs font-bold text-slate-900 block truncate" title={orderDossier.shippingAddress}>
-                {orderDossier.shippingAddress}
+                {orderDossier.shippingAddress || 'Not recorded'}
               </span>
-              <span className="text-[10px] text-emerald-700 font-bold block truncate">
-                GPS: {orderDossier.gpsCoordinates}
-              </span>
+              {orderDossier.gpsCoordinates && (
+                <span className="text-[10px] text-emerald-700 font-bold block truncate">
+                  GPS: {orderDossier.gpsCoordinates}
+                </span>
+              )}
             </div>
           </div>
 
@@ -527,9 +518,11 @@ export default function CaseDetailPage() {
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Storefront Order</span>
               <Link href="/storefront" className="text-xs font-bold text-[#0070BA] hover:underline block truncate">
-                {orderDossier.orderNumber}
+                {orderDossier.orderNumber || 'Not recorded'}
               </Link>
-              <span className="text-[11px] text-slate-500 block truncate">SKU: {orderDossier.itemSKU}</span>
+              {orderDossier.itemSKU && (
+                <span className="text-[11px] text-slate-500 block truncate">SKU: {orderDossier.itemSKU}</span>
+              )}
             </div>
           </div>
 
@@ -540,8 +533,10 @@ export default function CaseDetailPage() {
             </div>
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Fulfillment Carrier</span>
-              <span className="text-xs font-bold text-slate-900 block truncate">{carrierName}</span>
-              <span className="text-[11px] font-mono text-slate-600 block truncate font-bold">{trackingNumber}</span>
+              <span className="text-xs font-bold text-slate-900 block truncate">{carrierName || 'Not recorded'}</span>
+              {trackingNumber && (
+                <span className="text-[11px] font-mono text-slate-600 block truncate font-bold">{trackingNumber}</span>
+              )}
             </div>
           </div>
         </div>
@@ -582,9 +577,11 @@ export default function CaseDetailPage() {
               Signature Threshold
             </span>
             <div className="text-xs font-bold text-slate-900 mt-1">
-              {dispute.amount_cents >= 75000 
-                ? '§ 11.3(b) Signature on File' 
-                : 'Standard Tracking (< $750)'}
+              {!needsSignature
+                ? 'Standard Tracking (< $750)'
+                : hasSignature
+                ? '§ 11.3(b) Signature on File'
+                : '§ 11.3(b) Signature required, none on file'}
             </div>
           </div>
 
@@ -592,10 +589,18 @@ export default function CaseDetailPage() {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Protection Status
             </span>
-            <div className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" />
-              <span>Full Recovery Eligible</span>
-            </div>
+            {protectionMet ? (
+              <div className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" />
+                <span>Vault holds the required evidence</span>
+              </div>
+            ) : (
+              <div className="text-xs font-bold text-amber-700 mt-1">
+                {protectionCovered
+                  ? `Missing ${missingProtection.join(' and ')}`
+                  : 'Not covered by Seller Protection for this reason'}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -620,7 +625,7 @@ export default function CaseDetailPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-1">
           {[
             { step: '1', title: 'Inquiry Ingested', status: 'done', tag: 'INGESTED' },
-            { step: '2', title: 'Evidence Vault', status: 'done', tag: 'SHA-256' },
+            { step: '2', title: 'Evidence Vault', status: evidenceItems.length ? 'done' : 'pending', tag: evidenceItems.length ? `${evidenceItems.length} HASHED` : 'EMPTY' },
             { step: '3', title: 'Code Verifier', status: draft?.verified ? 'done' : 'blocked', tag: draft?.verified ? 'VERIFIED' : 'BLOCKING' },
             { step: '4', title: 'Approval Gate', status: isResolved ? 'done' : review ? 'active' : 'pending', tag: isResolved ? 'APPROVED' : review ? 'IN REVIEW' : 'PENDING' },
             { step: '5', title: 'PayPal REST Submit', status: isResolved || operation?.state === 'SUCCEEDED' ? 'done' : 'pending', tag: isResolved ? 'RESOLVED' : operation?.state === 'SUCCEEDED' ? 'ACKNOWLEDGED' : 'PENDING' }
@@ -667,7 +672,7 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
-      {/* ── Dynamic Carrier Transit Velocity Graph (Derived from Real SQLite Evidence & 3D Reflection) ── */}
+      {/* ── Carrier Tracking (events recorded in the vault) ── */}
       <div className="card-3d-reflection p-6 rounded-3xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -675,80 +680,40 @@ export default function CaseDetailPage() {
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-slate-900 text-sm">
-                Carrier Delivery Transit Velocity &amp; Proof of Transit
-              </h2>
+              <h2 className="font-bold text-slate-900 text-sm">Carrier Tracking</h2>
               <p className="text-xs text-slate-500 font-medium">
-                {carrierName} (<code className="font-mono text-slate-800 font-bold">{trackingNumber}</code>) — Real-time telemetry speed &amp; milestone progression
+                {carrierName
+                  ? <>{carrierName}{trackingNumber && <> (<code className="font-mono text-slate-800 font-bold">{trackingNumber}</code>)</>} · events recorded in the vault</>
+                  : 'No carrier tracking in the vault for this dispute'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" />
-              GPS Geofence Match (100%)
+          {trackingEvents.length > 0 && (
+            <span className="px-2.5 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold">
+              {trackingEvents.length} tracking event{trackingEvents.length === 1 ? '' : 's'}
             </span>
+          )}
+        </div>
+
+        {trackingEvents.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {trackingEvents.map((step, idx) => (
+              <div
+                key={idx}
+                className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center space-y-1"
+              >
+                <div className="text-[10px] text-slate-400 font-semibold">{step.time}</div>
+                <div className="text-xs font-bold text-slate-800">{step.stage}</div>
+                {step.location && <div className="text-[10px] text-slate-500 truncate">{step.location}</div>}
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* Transit Speed Wave AreaChart */}
-        <div className="h-48 w-full pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={transitVelocityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#003087" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#003087" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-              <XAxis dataKey="stage" stroke="#94A3B8" fontSize={11} tickLine={false} />
-              <YAxis
-                stroke="#94A3B8"
-                fontSize={11}
-                tickLine={false}
-                tickFormatter={(v) => `${v} mph`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#0F172A',
-                  borderColor: '#1E293B',
-                  borderRadius: '1rem',
-                  color: '#FFF',
-                  fontSize: '12px',
-                }}
-                formatter={(val: any, name: any, item: any) => [
-                  `${val} mph — ${item.payload.location}`,
-                  item.payload.time,
-                ]}
-              />
-              <Area
-                type="monotone"
-                dataKey="velocity"
-                stroke="#003087"
-                strokeWidth={2.5}
-                fillOpacity={1}
-                fill="url(#velocityGradient)"
-                name="Transit Velocity"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Transit Milestones Stepper Chips */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2">
-          {transitVelocityData.map((step, idx) => (
-            <div
-              key={idx}
-              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center space-y-1 hover:border-[#003087]/50 transition-colors"
-            >
-              <div className="text-[10px] text-slate-400 font-semibold">{step.time}</div>
-              <div className="text-xs font-bold text-slate-800">{step.stage}</div>
-              <div className="text-[10px] text-emerald-600 font-medium">✓ Verified</div>
-            </div>
-          ))}
-        </div>
+        ) : (
+          <p className="text-xs text-slate-500">
+            Without recorded tracking, this dispute cannot rely on proof of delivery.
+          </p>
+        )}
       </div>
 
       {/* ── Main 2-Column Grid: Evidence Vault + AI Draft ── */}
@@ -890,7 +855,7 @@ export default function CaseDetailPage() {
 
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-400">
-                Engine: <strong className="text-slate-700 font-mono">Ava AI Autonomous Defense Engine + RAG</strong>
+                Drafted by: <strong className="text-slate-700 font-mono">{draft?.model_name || 'unknown'}</strong>
               </span>
               <button
                 onClick={handleRegenerateDraft}
