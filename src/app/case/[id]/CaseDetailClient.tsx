@@ -91,7 +91,36 @@ export default function CaseDetailPage() {
   const reviewRequest = useRef(0);
   const [evidenceFilter, setEvidenceFilter] = useState<'ALL' | 'ORDER_CONFIRMATION' | 'TRACKING_HISTORY' | 'PROOF_OF_DELIVERY'>('ALL');
 
+  // "/case/_" (the sidebar's Case Review link) means "the most urgent dispute":
+  // the list endpoint already orders by status, amount and deadline.
+  const isPlaceholderId = !disputeId || disputeId === '_';
+  const [noDisputes, setNoDisputes] = useState(false);
+  useEffect(() => {
+    if (!isPlaceholderId) return;
+    let active = true;
+    fetch('/api/disputes')
+      .then((res) => (res.ok ? res.json() : { disputes: [] }))
+      .then((data: { disputes?: { id: string }[] }) => {
+        if (!active) return;
+        const first = data.disputes?.[0];
+        if (first) {
+          setDisputeId(first.id);
+          window.history.replaceState(null, '', `/case/${encodeURIComponent(first.id)}/`);
+        } else {
+          setNoDisputes(true);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isPlaceholderId]);
+
   const fetchCase = async () => {
+    if (isPlaceholderId) return;
     try {
       const res = await fetch(`/api/disputes/${disputeId}`);
       if (res.ok) {
@@ -287,7 +316,10 @@ export default function CaseDetailPage() {
   if (!dispute) {
     return (
       <div className="bg-white p-8 rounded-3xl border border-slate-200/90 shadow-sm text-center card-3d-reflection">
-        <h2 className="text-lg font-bold text-slate-800">Dispute Not Found</h2>
+        <h2 className="text-lg font-bold text-slate-800">{noDisputes ? 'No disputes yet' : 'Dispute Not Found'}</h2>
+        {noDisputes && (
+          <p className="mt-1 text-sm text-slate-500">Disputes appear here once a buyer opens one, or when you simulate one from the queue.</p>
+        )}
         <Link href="/" className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#003087] font-bold hover:underline">
           <ArrowLeft className="w-3.5 h-3.5" /> Return to dispute queue
         </Link>

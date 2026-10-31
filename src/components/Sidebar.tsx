@@ -59,7 +59,8 @@ export default function Sidebar({
       title: 'PLATFORM',
       items: [
         { href: '/', label: 'Dispute Queue', icon: Home, exact: true },
-        { href: '/case/dsp_hero_1240', label: 'Case Review', icon: Shield, matchPrefix: '/case' },
+        // '/case/_' opens the most urgent dispute in whichever workspace is signed in.
+        { href: '/case/_/', label: 'Case Review', icon: Shield, matchPrefix: '/case' },
         { href: '/storefront', label: 'Buyer Store ($5k Fake $)', icon: Tag },
         { href: '/vault', label: 'Evidence Vault', icon: FileCheck },
       ],
