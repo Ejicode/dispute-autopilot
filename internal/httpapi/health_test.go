@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Ejicode/dispute-autopilot/internal/store"
@@ -45,5 +46,27 @@ func TestHealthReadiness(t *testing.T) {
 	unavailable := call()
 	if unavailable.Code != http.StatusServiceUnavailable {
 		t.Fatalf("invalid mode health status = %d, want 503", unavailable.Code)
+	}
+}
+
+// TestSecurityHeaders checks every response carries the browser protections,
+// in particular that the console cannot be framed by another site.
+func TestSecurityHeaders(t *testing.T) {
+	t.Setenv("DATA_DIR", t.TempDir())
+	t.Setenv("APP_MODE", "demo")
+	store.Close()
+	t.Cleanup(store.Close)
+
+	handler := New(t.TempDir())
+	for _, path := range []string{"/api/health", "/api/disputes", "/login/"} {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		h := rec.Header()
+		if h.Get("X-Frame-Options") != "DENY" || h.Get("X-Content-Type-Options") != "nosniff" {
+			t.Errorf("%s: missing frame/nosniff headers: %v", path, h)
+		}
+		if csp := h.Get("Content-Security-Policy"); !strings.Contains(csp, "frame-ancestors 'none'") {
+			t.Errorf("%s: CSP %q does not forbid framing", path, csp)
+		}
 	}
 }
