@@ -215,7 +215,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
               <span className="text-[11px] text-slate-500 font-mono truncate block">{buyerEmail}</span>
             ) : (
               <span className="text-[11px] text-slate-500 font-medium block">
-                {isSignatureThreshold ? 'PayPal § 11.3(b) Compliant' : 'Checkout Grounding'}
+                {isSignatureThreshold ? 'Signature required ($750+)' : 'Checkout Grounding'}
               </span>
             )}
           </div>

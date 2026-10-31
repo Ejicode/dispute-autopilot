@@ -71,6 +71,9 @@ export default function CaseDetailPage() {
   const { lastEvent } = useRealtime();
   const { activeUser } = useUser();
   const appMode = useAppMode();
+  // Who receives an approved action. Demo mode never reaches PayPal.
+  const provider = appMode === 'sandbox' ? 'PayPal Sandbox' : appMode === 'live' ? 'PayPal' : 'the PayPal simulator';
+  const modeBadge = appMode ? MODE_LABEL[appMode] : '…';
 
   const [dispute, setDispute] = useState<Dispute | null>(null);
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
@@ -586,7 +589,7 @@ export default function CaseDetailPage() {
             </h3>
           </div>
           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono">
-            PayPal User Agreement § 11
+            PayPal Seller Protection
           </span>
         </div>
 
@@ -597,10 +600,10 @@ export default function CaseDetailPage() {
             </span>
             <div className="text-xs font-bold text-slate-900 mt-1">
               {dispute.reason === 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED'
-                ? '§ 11.3 Proof of Delivery'
+                ? 'Proof of delivery'
                 : dispute.reason === 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED'
-                ? '§ 11.4 SNAD Rebuttal'
-                : '§ 11.2 Unauthorized Protection'}
+                ? 'Not-as-described evidence'
+                : 'Unauthorized transaction'}
             </div>
           </div>
 
@@ -612,8 +615,8 @@ export default function CaseDetailPage() {
               {!needsSignature
                 ? 'Standard Tracking (< $750)'
                 : hasSignature
-                ? '§ 11.3(b) Signature on File'
-                : '§ 11.3(b) Signature required, none on file'}
+                ? 'Signature on file ($750+)'
+                : 'Signature required ($750+), none on file'}
             </div>
           </div>
 
@@ -649,7 +652,7 @@ export default function CaseDetailPage() {
             </h3>
           </div>
           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono">
-            {dispute.provenance === 'PAYPAL_SANDBOX' ? 'PayPal Sandbox REST' : 'PayPal REST API'}
+            {modeBadge}
           </span>
         </div>
 
@@ -660,7 +663,7 @@ export default function CaseDetailPage() {
             { step: '2', title: 'Evidence Vault', status: evidenceItems.length ? 'done' : 'pending', tag: evidenceItems.length ? `${evidenceItems.length} HASHED` : 'EMPTY' },
             { step: '3', title: 'Code Verifier', status: draft?.verified ? 'done' : 'blocked', tag: draft?.verified ? 'VERIFIED' : 'BLOCKING' },
             { step: '4', title: 'Approval Gate', status: isResolved ? 'done' : review ? 'active' : 'pending', tag: isResolved ? 'APPROVED' : review ? 'IN REVIEW' : 'PENDING' },
-            { step: '5', title: 'PayPal REST Submit', status: isResolved || operation?.state === 'SUCCEEDED' ? 'done' : 'pending', tag: isResolved ? 'RESOLVED' : operation?.state === 'SUCCEEDED' ? 'ACKNOWLEDGED' : 'PENDING' }
+            { step: '5', title: 'Submit to PayPal', status: isResolved || operation?.state === 'SUCCEEDED' ? 'done' : 'pending', tag: isResolved ? 'RESOLVED' : operation?.state === 'SUCCEEDED' ? 'ACKNOWLEDGED' : 'PENDING' }
           ].map((s, idx) => (
             <div
               key={idx}
@@ -994,7 +997,7 @@ export default function CaseDetailPage() {
                 <h3 className="font-bold text-slate-900 text-sm">Human Approval Gate</h3>
               </div>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono">
-                PayPal REST Sandbox Protocol
+                {modeBadge}
               </span>
             </div>
 
@@ -1059,10 +1062,10 @@ export default function CaseDetailPage() {
                   <strong>Notes:</strong> {review.snapshot.notes}
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  {review.snapshot.evidence_ids.length} supporting vault records chained into this API submission.
+                  {review.snapshot.evidence_ids.length} supporting vault records attached to this submission.
                 </p>
                 <details className="pt-1">
-                  <summary className="cursor-pointer font-bold text-[#003087] text-[11px]">View PayPal REST API payload JSON</summary>
+                  <summary className="cursor-pointer font-bold text-[#003087] text-[11px]">View the request payload (JSON)</summary>
                   <pre className="whitespace-pre-wrap break-all mt-2 p-2 bg-slate-900 text-slate-100 rounded-xl font-mono text-[10px]">
                     {JSON.stringify(review.snapshot.provider_payload, null, 2)}
                   </pre>
@@ -1072,14 +1075,14 @@ export default function CaseDetailPage() {
 
             {operation && (
               <p role="status" className="text-xs p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 font-medium">
-                {operation.state === 'SUCCEEDED' ? '✓ PayPal REST API acknowledged this operation. Final settlement confirmed.' :
+                {operation.state === 'SUCCEEDED' ? `✓ ${provider} acknowledged this action. The dispute closes when its final outcome arrives.` :
                  operation.state === 'UNCERTAIN' ? '⚠ Provider outcome is uncertain. Reconciliation required before further action.' :
                  'Submission is in progress. If it remains pending after a server restart, reconcile with PayPal before further action.'}
               </p>
             )}
 
             {approvalError && <p role="alert" className="text-xs p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-bold">{approvalError}</p>}
-            {approvalResult && <p role="status" className="text-xs p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">✓ Action acknowledged by PayPal REST Sandbox. Await final dispute outcome.</p>}
+            {approvalResult && <p role="status" className="text-xs p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">✓ Action acknowledged by {provider}. Await the final dispute outcome.</p>}
 
             <button
               onClick={handleApproveAction}
@@ -1089,7 +1092,7 @@ export default function CaseDetailPage() {
               {approving ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Submitting to PayPal REST API…</span>
+                  <span>Submitting to {provider}…</span>
                 </>
               ) : (
                 <>

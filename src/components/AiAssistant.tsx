@@ -498,7 +498,7 @@ export default function AiAssistant() {
     if (!lastAssistantMsg) {
       return [
         "What is our active dispute risk?",
-        "Explain § 11.3 Seller Protection",
+        "Explain Seller Protection for delivery",
         "Check Evidence Vault proofs"
       ];
     }
@@ -513,7 +513,7 @@ export default function AiAssistant() {
     if (text.includes("vault") || text.includes("evidence") || text.includes("hash")) {
       return [
         "Is tracking verified?",
-        "Check § 11.3(b) signature threshold",
+        "Check the $750 signature rule",
         "View order invoice details"
       ];
     }
@@ -801,7 +801,7 @@ export default function AiAssistant() {
                 onClick={() => sendMessage("Retrieve PayPal Seller Protection rules for Case PP-D-99214")}
                 className="px-2.5 py-1 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold text-[#003087] whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1"
               >
-                <span>🔍 § 11.3 Rules</span>
+                <span>🔍 Seller Protection</span>
               </button>
               <button
                 type="button"

@@ -220,8 +220,8 @@ export default function EvidenceVaultPage() {
             </div>
           </div>
           <div className="my-1.5">
-            <span className="text-2xl font-black text-slate-900 tracking-tight leading-none">
-              § 11.3 &amp; (b)
+            <span className="text-lg font-black text-slate-900 tracking-tight leading-none">
+              Delivery &amp; signature
             </span>
           </div>
           <div>
