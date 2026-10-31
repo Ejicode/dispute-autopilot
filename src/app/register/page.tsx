@@ -256,9 +256,6 @@ export default function RegisterPage() {
                 <span className="text-xs text-slate-500 font-medium block truncate">
                   {form.store_name || 'Your Store'}
                 </span>
-                <span className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider block mt-0.5">
-                  ● PayPal Seller Protection Active
-                </span>
               </div>
             </div>
 

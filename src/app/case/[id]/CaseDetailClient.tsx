@@ -53,6 +53,7 @@ import {
 import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, ApprovalReview } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { useUser } from '@/components/UserContext';
+import { useAppMode, MODE_LABEL } from '@/lib/runtime/mode';
 import EvidenceCard from '@/components/EvidenceCard';
 
 // Helper to format currency with thousand-separators
@@ -83,6 +84,7 @@ export default function CaseDetailPage() {
   }, [params?.id]);
   const { lastEvent } = useRealtime();
   const { activeUser } = useUser();
+  const appMode = useAppMode();
 
   const [dispute, setDispute] = useState<Dispute | null>(null);
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
@@ -368,12 +370,18 @@ export default function CaseDetailPage() {
           <span className="font-semibold text-slate-900 hidden md:inline">Evidence Dossier</span>
         </div>
 
-        {/* Right: Live Sync + Merchant Identity */}
+        {/* Right: Environment + Merchant Identity */}
         <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-[11px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-            <span>PayPal Sandbox Active (SSE)</span>
-          </div>
+          {appMode && (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-bold text-[11px] ${
+              appMode === 'demo'
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${appMode === 'demo' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <span>{MODE_LABEL[appMode]}</span>
+            </div>
+          )}
 
           <div className="hidden sm:flex items-center gap-1 text-slate-500 font-medium">
             <span>Merchant:</span>

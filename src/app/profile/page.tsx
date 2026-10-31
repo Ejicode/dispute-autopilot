@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  ShieldCheck,
   Building2,
   Mail,
   DollarSign,
@@ -33,10 +32,12 @@ import {
 } from 'recharts';
 import { useUser } from '@/components/UserContext';
 import { useRealtime } from '@/components/RealtimeContext';
+import { useAppMode, MODE_LABEL } from '@/lib/runtime/mode';
 import { useRouter } from 'next/navigation';
 
 export default function MerchantProfilePage() {
   const { activeUser, loading: userLoading, openCreateModal, logout } = useUser();
+  const appMode = useAppMode();
   const { lastEvent } = useRealtime();
   const router = useRouter();
 
@@ -145,13 +146,6 @@ export default function MerchantProfilePage() {
                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {activeUser.name}
                 </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-[#003087] border border-blue-200/60 text-xs font-bold">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Verified PayPal Merchant
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                  ● SELLER PROTECTION ACTIVE
-                </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 font-medium pt-1">
@@ -208,19 +202,22 @@ export default function MerchantProfilePage() {
           </div>
         </div>
 
-        {/* PayPal Security & Sandbox Integration Bar */}
+        {/* Environment Bar */}
         <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-3 text-xs text-slate-600">
           <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-            PayPal Sandbox:
+            Environment:
           </span>
-          <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 font-mono text-[11px] text-[#003087]">
-            App: <strong>NVP SOAP Webhooks</strong> (ID: BAAz8aintxI...)
-          </span>
+          {appMode && (
+            <span className={`px-2.5 py-1 rounded-lg border font-mono text-[11px] ${
+              appMode === 'demo'
+                ? 'bg-amber-50 border-amber-200 text-amber-800'
+                : 'bg-blue-50 border-blue-200 text-[#003087]'
+            }`}>
+              <strong>{MODE_LABEL[appMode]}</strong>
+            </span>
+          )}
           <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
-            Orders v2 Tracking: <strong className="text-emerald-600">ACTIVE</strong>
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
-            Evidence Vault SHA-256: <strong className="text-emerald-600">CHAINED</strong>
+            Evidence Vault: <strong className="text-emerald-600">SHA-256 per record</strong>
           </span>
         </div>
       </div>

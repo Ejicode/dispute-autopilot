@@ -5,6 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Dispute } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
+import { useAppMode } from '@/lib/runtime/mode';
 import { 
   TrendingUp, 
   RefreshCw, 
@@ -37,6 +38,7 @@ const QueueGrid = dynamic(() => import('@/components/QueueGrid'), {
 
 export default function DashboardPage() {
   const { lastEvent } = useRealtime();
+  const appMode = useAppMode();
 
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
@@ -327,9 +329,11 @@ export default function DashboardPage() {
                   <span>Protected Volume</span>
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </span>
-                <span className="bg-[#FFC439] text-[#001C48] font-black text-[11px] px-2.5 py-0.5 rounded-full shadow-sm">
-                  Live DB
-                </span>
+                {appMode && (
+                  <span className="bg-[#FFC439] text-[#001C48] font-black text-[11px] px-2.5 py-0.5 rounded-full shadow-sm">
+                    {appMode === 'demo' ? 'Demo data' : appMode === 'sandbox' ? 'Sandbox' : 'Live'}
+                  </span>
+                )}
               </div>
 
               <div className="my-2">
@@ -703,7 +707,9 @@ export default function DashboardPage() {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Prioritized by financial exposure and response deadline with live PayPal synchronization
+              Prioritized by financial exposure and response deadline
+              {appMode === 'demo' && ' · simulated disputes'}
+              {(appMode === 'sandbox' || appMode === 'live') && ' · updated from verified PayPal webhooks'}
             </p>
           </div>
 
