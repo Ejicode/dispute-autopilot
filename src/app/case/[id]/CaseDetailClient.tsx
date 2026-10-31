@@ -735,7 +735,7 @@ export default function CaseDetailPage() {
                 </div>
               </div>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-[#003087] border border-blue-100 self-start sm:self-auto">
-                {evidenceItems.length} Immutable Items
+                {evidenceItems.length} Hashed Items
               </span>
             </div>
 

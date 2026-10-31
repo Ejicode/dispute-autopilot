@@ -609,7 +609,7 @@ export default function AiAssistant() {
                   </div>
                   <p className="text-[10px] text-cyan-200/90 font-medium leading-none mt-1 truncate flex items-center gap-1">
                     <Sparkles className="w-2.5 h-2.5 text-amber-300" />
-                    PayPal AI Dispute Partner • Autonomous Defense
+                    Dispute assistant · answers from your store data
                   </p>
                 </div>
               </div>

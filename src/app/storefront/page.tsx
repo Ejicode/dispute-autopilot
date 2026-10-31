@@ -368,7 +368,7 @@ export default function StorefrontPage() {
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h1 className="text-xl font-bold text-slate-900 tracking-tight">{isBuyer ? 'Store' : 'Sales & Storefront Catalog'}</h1>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-[#003087] border border-blue-100">
-                52 Verified Products
+                {PRODUCTS.length} Demo Products
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                 SHA-256 Evidence Vaulting Active
@@ -381,7 +381,7 @@ export default function StorefrontPage() {
 
           <div className="flex items-center gap-2 text-xs text-slate-600 bg-blue-50/70 border border-blue-100 rounded-2xl px-4 py-2.5 shrink-0">
             <ShieldCheck className="w-4 h-4 text-[#003087] shrink-0" />
-            <span>Every purchase creates an immutable <strong>SHA-256 Vault record</strong></span>
+            <span>Every purchase is hashed into the <strong>Evidence Vault (SHA-256)</strong></span>
           </div>
         </div>
 
@@ -599,7 +599,7 @@ export default function StorefrontPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs text-slate-500 font-semibold">
-            Showing <strong>{displayedProducts.length}</strong> of <strong>{PRODUCTS.length}</strong> real products
+            Showing <strong>{displayedProducts.length}</strong> of <strong>{PRODUCTS.length}</strong> products
           </span>
           <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Demo storefront — no payment collected
@@ -786,7 +786,7 @@ export default function StorefrontPage() {
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-start gap-2.5">
                 <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold block">Autonomous Evidence Vaulting Protocol</span>
+                  <span className="font-bold block">Automatic evidence capture</span>
                   <p className="text-[11px] text-emerald-800 mt-0.5">
                     Upon checkout, this item's price, buyer address, order confirmation, and carrier tracking number are automatically hashed with SHA-256 and stored in the Evidence Vault.
                   </p>

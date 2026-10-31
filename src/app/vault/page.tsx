@@ -117,10 +117,10 @@ export default function EvidenceVaultPage() {
             <span>Evidence Vault</span>
           </h1>
           <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
-            SHA-256 Chained
+            SHA-256 per record
           </span>
           <span className="bg-blue-50 text-[#003087] border border-blue-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-            Immutable
+            Tamper-evident
           </span>
         </div>
 
@@ -186,7 +186,7 @@ export default function EvidenceVaultPage() {
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#003087] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
-              Tamper-Proof
+              Tamper-evident
             </span>
           </div>
         </div>

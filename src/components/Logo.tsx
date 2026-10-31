@@ -138,7 +138,6 @@ export default function Logo({
               >
                 AUTOPILOT
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Autonomous Agent Active" />
             </div>
           </div>
 

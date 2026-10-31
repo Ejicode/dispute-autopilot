@@ -95,7 +95,7 @@ export default function TrustLabPage() {
       timestamp: new Date().toISOString(),
       evaluation: 'Dispute Autopilot - Trust Lab Automated Penetration Test',
       totalVectors: initialVectors.length,
-      defenseRate: '100% BLOCKED',
+      defenseRate: `${(results || []).filter((r) => r.blocked).length}/${(results || []).length} BLOCKED`,
       results: results || [],
     };
     const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
