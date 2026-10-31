@@ -65,9 +65,6 @@ export default function BenchPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Dispute Bench: 40-Scenario Evaluation</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-blue-200 text-[#003087] bg-blue-50 font-mono">
-              make bench
-            </span>
           </div>
           <p className="text-xs text-slate-500">
             Standardized evaluation testing 40 diverse scenarios across INR, SNAD, and Unauthorized dispute claims.

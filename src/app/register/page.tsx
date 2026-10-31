@@ -86,7 +86,7 @@ export default function RegisterPage() {
             Create Merchant Account
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm font-medium">
-            Join the DA (Dispute Autopilot) merchant dispute and revenue protection network
+            Set up a workspace to manage your store's PayPal disputes
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export default function RegisterPage() {
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden card-3d-reflection">
           <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] px-4 sm:px-6 py-4">
             <h2 className="text-white font-bold text-base">Merchant Registration</h2>
-            <p className="text-white/70 text-xs mt-0.5">Secure registration with live PayPal sandbox credentials</p>
+            <p className="text-white/70 text-xs mt-0.5">Your login for Dispute Autopilot</p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
@@ -273,7 +273,7 @@ export default function RegisterPage() {
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4 text-[#FFC439]" />
-                  <span>Create Merchant Account &amp; Launch</span>
+                  <span>Create account</span>
                 </>
               )}
             </button>

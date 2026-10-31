@@ -331,7 +331,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center justify-between text-xs text-blue-100/80 pt-2 border-t border-white/15">
-                <span>{kpis.orderCount} store orders protected</span>
+                <span>Across {kpis.orderCount} store orders</span>
                 <span className="font-bold text-emerald-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                   <span>Orders Ledger →</span>
@@ -349,9 +349,6 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                   <span>Total Orders</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
-                  {kpis.orderCount} Orders
                 </span>
               </div>
 
@@ -380,9 +377,6 @@ export default function DashboardPage() {
                   <span>Unique Customers</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
-                  {kpis.customerCount} Buyers
-                </span>
               </div>
 
               <div className="my-2 relative z-10">
@@ -409,9 +403,6 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                   <span>Evidence Vault</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
-                  {kpis.evidenceCount} Files
                 </span>
               </div>
 

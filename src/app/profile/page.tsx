@@ -288,7 +288,7 @@ export default function MerchantProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
               <div>
                 <h2 className="font-bold text-slate-900 text-sm">Protected GMV vs. Disputed Volume</h2>
-                <p className="text-xs text-slate-500 font-medium">Daily cumulative from your SQLite transaction records</p>
+                <p className="text-xs text-slate-500 font-medium">Daily cumulative totals from your orders and disputes</p>
               </div>
               <div className="flex items-center gap-3 text-xs font-semibold">
                 <span className="flex items-center gap-1.5 text-[#003087]">
@@ -330,7 +330,7 @@ export default function MerchantProfilePage() {
           <div className="lg:col-span-4 card-3d-reflection p-6 rounded-3xl space-y-4">
             <div className="pb-3 border-b border-slate-100">
               <h2 className="font-bold text-slate-900 text-sm">Dispute Category Breakdown</h2>
-              <p className="text-xs text-slate-500 font-medium">Real distribution from your disputes table</p>
+              <p className="text-xs text-slate-500 font-medium">Share of your disputes by reason</p>
             </div>
             <div className="h-72 w-full flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">

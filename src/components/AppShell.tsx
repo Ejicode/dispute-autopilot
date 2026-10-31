@@ -108,7 +108,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             <Logo variant="dark" size="sm" href="/storefront" />
             <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Buyer Sandbox (Fake Money)
+              Demo store
             </span>
           </div>
           <div className="flex items-center gap-2.5">

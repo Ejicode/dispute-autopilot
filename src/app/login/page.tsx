@@ -74,7 +74,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-xs text-blue-200/80 font-medium">
-          PayPal Operations Platform
+          Dispute operations for PayPal merchants
         </div>
       </div>
 
@@ -122,7 +122,7 @@ export default function LoginPage() {
               }`}
             >
               <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-              <span>Buyer ($5k Fake $)</span>
+              <span>Buyer</span>
             </button>
           </div>
 

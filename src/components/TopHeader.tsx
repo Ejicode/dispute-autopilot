@@ -134,10 +134,10 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
           <Link
             href="/storefront?mode=buyer"
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all card-3d-reflection"
-            title="Open Buyer Storefront with $5,000 PayPal Fake Money"
+            title="Open the buyer storefront"
           >
             <ShoppingBag className="w-3.5 h-3.5 text-[#0070BA]" />
-            <span>Buyer ($5k Fake $)</span>
+            <span>Buyer Store</span>
           </Link>
         )}
 
