@@ -230,6 +230,11 @@ export default function StorefrontPage() {
       return;
     }
 
+    if (paypalBalance < product.price_cents) {
+      setCheckoutError(`Not enough demo balance: this item costs $${(product.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}. Add funds to continue.`);
+      return;
+    }
+
     setBuyingProductId(product.id);
     try {
       const res = await fetch('/api/storefront/checkout', {
@@ -253,8 +258,7 @@ export default function StorefrontPage() {
 
       if (res.ok) {
         const data = await res.json();
-        const nextBal = Math.max(0, paypalBalance - product.price_cents);
-        updateBalance(nextBal);
+        updateBalance(paypalBalance - product.price_cents);
         setCheckoutSuccessToast({ name: product.name, orderNumber: data.order?.order_number || 'New Order' });
         setTimeout(() => setCheckoutSuccessToast(null), 6000);
         await fetchOrders();
@@ -683,16 +687,16 @@ export default function StorefrontPage() {
                   <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleBuyProduct(prod)}
-                        disabled={buyingProductId !== null}
+                        disabled={buyingProductId !== null || paypalBalance < prod.price_cents}
                         className="flex-1 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 btn-press"
-                        title="Buy now with the demo balance"
+                        title={paypalBalance < prod.price_cents ? 'Not enough demo balance. Add funds to buy this item.' : 'Buy now with the demo balance'}
                       >
                         {buyingProductId === prod.id ? (
                           <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                         ) : (
                           <ShoppingBag className="w-3.5 h-3.5 text-[#FFC439]" />
                         )}
-                        <span>Buy now</span>
+                        <span>{paypalBalance < prod.price_cents ? 'Not enough balance' : 'Buy now'}</span>
                       </button>
                     <button
                       onClick={() => { setCheckoutError(null); setSelectedProduct(prod); }}
@@ -861,7 +865,7 @@ export default function StorefrontPage() {
 
                 <button
                   onClick={() => handleBuyProduct(selectedProduct)}
-                  disabled={buyingProductId !== null}
+                  disabled={buyingProductId !== null || paypalBalance < selectedProduct.price_cents}
                   className="px-6 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center gap-2 disabled:opacity-50"
                 >
                   {buyingProductId === selectedProduct.id ? (
@@ -869,7 +873,7 @@ export default function StorefrontPage() {
                   ) : (
                     <ShoppingBag className="w-4 h-4 text-[#FFC439]" />
                   )}
-                  <span>Complete Purchase with PayPal</span>
+                  <span>{paypalBalance < selectedProduct.price_cents ? 'Not enough balance' : 'Complete purchase'}</span>
                 </button>
               </div>
             </div>
