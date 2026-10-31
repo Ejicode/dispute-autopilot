@@ -327,15 +327,15 @@ export default function StorefrontPage() {
       {/* ── Top-Right Toast Notifications (Never overlaps with bottom-right voice AI) ── */}
       <div className="fixed top-6 right-6 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none">
         {checkoutSuccessToast && (
-          <div className="bg-[#003087] text-white p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection">
+          <div className="bg-[#003087] text-white p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection-dark">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-white text-[#003087] flex items-center justify-center font-bold shrink-0">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <span className="font-extrabold text-sm block">Payment Captured &amp; Vaulted!</span>
+                <span className="font-extrabold text-sm block">Order placed</span>
                 <span className="text-xs text-white/90 block">
-                  {checkoutSuccessToast.orderNumber}: {checkoutSuccessToast.name} has been snapshot into Evidence Vault with SHA-256 integrity.
+                  {checkoutSuccessToast.orderNumber}: {checkoutSuccessToast.name}. The receipt is hashed into the Evidence Vault.
                 </span>
               </div>
             </div>
@@ -346,7 +346,7 @@ export default function StorefrontPage() {
         )}
 
         {disputeToast && (
-          <div className="bg-rose-900 text-white p-4 rounded-2xl shadow-2xl border border-rose-700/50 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection">
+          <div className="bg-rose-900 text-white p-4 rounded-2xl shadow-2xl border border-rose-700/50 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-white text-rose-800 flex items-center justify-center font-bold shrink-0">
                 <ShieldAlert className="w-5 h-5" />
