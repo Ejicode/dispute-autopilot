@@ -151,8 +151,12 @@ type AIDraft struct {
 type ApprovalAction string
 
 const (
-	ActionProvideEvidence ApprovalAction = "PROVIDE_EVIDENCE"
-	ActionAcceptClaim     ApprovalAction = "ACCEPT_CLAIM"
+	ActionProvideEvidence   ApprovalAction = "PROVIDE_EVIDENCE"
+	ActionAcceptClaim       ApprovalAction = "ACCEPT_CLAIM"
+	ActionAppeal            ApprovalAction = "APPEAL"
+	ActionMakeOffer         ApprovalAction = "MAKE_OFFER"
+	ActionEscalate          ApprovalAction = "ESCALATE"
+	ActionAcknowledgeReturn ApprovalAction = "ACKNOWLEDGE_RETURN_ITEM"
 )
 
 // ExactActionSnapshot freezes the reviewed provider request.

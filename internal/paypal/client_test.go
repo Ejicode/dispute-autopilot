@@ -416,3 +416,392 @@ func TestDisputeIDStaysInOnePathSegment(t *testing.T) {
 		t.Fatalf("provider request URIs = %v, want second to be %s", uris, want)
 	}
 }
+
+func TestProvideEvidenceWithDocumentsMultipart(t *testing.T) {
+	resetPayPalStore(t)
+	t.Setenv("PAYPAL_ENVIRONMENT", "sandbox")
+	t.Setenv("PAYPAL_CLIENT_ID", "test-id")
+	t.Setenv("PAYPAL_CLIENT_SECRET", "test-secret")
+	t.Setenv("PAYPAL_MERCHANT_USER_ID", testMerchant)
+
+	var (
+		capturedContentType string
+		capturedInputJSON   string
+		capturedFileBytes   []byte
+		capturedFileName    string
+		capturedIdempKey    string
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/token") {
+			_, _ = w.Write([]byte(`{"access_token":"token-123","expires_in":3600}`))
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/provide-evidence") {
+			capturedContentType = r.Header.Get("Content-Type")
+			capturedIdempKey = r.Header.Get("PayPal-Request-Id")
+
+			mr, err := r.MultipartReader()
+			if err != nil {
+				t.Errorf("MultipartReader error: %v", err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			for {
+				part, err := mr.NextPart()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					t.Errorf("NextPart error: %v", err)
+					break
+				}
+				if part.FormName() == "input" {
+					b, _ := io.ReadAll(part)
+					capturedInputJSON = string(b)
+				} else if part.FormName() == "file1" {
+					capturedFileName = part.FileName()
+					b, _ := io.ReadAll(part)
+					capturedFileBytes = b
+				}
+			}
+			_, _ = w.Write([]byte(`{"status":"UNDER_REVIEW","dispute_id":"PP-D-123"}`))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(server.Close)
+
+	ctx := paypalContext(t, testMerchant, config.ModeSandbox)
+	db, err := store.Merchant(ctx)
+	if err != nil {
+		t.Fatalf("store.Merchant: %v", err)
+	}
+	insertClientDispute(t, ctx, db, "dsp_doc_test", "PP-D-DOCS", string(config.ProvenancePayPalSandbox))
+
+	client := &Client{baseURL: server.URL, environment: "sandbox", clientID: "test-id", clientSecret: "test-secret"}
+	action := types.ExactActionSnapshot{
+		Environment:     "sandbox",
+		ActionType:      string(types.ActionProvideEvidence),
+		DisputeID:       "dsp_doc_test",
+		PayPalDisputeID: "PP-D-DOCS",
+		AmountCents:     1000,
+		Currency:        "USD",
+		ProviderPayload: map[string]any{
+			"evidences": []any{
+				map[string]any{
+					"evidence_type": "PROOF_OF_FULFILLMENT",
+					"notes":         "Item delivered with carrier tracking and signature confirmation.",
+				},
+			},
+		},
+	}
+
+	testDocBytes := []byte("%PDF-1.4 test delivery confirmation slip")
+	docs := []EvidenceDocument{
+		{
+			Name:        "delivery_slip.pdf",
+			ContentType: "application/pdf",
+			Data:        testDocBytes,
+		},
+	}
+
+	call, err := client.ProvideEvidenceWithDocuments(ctx, "dsp_doc_test", action, "doc-idemp-1", docs)
+	if err != nil {
+		t.Fatalf("ProvideEvidenceWithDocuments: %v", err)
+	}
+	if !call.Success {
+		t.Fatalf("expected call.Success=true")
+	}
+
+	if !strings.HasPrefix(capturedContentType, "multipart/form-data; boundary=") {
+		t.Errorf("expected Content-Type to start with multipart/form-data, got %q", capturedContentType)
+	}
+	if capturedIdempKey != "doc-idemp-1" {
+		t.Errorf("expected PayPal-Request-Id=doc-idemp-1, got %q", capturedIdempKey)
+	}
+	if !strings.Contains(capturedInputJSON, `"name":"delivery_slip.pdf"`) {
+		t.Errorf("expected input JSON to contain delivery_slip.pdf document, got: %s", capturedInputJSON)
+	}
+	if capturedFileName != "delivery_slip.pdf" {
+		t.Errorf("expected file1 filename=delivery_slip.pdf, got %q", capturedFileName)
+	}
+	if string(capturedFileBytes) != string(testDocBytes) {
+		t.Errorf("expected file bytes %q, got %q", string(testDocBytes), string(capturedFileBytes))
+	}
+}
+
+func TestProvideEvidenceWithDocumentsDemo(t *testing.T) {
+	resetPayPalStore(t)
+	ctx := paypalContext(t, testMerchant, config.ModeDemo)
+	db, err := store.Merchant(ctx)
+	if err != nil {
+		t.Fatalf("store.Merchant: %v", err)
+	}
+	insertClientDispute(t, ctx, db, "dsp_demo_docs", "PP-D-DEMO-DOCS", "DEMO")
+
+	client := NewClient()
+	action := types.ExactActionSnapshot{
+		Environment:     "demo",
+		ActionType:      string(types.ActionProvideEvidence),
+		DisputeID:       "dsp_demo_docs",
+		PayPalDisputeID: "PP-D-DEMO-DOCS",
+		AmountCents:     1000,
+		Currency:        "USD",
+		ProviderPayload: map[string]any{"evidences": []any{}},
+	}
+	docs := []EvidenceDocument{
+		{
+			Name:        "receipt.pdf",
+			ContentType: "application/pdf",
+			Data:        []byte("demo PDF"),
+		},
+	}
+
+	call, err := client.ProvideEvidenceWithDocuments(ctx, "dsp_demo_docs", action, "demo-doc-key", docs)
+	if err != nil {
+		t.Fatalf("ProvideEvidenceWithDocuments demo: %v", err)
+	}
+	if !call.Success {
+		t.Fatalf("expected call.Success=true in demo mode")
+	}
+	resMap, ok := call.Result.(map[string]any)
+	if !ok || resMap["documents_count"] != 1 {
+		t.Errorf("expected documents_count=1 in demo result, got %v", call.Result)
+	}
+}
+
+func TestSendTracker(t *testing.T) {
+	resetPayPalStore(t)
+	t.Setenv("PAYPAL_ENVIRONMENT", "sandbox")
+	t.Setenv("PAYPAL_CLIENT_ID", "test-id")
+	t.Setenv("PAYPAL_CLIENT_SECRET", "test-secret")
+	t.Setenv("PAYPAL_MERCHANT_USER_ID", testMerchant)
+
+	var (
+		capturedURI     string
+		capturedBody    string
+		capturedIdemp   string
+		capturedAuthHdr string
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/token") {
+			_, _ = w.Write([]byte(`{"access_token":"token-tracker","expires_in":3600}`))
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/shipping/trackers-batch") {
+			capturedURI = r.RequestURI
+			capturedAuthHdr = r.Header.Get("Authorization")
+			capturedIdemp = r.Header.Get("PayPal-Request-Id")
+			b, _ := io.ReadAll(r.Body)
+			capturedBody = string(b)
+			_, _ = w.Write([]byte(`{"tracker_identifiers":[{"transaction_id":"tx-999","tracking_number":"TRK-123-USPS"}],"errors":[]}`))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(server.Close)
+
+	ctx := paypalContext(t, testMerchant, config.ModeSandbox)
+	client := &Client{baseURL: server.URL, environment: "sandbox", clientID: "test-id", clientSecret: "test-secret"}
+
+	call, err := client.SendTracker(ctx, TrackerInfo{
+		TransactionID:  "tx-999",
+		TrackingNumber: "TRK-123-USPS",
+		Status:         "IN_TRANSIT",
+		Carrier:        "USPS",
+		NotifyBuyer:    false,
+	})
+	if err != nil {
+		t.Fatalf("SendTracker: %v", err)
+	}
+	if !call.Success {
+		t.Fatalf("expected call.Success=true")
+	}
+
+	if capturedURI != "/v1/shipping/trackers-batch" {
+		t.Errorf("expected URI /v1/shipping/trackers-batch, got %q", capturedURI)
+	}
+	if capturedAuthHdr != "Bearer token-tracker" {
+		t.Errorf("expected Bearer token-tracker, got %q", capturedAuthHdr)
+	}
+	if capturedIdemp == "" {
+		t.Errorf("expected non-empty PayPal-Request-Id")
+	}
+	if !strings.Contains(capturedBody, `"tracking_number":"TRK-123-USPS"`) ||
+		!strings.Contains(capturedBody, `"carrier":"USPS"`) ||
+		!strings.Contains(capturedBody, `"status":"IN_TRANSIT"`) {
+		t.Errorf("unexpected body: %s", capturedBody)
+	}
+}
+
+func TestSendTrackerDemo(t *testing.T) {
+	resetPayPalStore(t)
+	ctx := paypalContext(t, testMerchant, config.ModeDemo)
+
+	client := NewClient()
+	call, err := client.SendTracker(ctx, TrackerInfo{
+		TransactionID:  "tx-demo-123",
+		TrackingNumber: "TRK-DEMO-USPS",
+		Status:         "LABEL_CREATED",
+		Carrier:        "USPS",
+	})
+	if err != nil {
+		t.Fatalf("SendTracker demo: %v", err)
+	}
+	if !call.Success {
+		t.Fatalf("expected call.Success=true in demo mode")
+	}
+	resMap, ok := call.Result.(map[string]any)
+	if !ok || resMap["status"] != "SHIPPED" {
+		t.Errorf("expected mapped status=SHIPPED, got %v", call.Result)
+	}
+}
+
+func TestVerifySellerProtectionAddressExact(t *testing.T) {
+	paypalAddr := PayPalAddress{
+		AddressLine1: "742 Evergreen Terrace",
+		AdminArea2:   "Springfield",
+		AdminArea1:   "OR",
+		PostalCode:   "97477",
+		CountryCode:  "US",
+	}
+	delivAddr := PayPalAddress{
+		AddressLine1: "742 Evergreen Terrace",
+		AdminArea2:   "Springfield",
+		AdminArea1:   "OR",
+		PostalCode:   "97477",
+		CountryCode:  "US",
+	}
+
+	result := VerifySellerProtectionAddress(paypalAddr, delivAddr)
+	if !result.Eligible || result.Status != "VERIFIED_MATCH" {
+		t.Errorf("expected VERIFIED_MATCH eligible=true, got %+v", result)
+	}
+	if len(result.MismatchFields) != 0 {
+		t.Errorf("expected 0 mismatches, got %v", result.MismatchFields)
+	}
+	if result.PolicySection != "Proof of delivery" {
+		t.Errorf("expected the proof-of-delivery rule, got %s", result.PolicySection)
+	}
+}
+
+func TestVerifySellerProtectionAddressNormalized(t *testing.T) {
+	// Tests street abbreviation expansion (St -> Street, Ave -> Avenue), case-insensitivity, and zip suffix
+	paypalAddr := ParseAddressString("123 Market St, San Jose, CA 95113")
+	delivAddr := ParseAddressString("123 market street, san jose, ca 95113-1000")
+
+	result := VerifySellerProtectionAddress(paypalAddr, delivAddr)
+	if !result.Eligible || result.Status != "VERIFIED_MATCH" {
+		t.Errorf("expected VERIFIED_MATCH eligible=true with normalized address, got %+v", result)
+	}
+}
+
+func TestVerifySellerProtectionAddressMismatch(t *testing.T) {
+	// When package was redirected to a different address
+	paypalAddr := ParseAddressString("742 Evergreen Terrace, Springfield, OR 97477")
+	delivAddr := ParseAddressString("100 Elm Street, Portland, OR 97201")
+
+	result := VerifySellerProtectionAddress(paypalAddr, delivAddr)
+	if result.Eligible || result.Status != "MISMATCH" {
+		t.Errorf("expected MISMATCH eligible=false, got %+v", result)
+	}
+	if len(result.MismatchFields) == 0 {
+		t.Errorf("expected mismatch fields listed, got empty")
+	}
+}
+
+func TestVerifySellerProtectionAddressUnverified(t *testing.T) {
+	paypalAddr := ParseAddressString("")
+	delivAddr := ParseAddressString("")
+
+	result := VerifySellerProtectionAddress(paypalAddr, delivAddr)
+	if result.Eligible || result.Status != "UNVERIFIED" {
+		t.Errorf("expected UNVERIFIED eligible=false, got %+v", result)
+	}
+}
+
+func TestGetOrderDemo(t *testing.T) {
+	resetPayPalStore(t)
+	ctx := paypalContext(t, testMerchant, config.ModeDemo)
+	db, err := store.Merchant(ctx)
+	if err != nil {
+		t.Fatalf("store.Merchant: %v", err)
+	}
+
+	// Insert demo order
+	if _, err := db.Exec(ctx, `INSERT INTO demo_orders (
+		id, order_number, buyer_name, buyer_email, shipping_address, items, total_cents, currency,
+		paypal_order_id, carrier, tracking_number, delivery_status, created_at, provenance
+	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		"ord_test_sp", "ORD-TEST-SP", "Alex Chen", "alex@example.com",
+		"456 Tech Blvd, Austin, TX 78701", "[]", 5000, "USD",
+		"PP-ORD-TEST-SP", "FedEx", "TRK-FEDEX-99", "DELIVERED", "2026-10-31T10:00:00Z", "DEMO"); err != nil {
+		t.Fatalf("insert demo order: %v", err)
+	}
+
+	client := NewClient()
+	order, err := client.GetOrder(ctx, "PP-ORD-TEST-SP")
+	if err != nil {
+		t.Fatalf("GetOrder failed: %v", err)
+	}
+	if order.ID != "PP-ORD-TEST-SP" {
+		t.Errorf("expected ID PP-ORD-TEST-SP, got %s", order.ID)
+	}
+	if len(order.PurchaseUnits) == 0 {
+		t.Fatalf("expected purchase units populated")
+	}
+	addr := order.PurchaseUnits[0].Shipping.Address
+	if addr.AddressLine1 != "456 Tech Blvd" || addr.AdminArea2 != "Austin" || addr.AdminArea1 != "TX" {
+		t.Errorf("unexpected parsed address: %+v", addr)
+	}
+}
+
+func TestTestConnection(t *testing.T) {
+	// 1. Not configured
+	unconf := &Client{clientID: "", clientSecret: ""}
+	res, err := unconf.TestConnection(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+	if res["configured"] != false || res["connected"] != false {
+		t.Errorf("expected configured=false, got %+v", res)
+	}
+
+	// 2. Successful connection to mock OAuth server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/v1/oauth2/token" {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"test-token","scope":"https://uri.paypal.com/services/disputes/read-seller https://uri.paypal.com/services/shipping/trackers/readwrite","app_id":"APP-TEST","expires_in":3600}`))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(server.Close)
+
+	client := &Client{
+		baseURL:      server.URL,
+		environment:  "sandbox",
+		clientID:     "BAAXaTaMcWmo8bJH9k-test",
+		clientSecret: "test-secret-12345",
+	}
+
+	res, err = client.TestConnection(context.Background())
+	if err != nil {
+		t.Fatalf("TestConnection failed: %v", err)
+	}
+	if res["connected"] != true || res["configured"] != true {
+		t.Errorf("expected connected=true, got %+v", res)
+	}
+	if res["app_id"] != "APP-TEST" {
+		t.Errorf("expected app_id APP-TEST, got %v", res["app_id"])
+	}
+	if res["scope_count"] != 2 {
+		t.Errorf("expected 2 scopes, got %v", res["scope_count"])
+	}
+}
+
+

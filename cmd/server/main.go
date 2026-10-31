@@ -23,6 +23,7 @@ import (
 
 func main() {
 	config.LoadEnvFiles()
+	paypal.Default = paypal.NewClient()
 
 	mode, err := config.ApplicationMode()
 	if err != nil {

@@ -16,6 +16,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { EvidenceItem } from '@/lib/types';
+import { formatCurrency } from '@/lib/currency';
 
 interface EvidenceCardProps {
   item: EvidenceItem;
@@ -102,7 +103,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
               {(() => {
                 // Receipts record the total as total_cents (checkout) or amount_cents (seed data).
                 const cents = data.total_cents ?? data.amount_cents;
-                return typeof cents === 'number' ? `$${(cents / 100).toFixed(2)} ${data.currency || 'USD'}` : 'Amount not recorded';
+                return typeof cents === 'number' ? formatCurrency(cents, data.currency || 'USD') : 'Amount not recorded';
               })()}
             </span>
             <span className="text-[11px] text-slate-500 truncate block">{data.payment_method || 'Payment method not recorded'}</span>
@@ -307,7 +308,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
         <div className="flex items-center gap-1.5 shrink-0">
           <div 
             className="flex items-center gap-1 font-mono text-[10px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80 font-bold shrink-0"
-            title={`Immutable SHA-256 Hash: ${item.sha256_hash}`}
+            title={`SHA-256 hash: ${item.sha256_hash}`}
           >
             <Hash className="w-2.5 h-2.5 text-emerald-600" />
             <span>{item.sha256_hash.substring(0, 10)}…</span>

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Dispute } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { useAppMode } from '@/lib/runtime/mode';
 import { useLatestTrustLabResults } from '@/lib/trust-lab/useLatestResults';
+import { formatCurrency } from '@/lib/currency';
 import { 
   TrendingUp, 
   RefreshCw, 
@@ -36,6 +37,14 @@ const QueueGrid = dynamic(() => import('@/components/QueueGrid'), {
   loading: () => <div className="h-96 rounded-2xl bg-slate-100 animate-pulse" />,
 });
 
+// Static security telemetry data — hoisted outside component to avoid per-render recreation
+const defenseInvariantsData = [
+  { name: 'Webhook Signature Check', metric: '100% Cryptographic', status: 'Active' as const, percentage: 100, color: '#003087' },
+  { name: 'Replay Protection (Idempotent)', metric: '100% Unique Lock', status: 'Active' as const, percentage: 100, color: '#0070BA' },
+  { name: 'Deterministic Policy Gate', metric: '100% Enforced', status: 'Active' as const, percentage: 100, color: '#00A6E0' },
+  { name: 'Evidence Vault SHA-256', metric: '100% Verified', status: 'Active' as const, percentage: 100, color: '#10B981' },
+];
+
 export default function DashboardPage() {
   const { lastEvent } = useRealtime();
   const appMode = useAppMode();
@@ -53,7 +62,7 @@ export default function DashboardPage() {
   const [selectedDayFilter, setSelectedDayFilter] = useState<string | null>(null);
 
   // Fetch disputes and live analytics from real SQLite database
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       const [disputesRes, analyticsRes] = await Promise.all([
         fetch('/api/disputes'),
@@ -74,17 +83,44 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [lastEvent]);
+  }, [fetchDashboardData, lastEvent]);
 
-  // Periodic polling fallback
+  // Periodic polling fallback — pauses when tab is hidden to save bandwidth
   useEffect(() => {
-    const interval = setInterval(fetchDashboardData, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const startPolling = () => {
+      if (!interval) {
+        interval = setInterval(fetchDashboardData, 5000);
+      }
+    };
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        fetchDashboardData(); // Refresh immediately on return
+        startPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchDashboardData]);
 
   const handleSimulateDispute = async () => {
     setSimulating(true);
@@ -151,7 +187,7 @@ export default function DashboardPage() {
   // Real data calculations for 2x2 Metric Cards from SQLite
   const totalSalesDisplay = useMemo(() => {
     if (kpis.totalProtectedCents > 0) {
-      return '$' + (kpis.totalProtectedCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return formatCurrency(kpis.totalProtectedCents, 'USD');
     }
     return '$0.00';
   }, [kpis.totalProtectedCents]);

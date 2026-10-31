@@ -36,20 +36,12 @@ import {
   Shield,
   Info
 } from 'lucide-react';
-import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, ApprovalReview } from '@/lib/types';
+import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, ApprovalReview, SellerProtectionVerification } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { useUser } from '@/components/UserContext';
 import { useAppMode, MODE_LABEL } from '@/lib/runtime/mode';
 import EvidenceCard from '@/components/EvidenceCard';
-
-// Helper to format currency with thousand-separators
-function formatCurrency(cents: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
-}
+import { formatCurrency } from '@/lib/currency';
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -89,6 +81,7 @@ export default function CaseDetailPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [approvalError, setApprovalError] = useState('');
   const [operation, setOperation] = useState<ApprovalReview['operation']>();
+  const [sellerProtection, setSellerProtection] = useState<SellerProtectionVerification | null>(null);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedDraft, setCopiedDraft] = useState(false);
   const reviewRequest = useRef(0);
@@ -133,6 +126,7 @@ export default function CaseDetailPage() {
         setDraft(data.draft);
         setAuditLogs(data.auditLogs || []);
         setOperation(data.operation || undefined);
+        setSellerProtection(data.sellerProtection || null);
       }
     } catch (err) {
       console.error('Failed to load dispute:', err);
@@ -410,6 +404,41 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
+      {/* ── Urgent response-deadline banner ── */}
+      {!isResolved && dispute.status === 'REQUIRED_ACTION' && (
+        <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 border border-amber-300/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 animate-enter-up">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-amber-500 text-white shrink-0 shadow-xs mt-0.5">
+              <Clock className="w-5 h-5 animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 bg-amber-200/80 px-2.5 py-0.5 rounded-md border border-amber-300">
+                  ⚠️ Urgent PayPal Response Window
+                </span>
+                <span className="text-xs font-bold text-rose-700 font-mono">
+                  {deadlineText}
+                </span>
+              </div>
+              <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                If the response deadline passes without a reply, PayPal can close the dispute in the buyer's favor. Review the evidence below and approve a response before the deadline.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('approval-gate-card');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#003087] to-[#0070BA] hover:from-[#001C48] hover:to-[#005ea6] text-white text-xs font-bold shadow-md shadow-blue-950/20 shrink-0 cursor-pointer self-start md:self-auto transition-transform active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#FFC439]" />
+            <span>Jump to Approval Gate</span>
+          </button>
+        </div>
+      )}
+
       {/* ── Case Header Hero Card (Balanced, Symmetrical & Polished) ── */}
       <div className="card-3d-reflection p-6 sm:p-7 rounded-3xl relative">
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#003087]/8 via-[#0070BA]/4 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -440,12 +469,17 @@ export default function CaseDetailPage() {
                 <span>⚡ {dispute.recommendation} DISPUTE</span>
               </span>
 
-              {protectionMet && (
+              {sellerProtection?.status === 'MISMATCH' ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200 flex items-center gap-1" title={sellerProtection.reason}>
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Delivery address mismatch</span>
+                </span>
+              ) : protectionMet ? (
                 <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#E6F0FA] text-[#003087] border border-[#C9E0FA] flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA]" />
                   <span>Seller Protection evidence complete</span>
                 </span>
-              )}
+              ) : null}
             </div>
 
             {/* Big Amount Typography */}
@@ -529,13 +563,29 @@ export default function CaseDetailPage() {
 
           {/* Card 2: Shipping Destination */}
           <div className="p-3 rounded-xl card-3d-reflection-subtle flex items-start gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+              sellerProtection?.status === 'MISMATCH' 
+                ? 'bg-rose-100/70 text-rose-700' 
+                : 'bg-emerald-100/70 text-emerald-700'
+            }`}>
               <MapPin className="w-4 h-4" />
             </div>
-            <div className="min-w-0">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Shipping Destination</span>
-              <span className="text-xs font-bold text-slate-900 block truncate" title={orderDossier.shippingAddress}>
-                {orderDossier.shippingAddress || 'Not recorded'}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Shipping Destination</span>
+                {sellerProtection?.status === 'VERIFIED_MATCH' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold font-mono">
+                    ADDRESS MATCH
+                  </span>
+                )}
+                {sellerProtection?.status === 'MISMATCH' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold font-mono">
+                    ADDRESS MISMATCH
+                  </span>
+                )}
+              </div>
+              <span className="text-xs font-bold text-slate-900 block truncate" title={sellerProtection?.delivery_address || orderDossier.shippingAddress}>
+                {sellerProtection?.delivery_address || orderDossier.shippingAddress || 'Not recorded'}
               </span>
               {orderDossier.gpsCoordinates && (
                 <span className="text-[10px] text-emerald-700 font-bold block truncate">
@@ -593,7 +643,7 @@ export default function CaseDetailPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3">
           <div className="p-3.5 rounded-2xl card-3d-reflection-subtle">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Matched Policy
@@ -624,7 +674,12 @@ export default function CaseDetailPage() {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Protection Status
             </span>
-            {protectionMet ? (
+            {sellerProtection?.status === 'MISMATCH' ? (
+              <div className="text-xs font-bold text-rose-700 mt-1 flex items-center gap-1" title={sellerProtection.reason}>
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>At risk: delivery address differs</span>
+              </div>
+            ) : protectionMet ? (
               <div className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" />
                 <span>Vault holds the required evidence</span>
@@ -636,6 +691,36 @@ export default function CaseDetailPage() {
                   : 'Not covered by Seller Protection for this reason'}
               </div>
             )}
+          </div>
+
+          <div className="p-3.5 rounded-2xl card-3d-reflection-subtle">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Delivery Address Check
+            </span>
+            <div className={`text-xs font-bold mt-1 flex items-center gap-1 ${
+              sellerProtection?.status === 'VERIFIED_MATCH'
+                ? 'text-emerald-700'
+                : sellerProtection?.status === 'MISMATCH'
+                ? 'text-rose-700'
+                : 'text-slate-500'
+            }`}>
+              {sellerProtection?.status === 'VERIFIED_MATCH' ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="truncate" title="Delivery address matches the PayPal transaction address">Matches PayPal address</span>
+                </>
+              ) : sellerProtection?.status === 'MISMATCH' ? (
+                <>
+                  <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                  <span className="truncate" title={sellerProtection?.reason}>Address mismatch</span>
+                </>
+              ) : (
+                <>
+                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>Not checked</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -990,7 +1075,7 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Human Approval Gate Card */}
-          <div className="card-3d-reflection p-6 rounded-3xl space-y-4">
+          <div id="approval-gate-card" className="card-3d-reflection p-6 rounded-3xl space-y-4 scroll-mt-20">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Lock className="w-5 h-5 text-[#003087]" />
@@ -1015,6 +1100,10 @@ export default function CaseDetailPage() {
               >
                 <option value="PROVIDE_EVIDENCE">Submit Rebuttal Evidence to PayPal</option>
                 <option value="ACCEPT_CLAIM">Accept Claim &amp; Authorize Buyer Refund</option>
+                <option value="APPEAL">Appeal Dispute Decision to PayPal</option>
+                <option value="MAKE_OFFER">Make Settlement Offer to Buyer</option>
+                <option value="ESCALATE">Escalate Dispute to PayPal Claim</option>
+                <option value="ACKNOWLEDGE_RETURN_ITEM">Acknowledge Return Item Receipt</option>
               </select>
             </label>
 

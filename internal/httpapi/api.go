@@ -32,10 +32,13 @@ func New(webDir string) http.Handler {
 	mux.HandleFunc("GET /api/health", api.health)
 	mux.HandleFunc("GET /api/auth", api.authSession)
 	mux.HandleFunc("POST /api/auth", api.authRegister)
+	mux.HandleFunc("PUT /api/auth", api.authUpdateProfile)
+	mux.HandleFunc("PATCH /api/auth", api.authUpdateProfile)
 	mux.HandleFunc("DELETE /api/auth", api.authLogout)
 	mux.HandleFunc("POST /api/auth/login", api.authLogin)
 
 	mux.HandleFunc("GET /api/runtime", api.withMerchant(api.runtimeMode))
+	mux.HandleFunc("GET /api/paypal/status", api.withMerchant(api.paypalStatus))
 	mux.HandleFunc("GET /api/events/stream", api.withMerchant(api.eventsStream))
 
 	mux.HandleFunc("GET /api/disputes", api.withMerchant(merchantOnly(api.disputesList)))
@@ -56,6 +59,7 @@ func New(webDir string) http.Handler {
 	mux.HandleFunc("GET /api/search", api.withMerchant(merchantOnly(api.search)))
 	mux.HandleFunc("GET /api/analytics", api.withMerchant(merchantOnly(api.analytics)))
 	mux.HandleFunc("GET /api/vault", api.withMerchant(merchantOnly(api.vaultList)))
+	mux.HandleFunc("GET /api/vault/dossier", api.withMerchant(merchantOnly(api.vaultDossier)))
 
 	mux.HandleFunc("GET /api/trust-lab/run", api.withMerchant(merchantOnly(api.trustLabList)))
 	mux.HandleFunc("POST /api/trust-lab/run", api.withMerchant(merchantOnly(api.trustLabRun)))

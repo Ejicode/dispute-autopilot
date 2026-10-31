@@ -15,6 +15,7 @@ import (
 	"github.com/Ejicode/dispute-autopilot/internal/ai"
 	"github.com/Ejicode/dispute-autopilot/internal/config"
 	"github.com/Ejicode/dispute-autopilot/internal/httpx"
+	"github.com/Ejicode/dispute-autopilot/internal/paypal"
 	"github.com/Ejicode/dispute-autopilot/internal/realtime"
 	"github.com/Ejicode/dispute-autopilot/internal/runtime"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
@@ -282,6 +283,26 @@ func AdvanceCarrierStatus(ctx context.Context, orderID string, targetStatus *str
 		}
 		realtime.Default().Publish(ctx, "CARRIER_UPDATE", resultOrder)
 	}
+
+	// Proactively sync carrier tracking to PayPal Shipping Trackers API
+	if resultOrder != nil {
+		txID, _ := resultOrder["paypal_order_id"].(string)
+		if txID == "" {
+			txID, _ = resultOrder["id"].(string)
+		}
+		trk, _ := resultOrder["tracking_number"].(string)
+		cName, _ := resultOrder["carrier"].(string)
+		if trk != "" && txID != "" {
+			_, _ = paypal.Default.SendTracker(ctx, paypal.TrackerInfo{
+				TransactionID:  txID,
+				TrackingNumber: trk,
+				Status:         newStatus,
+				Carrier:        cName,
+				NotifyBuyer:    false,
+			})
+		}
+	}
+
 	return map[string]any{"order": resultOrder, "newStatus": newStatus}, nil
 }
 

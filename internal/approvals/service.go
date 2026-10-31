@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -50,8 +51,16 @@ type reviewResult struct {
 
 // ParseAction validates an explicit, supported action type.
 func ParseAction(value any) (string, error) {
-	if s, ok := value.(string); ok && (s == string(types.ActionProvideEvidence) || s == string(types.ActionAcceptClaim)) {
-		return s, nil
+	if s, ok := value.(string); ok {
+		switch types.ApprovalAction(s) {
+		case types.ActionProvideEvidence,
+			types.ActionAcceptClaim,
+			types.ActionAppeal,
+			types.ActionMakeOffer,
+			types.ActionEscalate,
+			types.ActionAcknowledgeReturn:
+			return s, nil
+		}
 	}
 	return "", httpx.Errorf(http.StatusBadRequest, "An explicit supported action_type is required.")
 }
@@ -91,11 +100,15 @@ func scanOperation(sc store.Scanner) (operation, error) {
 	return op, err
 }
 
-func checkPolicy(ctx context.Context, dispute types.Dispute) error {
+func checkPolicy(ctx context.Context, dispute types.Dispute, action string) error {
 	if err := runtime.RequireMatchingProvenance(ctx, dispute.Provenance); err != nil {
 		return err
 	}
-	if dispute.Status != string(types.StatusRequiredAction) {
+	if action == string(types.ActionAppeal) {
+		if dispute.Status != string(types.StatusRequiredAction) && dispute.Status != string(types.StatusResolved) {
+			return httpx.Errorf(http.StatusConflict, "This dispute is not eligible for appeal.")
+		}
+	} else if dispute.Status != string(types.StatusRequiredAction) {
 		return httpx.Errorf(http.StatusConflict, "This dispute is not awaiting a merchant action.")
 	}
 	deadline, err := paypal.Timestamp(dispute.ResponseDeadline)
@@ -123,7 +136,7 @@ func checkPolicy(ctx context.Context, dispute types.Dispute) error {
 // buildReview performs synchronous capture: no work happens between reading the
 // review inputs and reserving execution.
 func buildReview(ctx context.Context, dispute types.Dispute, action string) (reviewResult, error) {
-	if err := checkPolicy(ctx, dispute); err != nil {
+	if err := checkPolicy(ctx, dispute, action); err != nil {
 		return reviewResult{}, err
 	}
 	db, err := store.Merchant(ctx)
@@ -136,7 +149,7 @@ func buildReview(ctx context.Context, dispute types.Dispute, action string) (rev
 	evidenceMaps := []map[string]any{}
 	evidenceTyped := []types.EvidenceItem{}
 
-	if action == string(types.ActionProvideEvidence) {
+	if action == string(types.ActionProvideEvidence) || action == string(types.ActionAppeal) {
 		draftRows, err := rawRows(ctx, db, "SELECT * FROM ai_drafts WHERE dispute_id=? ORDER BY created_at DESC, rowid DESC LIMIT 1", dispute.ID)
 		if err != nil {
 			return reviewResult{}, err
@@ -167,7 +180,8 @@ func buildReview(ctx context.Context, dispute types.Dispute, action string) (rev
 	var draftID any
 	var draftText string
 
-	if action == string(types.ActionProvideEvidence) {
+	switch action {
+	case string(types.ActionProvideEvidence), string(types.ActionAppeal):
 		for _, item := range evidenceTyped {
 			if err := runtime.RequireMatchingProvenance(ctx, item.Provenance); err != nil {
 				return reviewResult{}, err
@@ -240,7 +254,37 @@ func buildReview(ctx context.Context, dispute types.Dispute, action string) (rev
 		}
 		notes = draftText
 		draftID, _ = draft["id"]
-	} else {
+
+	case string(types.ActionMakeOffer):
+		offerDollars := fmt.Sprintf("%.2f", float64(dispute.AmountCents)/100)
+		payload = map[string]any{
+			"note":       "Seller proposes full refund settlement offer.",
+			"offer_type": "REFUND",
+			"offer_amount": map[string]any{
+				"currency_code": dispute.Currency,
+				"value":         offerDollars,
+			},
+		}
+		notes = fmt.Sprintf("Seller proposed settlement offer of $%s %s", offerDollars, dispute.Currency)
+
+	case string(types.ActionEscalate):
+		payload = map[string]any{
+			"note": "Merchant requests formal PayPal dispute escalation for independent review.",
+		}
+		notes = "Merchant escalated dispute to PayPal."
+
+	case string(types.ActionAcknowledgeReturn):
+		payload = map[string]any{
+			"note":                 "Merchant confirms receipt of returned merchandise.",
+			"acknowledgement_type": "ITEM_RECEIVED",
+		}
+		notes = "Merchant acknowledged receipt of returned merchandise."
+
+	case string(types.ActionAcceptClaim):
+		payload = map[string]any{"note": "Seller accepted buyer claim."}
+		notes = "Seller accepted buyer claim."
+
+	default:
 		payload = map[string]any{"note": "Seller accepted buyer claim."}
 	}
 
@@ -433,6 +477,14 @@ func ExecuteApproval(ctx context.Context, id, action, digest string) (int, map[s
 		call, callErr = paypal.Default.ProvideEvidence(ctx, id, actionSnapshot, op.IdempotencyKey)
 	case string(types.ActionAcceptClaim):
 		call, callErr = paypal.Default.AcceptClaim(ctx, id, actionSnapshot, op.IdempotencyKey)
+	case string(types.ActionAppeal):
+		call, callErr = paypal.Default.AppealDispute(ctx, id, actionSnapshot, op.IdempotencyKey)
+	case string(types.ActionMakeOffer):
+		call, callErr = paypal.Default.MakeOffer(ctx, id, actionSnapshot, op.IdempotencyKey)
+	case string(types.ActionEscalate):
+		call, callErr = paypal.Default.EscalateDispute(ctx, id, actionSnapshot, op.IdempotencyKey)
+	case string(types.ActionAcknowledgeReturn):
+		call, callErr = paypal.Default.AcknowledgeReturnItem(ctx, id, actionSnapshot, op.IdempotencyKey)
 	}
 	if callErr != nil || !call.Success {
 		// An exception is not proof the provider did nothing. Never resubmit.

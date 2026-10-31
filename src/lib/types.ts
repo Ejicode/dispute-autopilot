@@ -81,7 +81,7 @@ export interface AIDraft {
 
 export interface ExactActionSnapshot {
   environment?: import('./runtime/mode').AppMode;
-  action_type: 'PROVIDE_EVIDENCE' | 'ACCEPT_CLAIM';
+  action_type: 'PROVIDE_EVIDENCE' | 'ACCEPT_CLAIM' | 'APPEAL' | 'MAKE_OFFER' | 'ESCALATE' | 'ACKNOWLEDGE_RETURN_ITEM';
   dispute_id: string;
   paypal_dispute_id: string;
   amount_cents: number;
@@ -98,6 +98,16 @@ export interface ApprovalReview {
   snapshot_digest: string;
   snapshot: ExactActionSnapshot & { draft_id: string | null; response_deadline: string };
   operation?: { id: string; state: 'SUBMITTING' | 'SUCCEEDED' | 'UNCERTAIN' };
+}
+
+export interface SellerProtectionVerification {
+  eligible: boolean;
+  policy_section: string; // e.g. "Proof of delivery"
+  status: 'VERIFIED_MATCH' | 'MISMATCH' | 'UNVERIFIED';
+  reason: string;
+  paypal_address?: string;
+  delivery_address?: string;
+  mismatch_fields?: string[];
 }
 
 export interface Approval {

@@ -189,7 +189,7 @@ const baselineSQL = `
     CREATE TABLE IF NOT EXISTS approval_operations (
       id TEXT PRIMARY KEY,
       dispute_id TEXT NOT NULL UNIQUE REFERENCES disputes(id),
-      action_type TEXT NOT NULL CHECK(action_type IN ('PROVIDE_EVIDENCE','ACCEPT_CLAIM')),
+      action_type TEXT NOT NULL CHECK(action_type IN ('PROVIDE_EVIDENCE','ACCEPT_CLAIM','APPEAL','MAKE_OFFER','ESCALATE','ACKNOWLEDGE_RETURN_ITEM')),
       snapshot_digest TEXT NOT NULL,
       snapshot TEXT NOT NULL,
       approver TEXT NOT NULL,

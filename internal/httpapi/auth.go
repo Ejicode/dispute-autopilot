@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"net/url"
+	"strings"
 
 	"github.com/Ejicode/dispute-autopilot/internal/auth"
 	"github.com/Ejicode/dispute-autopilot/internal/config"
 	"github.com/Ejicode/dispute-autopilot/internal/demo"
 	"github.com/Ejicode/dispute-autopilot/internal/httpx"
+	"github.com/Ejicode/dispute-autopilot/internal/paypal"
 	"github.com/Ejicode/dispute-autopilot/internal/scope"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
 	"github.com/Ejicode/dispute-autopilot/internal/types"
@@ -89,15 +90,16 @@ func (a *API) register(w http.ResponseWriter, r *http.Request) error {
 	}
 	var avatar *string
 	if raw, present := body["avatar_url"]; present && truthy(raw) {
-		value, err := auth.Field(body, "avatar_url", 2048)
+		value, err := auth.Field(body, "avatar_url", 2500000)
 		if err != nil {
 			return err
 		}
-		parsed, parseErr := url.Parse(value)
-		if parseErr != nil || parsed.Scheme != "https" {
-			return httpx.Errorf(http.StatusBadRequest, "Avatar must use an HTTPS URL.")
+		trimmed := strings.TrimSpace(value)
+		if strings.HasPrefix(trimmed, "https://") || strings.HasPrefix(trimmed, "data:image/") {
+			avatar = &trimmed
+		} else {
+			return httpx.Errorf(http.StatusBadRequest, "Avatar must use an HTTPS URL or image data.")
 		}
-		avatar = &value
 	}
 	if err := auth.Throttle(email); err != nil {
 		return err
@@ -234,6 +236,90 @@ func (a *API) runtimeMode(w http.ResponseWriter, r *http.Request, _ *types.UserA
 		"mode":                 string(sc.Mode),
 		"simulation_enabled":   sc.Mode == config.ModeDemo,
 		"provider_environment": provider,
+		"paypal_configured":   paypal.Default.IsConfigured(),
 	})
 	return nil
 }
+
+func (a *API) paypalStatus(w http.ResponseWriter, r *http.Request, _ *types.UserAccount) error {
+	res, err := paypal.Default.TestConnection(r.Context())
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	httpx.JSON(w, http.StatusOK, res)
+	return nil
+}
+
+func (a *API) authUpdateProfile(w http.ResponseWriter, r *http.Request) {
+	if err := a.updateProfile(w, r); err != nil {
+		httpx.Error(w, err)
+	}
+}
+
+func (a *API) updateProfile(w http.ResponseWriter, r *http.Request) error {
+	if err := auth.AssertSameOrigin(r); err != nil {
+		return err
+	}
+	user, err := auth.RequireUser(r)
+	if err != nil {
+		return err
+	}
+	body, err := httpx.ReadJSONBody(r, 2500000)
+	if err != nil {
+		return err
+	}
+	var newAvatar sql.NullString
+	if raw, present := body["avatar_url"]; present {
+		if rawStr, ok := raw.(string); ok && strings.TrimSpace(rawStr) != "" {
+			trimmed := strings.TrimSpace(rawStr)
+			if strings.HasPrefix(trimmed, "https://") || strings.HasPrefix(trimmed, "data:image/") {
+				newAvatar = sql.NullString{String: trimmed, Valid: true}
+			} else {
+				return httpx.Errorf(http.StatusBadRequest, "Avatar must be an HTTPS URL or image data URI.")
+			}
+		} else {
+			newAvatar = sql.NullString{Valid: false}
+		}
+	} else if user.AvatarURL != nil {
+		newAvatar = sql.NullString{String: *user.AvatarURL, Valid: true}
+	}
+
+	newName := user.Name
+	if raw, present := body["name"]; present {
+		if str, ok := raw.(string); ok && strings.TrimSpace(str) != "" {
+			newName = strings.TrimSpace(str)
+		}
+	}
+	newStore := user.StoreName
+	if raw, present := body["store_name"]; present {
+		if str, ok := raw.(string); ok && strings.TrimSpace(str) != "" {
+			newStore = strings.TrimSpace(str)
+		}
+	}
+
+	db, err := store.Auth()
+	if err != nil {
+		return err
+	}
+	if newAvatar.Valid {
+		_, err = db.Exec(r.Context(), "UPDATE accounts SET name=?, store_name=?, avatar_url=? WHERE id=?",
+			newName, newStore, newAvatar.String, user.ID)
+	} else {
+		_, err = db.Exec(r.Context(), "UPDATE accounts SET name=?, store_name=?, avatar_url=NULL WHERE id=?",
+			newName, newStore, user.ID)
+	}
+	if err != nil {
+		return err
+	}
+
+	updatedUser, err := scanPublicUser(db.QueryRow(r.Context(), "SELECT "+publicAccountColumns+" FROM accounts WHERE id=?", user.ID))
+	if err != nil {
+		return err
+	}
+
+	w.Header().Set("Cache-Control", "no-store")
+	httpx.JSON(w, http.StatusOK, map[string]any{"success": true, "user": updatedUser})
+	return nil
+}
+

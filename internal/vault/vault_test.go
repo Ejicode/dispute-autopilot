@@ -111,3 +111,23 @@ func TestGenerateDisputePDFPacket(t *testing.T) {
 		t.Errorf("generated PDF should contain content, got %d bytes", len(pdfBytes))
 	}
 }
+
+func TestGenerateVaultPDFDossier(t *testing.T) {
+	evidence := []types.EvidenceItem{
+		{ID: "ev_1", EvidenceType: "TRACKING_HISTORY", Source: "USPS", Title: "Tracking", Content: `{"tracking_number":"TRK-100","status":"DELIVERED"}`, SHA256Hash: store.SHA256Hex([]byte(`{"tracking_number":"TRK-100","status":"DELIVERED"}`)), CapturedAt: "2026-10-01"},
+		{ID: "ev_2", EvidenceType: "PROOF_OF_DELIVERY", Source: "USPS", Title: "POD", Content: `{"delivered_at":"2026-10-04","signature_on_file":"SIGNATURE_VERIFIED"}`, SHA256Hash: store.SHA256Hex([]byte(`{"delivered_at":"2026-10-04","signature_on_file":"SIGNATURE_VERIFIED"}`)), CapturedAt: "2026-10-04"},
+		{ID: "ev_3", EvidenceType: "ORDER_CONFIRMATION", Source: "STORE", Title: "Order", Content: `{"total_cents":10000}`, SHA256Hash: store.SHA256Hex([]byte(`{"total_cents":10000}`)), CapturedAt: "2026-10-01"},
+	}
+
+	pdfBytes, err := GenerateVaultPDFDossier("merchant_demo_1", evidence)
+	if err != nil {
+		t.Fatalf("GenerateVaultPDFDossier: %v", err)
+	}
+	if len(pdfBytes) < 5 || string(pdfBytes[:5]) != "%PDF-" {
+		t.Fatalf("dossier must be a genuine binary PDF, got %d bytes", len(pdfBytes))
+	}
+	if len(pdfBytes) <= 1000 {
+		t.Errorf("generated dossier should contain content, got %d bytes", len(pdfBytes))
+	}
+}
+

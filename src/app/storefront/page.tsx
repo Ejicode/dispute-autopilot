@@ -28,6 +28,7 @@ import { useRealtime } from '@/components/RealtimeContext';
 import { useUser } from '@/components/UserContext';
 import { isDemoBuyer } from '@/lib/persona';
 import { PRODUCTS, Product } from '@/lib/storefront/catalog';
+import { formatCurrency, SUPPORTED_CURRENCIES } from '@/lib/currency';
 
 const MILESTONES = ["LABEL_CREATED", "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
 
@@ -90,6 +91,7 @@ export default function StorefrontPage() {
 
   // Demo wallet balance kept in this browser only (starts at $5,000.00 = 500000 cents)
   const [paypalBalance, setPaypalBalance] = useState<number>(500000);
+  const [walletCurrency, setWalletCurrency] = useState<string>('USD');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -98,6 +100,8 @@ export default function StorefrontPage() {
         const parsed = parseInt(stored, 10);
         if (!isNaN(parsed)) setPaypalBalance(parsed);
       }
+      const storedCur = localStorage.getItem('paypal_sandbox_fake_currency');
+      if (storedCur) setWalletCurrency(storedCur);
     }
   }, []);
 
@@ -105,6 +109,13 @@ export default function StorefrontPage() {
     setPaypalBalance(cents);
     if (typeof window !== 'undefined') {
       localStorage.setItem('paypal_sandbox_fake_balance', String(cents));
+    }
+  };
+
+  const updateCurrency = (curr: string) => {
+    setWalletCurrency(curr);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paypal_sandbox_fake_currency', curr);
     }
   };
 
@@ -119,6 +130,7 @@ export default function StorefrontPage() {
       else inTransit++;
     }
     return {
+      totalCents,
       totalRevenue: (totalCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 }),
       totalOrders: orders.length,
       delivered,
@@ -231,7 +243,7 @@ export default function StorefrontPage() {
     }
 
     if (paypalBalance < product.price_cents) {
-      setCheckoutError(`Not enough demo balance: this item costs $${(product.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}. Add funds to continue.`);
+      setCheckoutError(`Not enough demo balance: this item costs ${formatCurrency(product.price_cents, walletCurrency)}. Add funds to continue.`);
       return;
     }
 
@@ -244,6 +256,7 @@ export default function StorefrontPage() {
           buyer_name: name,
           buyer_email: email,
           shipping_address: address,
+          currency: walletCurrency,
           items: [
             {
               name: product.name,
@@ -291,22 +304,32 @@ export default function StorefrontPage() {
     }
   };
 
-  // Real-time Inbound Dispute simulation linked to specific order
-  const handleSimulateDispute = async (order: DemoOrder) => {
+  // Real-time Inbound Dispute simulation linked to specific order across PayPal policy reasons
+  const handleSimulateDispute = async (
+    order: DemoOrder,
+    reason: 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED' | 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' | 'UNAUTHORISED' = 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED'
+  ) => {
     setDisputingOrderId(order.id);
+    let buyerMessage = `Customer stated: Order ${order.order_number} has not arrived at destination. Requesting refund.`;
+    if (reason === 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED') {
+      buyerMessage = `Customer stated: Order ${order.order_number} arrived significantly damaged and differs from catalog specifications. Requesting return/refund.`;
+    } else if (reason === 'UNAUTHORISED') {
+      buyerMessage = `Cardholder stated: Unauthorized transaction on PayPal account for order ${order.order_number}. Did not authorize this purchase.`;
+    }
+
     try {
       const res = await fetch('/api/disputes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           order_id: order.id,
-          reason: 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED',
+          reason,
           amount_cents: order.total_cents,
           currency: order.currency,
           hours_until_deadline: 48,
           buyer_name: order.buyer_name,
           shipping_address: order.shipping_address,
-          buyer_message: `Customer stated: Order ${order.order_number} has not arrived at destination. Requesting refund.`,
+          buyer_message: buyerMessage,
         }),
       });
       if (res.ok) {
@@ -400,11 +423,23 @@ export default function StorefrontPage() {
                     : 'Place simulated sales as a demo buyer'}
                 </span>
               </div>
-              <div className="flex items-baseline gap-2 mt-1">
+              <div className="flex items-center gap-2.5 mt-1">
                 <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                  ${(paypalBalance / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  {formatCurrency(paypalBalance, walletCurrency)}
                 </span>
-                <span className="text-xs font-bold text-blue-200">USD · demo balance</span>
+                <select
+                  value={walletCurrency}
+                  onChange={(e) => updateCurrency(e.target.value)}
+                  className="bg-white/15 hover:bg-white/25 text-white font-bold text-xs rounded-xl px-2.5 py-1 border border-white/20 outline-none cursor-pointer transition-colors"
+                  title="Currency for the demo balance and prices"
+                >
+                  {SUPPORTED_CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code} className="text-slate-900 bg-white">
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs font-bold text-blue-200">demo balance</span>
               </div>
               <p className="text-[11px] text-blue-100/80 mt-0.5">
                 Spend the demo balance on any product. No real payment is taken.
@@ -417,10 +452,10 @@ export default function StorefrontPage() {
               type="button"
               onClick={() => updateBalance(paypalBalance + 100000)}
               className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-bold transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
-              title="Add $1,000 to the demo balance"
+              title="Add 1,000 to the demo balance"
             >
               <Zap className="w-3.5 h-3.5 text-[#FFC439]" />
-              <span>+ $1,000</span>
+              <span>+ {formatCurrency(100000, walletCurrency)}</span>
             </button>
             {!isBuyer && (
               <Link
@@ -440,7 +475,7 @@ export default function StorefrontPage() {
           <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Gross Revenue</span>
-              <span className="text-xl font-extrabold text-slate-900 block mt-0.5">${stats.totalRevenue}</span>
+              <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{formatCurrency(stats.totalCents, walletCurrency)}</span>
               <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 From store orders
@@ -677,9 +712,9 @@ export default function StorefrontPage() {
                   <div className="flex items-baseline justify-between mb-2.5">
                     <div>
                       <span className="text-lg font-extrabold text-slate-900">
-                        ${(prod.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatCurrency(prod.price_cents, walletCurrency)}
                       </span>
-                      <span className="text-[11px] text-slate-400 ml-1">USD</span>
+                      <span className="text-[11px] text-slate-400 ml-1">{walletCurrency}</span>
                     </div>
                     <span className="text-[10px] text-slate-400 font-medium">Free 2-Day Shipping</span>
                   </div>
@@ -851,7 +886,7 @@ export default function StorefrontPage() {
               <div>
                 <span className="text-xs text-slate-400 block font-medium">Total Checkout Price</span>
                 <span className="text-2xl font-extrabold text-slate-900">
-                  ${(selectedProduct.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  {formatCurrency(selectedProduct.price_cents, walletCurrency)}
                 </span>
               </div>
 
@@ -942,7 +977,7 @@ export default function StorefrontPage() {
                       </div>
                       <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
                         <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Spend</span>
-                        <span className="font-extrabold text-[#003087]">${(cust.totalSpentCents / 100).toFixed(2)}</span>
+                        <span className="font-extrabold text-[#003087]">{formatCurrency(cust.totalSpentCents, walletCurrency)}</span>
                       </div>
                     </div>
                   </div>
@@ -1004,7 +1039,7 @@ export default function StorefrontPage() {
                         <span className="font-extrabold text-slate-900">{ord.order_number}</span>
                         <span className="text-slate-400 text-xs">·</span>
                         <span className="font-extrabold text-slate-900 text-base">
-                          ${(ord.total_cents / 100).toFixed(2)} {ord.currency}
+                          {formatCurrency(ord.total_cents, ord.currency)}
                         </span>
                         <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold">
                           {ord.tracking_number}
@@ -1016,18 +1051,40 @@ export default function StorefrontPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleSimulateDispute(ord)}
-                      disabled={disputingOrderId === ord.id}
-                      className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 disabled:opacity-50"
-                    >
-                      {disputingOrderId === ord.id ? (
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-                      )}
-                      <span>Open Simulated Dispute</span>
-                    </button>
+                    <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 mr-1 hidden sm:inline">
+                        Simulate Dispute:
+                      </span>
+                      <button
+                        onClick={() => handleSimulateDispute(ord, 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED')}
+                        disabled={disputingOrderId === ord.id}
+                        className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Open a simulated Item Not Received dispute"
+                      >
+                        {disputingOrderId === ord.id ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <ShieldAlert className="w-3 h-3 text-rose-600" />
+                        )}
+                        <span>Not received</span>
+                      </button>
+                      <button
+                        onClick={() => handleSimulateDispute(ord, 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED')}
+                        disabled={disputingOrderId === ord.id}
+                        className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Open a simulated Significantly Not As Described dispute"
+                      >
+                        <span>Not as described</span>
+                      </button>
+                      <button
+                        onClick={() => handleSimulateDispute(ord, 'UNAUTHORISED')}
+                        disabled={disputingOrderId === ord.id}
+                        className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Open a simulated Unauthorized Transaction dispute"
+                      >
+                        <span>Unauthorized</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Carrier Transit Stepper */}

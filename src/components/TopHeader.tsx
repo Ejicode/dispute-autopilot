@@ -77,9 +77,8 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Without an uploaded avatar, show the initial (as the profile page does), not a stranger's photo.
   const avatarUrl = activeUser?.avatar_url || null;
-  const initial = (activeUser?.name || 'M').trim().charAt(0).toUpperCase();
+  const userInitial = (activeUser?.name || 'U').trim().charAt(0).toUpperCase();
   const formattedDate = formatOrdinalDate(new Date());
 
   return (
@@ -91,6 +90,7 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
             onClick={onToggleSidebar}
             className="p-2 rounded-xl bg-white border border-slate-200/90 text-slate-600 hover:text-slate-900 shadow-sm md:hidden"
             title="Toggle Navigation"
+            aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -119,6 +119,41 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
 
       {/* ── Right Side: Mail Envelope & User Profile Pill ── */}
       <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+
+        {/* Mobile Search Button */}
+        <button
+          type="button"
+          onClick={() => setSearchModalOpen(true)}
+          className="p-2 rounded-xl bg-white border border-slate-200/90 text-slate-600 hover:text-slate-900 shadow-sm md:hidden"
+          aria-label="Search"
+        >
+          <Search className="w-4.5 h-4.5" />
+        </button>
+
+        {/* Mobile Search Modal Overlay */}
+        {searchModalOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex flex-col animate-in fade-in duration-150">
+            <div
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
+              onClick={() => setSearchModalOpen(false)}
+            />
+            <div className="relative z-10 p-4 pt-6 bg-white shadow-xl animate-in slide-in-from-top duration-200">
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <SearchBar variant="light" placeholder="Search transactions, items, disputes…" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSearchModalOpen(false)}
+                  className="p-2 rounded-xl text-slate-500 hover:text-slate-900"
+                  aria-label="Close search"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Persona Switcher (merchant only: the buyer has no merchant console) */}
         {isBuyer ? null : isStorefront ? (
@@ -151,10 +186,14 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
             }}
             className="w-10 h-10 rounded-full bg-white card-3d-reflection hover:-translate-y-0.5 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all relative cursor-pointer"
             title="Messages & Notifications"
+            aria-label={hasUnread ? "Messages & Notifications — unread" : "Messages & Notifications"}
           >
             <Mail className="w-4 h-4" />
             {hasUnread && (
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse ring-2 ring-white" />
+              <>
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse ring-2 ring-white" />
+                <span className="sr-only">Unread notifications</span>
+              </>
             )}
           </button>
 
@@ -235,8 +274,8 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
             }}
             className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white card-3d-reflection hover:-translate-y-0.5 cursor-pointer transition-all select-none"
           >
-            {/* Circular Picture Avatar */}
-            <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-slate-200 shadow-sm shrink-0">
+            {/* Circular Picture Avatar or Initial */}
+            <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-slate-200 shadow-sm shrink-0 flex items-center justify-center bg-gradient-to-br from-[#003087] via-[#005ea6] to-[#0070BA] text-white font-black text-xs select-none">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -244,9 +283,7 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="w-full h-full flex items-center justify-center bg-blue-50 text-[#003087] text-sm font-black">
-                  {initial}
-                </span>
+                <span>{userInitial}</span>
               )}
               <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white" />
             </div>
@@ -270,17 +307,17 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
               className="absolute right-0 top-full mt-2.5 w-72 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/15 border border-slate-200 p-3 text-slate-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-left"
             >
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2 flex items-center gap-3">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={activeUser?.name || 'Merchant Admin'}
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-[#003087]/30 shadow-sm shrink-0"
-                  />
-                ) : (
-                  <span className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-50 text-[#003087] text-base font-black ring-2 ring-[#003087]/30 shadow-sm shrink-0">
-                    {initial}
-                  </span>
-                )}
+                <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#003087]/30 shadow-sm shrink-0 flex items-center justify-center bg-gradient-to-br from-[#003087] via-[#005ea6] to-[#0070BA] text-white font-black text-base select-none">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={activeUser?.name || 'Merchant Admin'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{userInitial}</span>
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
                     <span>{activeUser?.name || 'Merchant Admin'}</span>
