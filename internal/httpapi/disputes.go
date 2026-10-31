@@ -15,6 +15,7 @@ import (
 	"github.com/Ejicode/dispute-autopilot/internal/auth"
 	"github.com/Ejicode/dispute-autopilot/internal/config"
 	"github.com/Ejicode/dispute-autopilot/internal/httpx"
+	"github.com/Ejicode/dispute-autopilot/internal/paypal"
 	"github.com/Ejicode/dispute-autopilot/internal/realtime"
 	"github.com/Ejicode/dispute-autopilot/internal/runtime"
 	"github.com/Ejicode/dispute-autopilot/internal/store"
@@ -401,14 +402,77 @@ func (a *API) disputeDetail(w http.ResponseWriter, r *http.Request, _ *types.Use
 		return err
 	}
 
+	// Verify Seller Protection § 11.3 (Proof of Delivery Address vs PayPal Transaction Address)
+	var deliveryAddr paypal.PayPalAddress
+	var paypalAddr paypal.PayPalAddress
+
+	for _, item := range evidenceItems {
+		itemType := stringValue(item["evidence_type"])
+		content := stringValue(item["content"])
+		if itemType == "PROOF_OF_DELIVERY" {
+			var pod struct {
+				DeliveryAddress string `json:"delivery_address"`
+				Address         string `json:"address"`
+			}
+			if err := json.Unmarshal([]byte(content), &pod); err == nil {
+				target := pod.DeliveryAddress
+				if target == "" {
+					target = pod.Address
+				}
+				if target != "" {
+					deliveryAddr = paypal.ParseAddressString(target)
+					break
+				}
+			}
+		}
+	}
+	if deliveryAddr.AddressLine1 == "" && order != nil {
+		if ordMap, ok := order.(map[string]any); ok {
+			shipStr := stringValue(ordMap["shipping_address"])
+			if shipStr != "" {
+				deliveryAddr = paypal.ParseAddressString(shipStr)
+			}
+		}
+	}
+
+	paypalOrderID := ""
+	if order != nil {
+		if ordMap, ok := order.(map[string]any); ok {
+			paypalOrderID = stringValue(ordMap["paypal_order_id"])
+			if paypalOrderID == "" {
+				paypalOrderID = stringValue(ordMap["id"])
+			}
+		}
+	}
+	if paypalOrderID == "" {
+		paypalOrderID = orderID
+	}
+
+	if paypalOrderID != "" {
+		if ppOrder, err := paypal.Default.GetOrder(r.Context(), paypalOrderID); err == nil && len(ppOrder.PurchaseUnits) > 0 {
+			paypalAddr = ppOrder.PurchaseUnits[0].Shipping.Address
+		}
+	}
+	if paypalAddr.AddressLine1 == "" && order != nil {
+		if ordMap, ok := order.(map[string]any); ok {
+			shipStr := stringValue(ordMap["shipping_address"])
+			if shipStr != "" {
+				paypalAddr = paypal.ParseAddressString(shipStr)
+			}
+		}
+	}
+
+	sellerProtection := paypal.VerifySellerProtectionAddress(paypalAddr, deliveryAddr)
+
 	httpx.JSON(w, http.StatusOK, map[string]any{
-		"dispute":       disputeRow,
-		"evidenceItems": evidenceItems,
-		"draft":         draft,
-		"approval":      approval,
-		"auditLogs":     formattedAudit,
-		"order":         order,
-		"operation":     operation,
+		"dispute":          disputeRow,
+		"evidenceItems":    evidenceItems,
+		"draft":            draft,
+		"approval":         approval,
+		"auditLogs":        formattedAudit,
+		"order":            order,
+		"operation":        operation,
+		"sellerProtection": sellerProtection,
 	})
 	return nil
 }

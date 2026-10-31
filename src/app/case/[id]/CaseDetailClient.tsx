@@ -50,7 +50,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, ApprovalReview } from '@/lib/types';
+import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, ApprovalReview, SellerProtectionVerification } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { useUser } from '@/components/UserContext';
 import EvidenceCard from '@/components/EvidenceCard';
@@ -90,6 +90,7 @@ export default function CaseDetailPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [approvalError, setApprovalError] = useState('');
   const [operation, setOperation] = useState<ApprovalReview['operation']>();
+  const [sellerProtection, setSellerProtection] = useState<SellerProtectionVerification | null>(null);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedDraft, setCopiedDraft] = useState(false);
   const reviewRequest = useRef(0);
@@ -105,6 +106,7 @@ export default function CaseDetailPage() {
         setDraft(data.draft);
         setAuditLogs(data.auditLogs || []);
         setOperation(data.operation || undefined);
+        setSellerProtection(data.sellerProtection || null);
       }
     } catch (err) {
       console.error('Failed to load dispute:', err);
@@ -374,6 +376,41 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
+      {/* ── Urgent Response SLA Alert Banner (PayPal Policy § 11.5) ── */}
+      {!isResolved && dispute.status === 'REQUIRED_ACTION' && (
+        <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 border border-amber-300/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 animate-enter-up">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-amber-500 text-white shrink-0 shadow-xs mt-0.5">
+              <Clock className="w-5 h-5 animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 bg-amber-200/80 px-2.5 py-0.5 rounded-md border border-amber-300">
+                  ⚠️ Urgent PayPal Response Window
+                </span>
+                <span className="text-xs font-bold text-rose-700 font-mono">
+                  {deadlineText}
+                </span>
+              </div>
+              <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                Under <strong>PayPal Resolution Center Procedures § 11.5</strong>, disputes expiring without merchant evidence submission trigger automated default forfeiture to the buyer plus non-refundable dispute fees. Review the verified evidence dossier below and approve the submission to preserve merchant revenue.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('approval-gate-card');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#003087] to-[#0070BA] hover:from-[#001C48] hover:to-[#005ea6] text-white text-xs font-bold shadow-md shadow-blue-950/20 shrink-0 cursor-pointer self-start md:self-auto transition-transform active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#FFC439]" />
+            <span>Jump to Approval Gate</span>
+          </button>
+        </div>
+      )}
+
       {/* ── Case Header Hero Card (Balanced, Symmetrical & Polished) ── */}
       <div className="card-3d-reflection p-6 sm:p-7 rounded-3xl relative">
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#003087]/8 via-[#0070BA]/4 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -404,9 +441,21 @@ export default function CaseDetailPage() {
                 <span>⚡ {dispute.recommendation} DISPUTE</span>
               </span>
 
-              <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#E6F0FA] text-[#003087] border border-[#C9E0FA] flex items-center gap-1">
+              <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border flex items-center gap-1 ${
+                sellerProtection?.status === 'VERIFIED_MATCH'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : sellerProtection?.status === 'MISMATCH'
+                  ? 'bg-rose-50 text-rose-800 border-rose-200'
+                  : 'bg-[#E6F0FA] text-[#003087] border-[#C9E0FA]'
+              }`}>
                 <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA]" />
-                <span>PayPal Seller Protection Active</span>
+                <span>
+                  {sellerProtection?.status === 'VERIFIED_MATCH'
+                    ? 'PayPal Seller Protection § 11.3 Verified'
+                    : sellerProtection?.status === 'MISMATCH'
+                    ? 'Seller Protection Mismatch (§ 11.3)'
+                    : 'PayPal Seller Protection Active'}
+                </span>
               </span>
             </div>
 
@@ -489,13 +538,29 @@ export default function CaseDetailPage() {
 
           {/* Card 2: Shipping Destination */}
           <div className="p-3 rounded-xl card-3d-reflection-subtle flex items-start gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+              sellerProtection?.status === 'MISMATCH' 
+                ? 'bg-rose-100/70 text-rose-700' 
+                : 'bg-emerald-100/70 text-emerald-700'
+            }`}>
               <MapPin className="w-4 h-4" />
             </div>
-            <div className="min-w-0">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Verified Destination</span>
-              <span className="text-xs font-bold text-slate-900 block truncate" title={orderDossier.shippingAddress}>
-                {orderDossier.shippingAddress}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Verified Destination</span>
+                {sellerProtection?.status === 'VERIFIED_MATCH' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold font-mono">
+                    § 11.3 MATCH
+                  </span>
+                )}
+                {sellerProtection?.status === 'MISMATCH' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold font-mono">
+                    § 11.3 MISMATCH
+                  </span>
+                )}
+              </div>
+              <span className="text-xs font-bold text-slate-900 block truncate" title={sellerProtection?.delivery_address || orderDossier.shippingAddress}>
+                {sellerProtection?.delivery_address || orderDossier.shippingAddress}
               </span>
               <span className="text-[10px] text-emerald-700 font-bold block truncate">
                 GPS: {orderDossier.gpsCoordinates}
@@ -547,7 +612,7 @@ export default function CaseDetailPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3">
           <div className="p-3.5 rounded-2xl card-3d-reflection-subtle">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Matched Policy
@@ -576,9 +641,50 @@ export default function CaseDetailPage() {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Protection Status
             </span>
-            <div className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" />
-              <span>Full Recovery Eligible</span>
+            <div className={`text-xs font-bold mt-1 flex items-center gap-1 ${
+              sellerProtection?.status === 'MISMATCH' ? 'text-rose-700' : 'text-emerald-700'
+            }`}>
+              {sellerProtection?.status === 'MISMATCH' ? (
+                <>
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Voided (Mismatch)</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Full Recovery Eligible</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl card-3d-reflection-subtle">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              § 11.3 Address Verification
+            </span>
+            <div className={`text-xs font-bold mt-1 flex items-center gap-1 ${
+              sellerProtection?.status === 'VERIFIED_MATCH'
+                ? 'text-emerald-700'
+                : sellerProtection?.status === 'MISMATCH'
+                ? 'text-rose-700'
+                : 'text-amber-700'
+            }`}>
+              {sellerProtection?.status === 'VERIFIED_MATCH' ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="truncate" title="Delivery address matches PayPal transaction address">Destination Matched</span>
+                </>
+              ) : sellerProtection?.status === 'MISMATCH' ? (
+                <>
+                  <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                  <span className="truncate" title={sellerProtection?.reason}>Address Mismatch</span>
+                </>
+              ) : (
+                <>
+                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>Pending Check</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -974,7 +1080,7 @@ export default function CaseDetailPage() {
           </div>
 
           {/* Human Approval Gate Card */}
-          <div className="card-3d-reflection p-6 rounded-3xl space-y-4">
+          <div id="approval-gate-card" className="card-3d-reflection p-6 rounded-3xl space-y-4 scroll-mt-20">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Lock className="w-5 h-5 text-[#003087]" />

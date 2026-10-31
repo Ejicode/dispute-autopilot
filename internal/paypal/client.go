@@ -58,8 +58,33 @@ func NewClient() *Client {
 // Default is the process-wide client.
 var Default = NewClient()
 
+func (c *Client) syncEnv() {
+	if c.clientID == "" {
+		c.clientID = os.Getenv("PAYPAL_CLIENT_ID")
+	}
+	if c.clientSecret == "" {
+		c.clientSecret = os.Getenv("PAYPAL_CLIENT_SECRET")
+	}
+	if c.environment == "" {
+		c.environment = os.Getenv("PAYPAL_ENVIRONMENT")
+		if c.environment == "" {
+			c.environment = "sandbox"
+		}
+	}
+	if c.baseURL == "" {
+		if c.environment == "live" {
+			c.baseURL = "https://api-m.paypal.com"
+		} else {
+			c.baseURL = "https://api-m.sandbox.paypal.com"
+		}
+	}
+}
+
 // IsConfigured reports whether credentials are present.
-func (c *Client) IsConfigured() bool { return c.clientID != "" && c.clientSecret != "" }
+func (c *Client) IsConfigured() bool {
+	c.syncEnv()
+	return c.clientID != "" && c.clientSecret != ""
+}
 
 // AssertMerchantAccess rejects cross-environment or cross-merchant use.
 func (c *Client) AssertMerchantAccess(ctx context.Context) error {
@@ -781,4 +806,408 @@ func decodeLoose(body []byte, text string) map[string]any {
 
 func fetchDispute(ctx context.Context, db *store.Store, disputeID string) (types.Dispute, error) {
 	return store.ScanDispute(db.QueryRow(ctx, "SELECT "+store.DisputeColumns+" FROM disputes WHERE id = ?", disputeID))
+}
+
+// PayPalAddress represents a shipping address structure compatible with PayPal Orders v2.
+type PayPalAddress struct {
+	AddressLine1 string `json:"address_line_1,omitempty"`
+	AddressLine2 string `json:"address_line_2,omitempty"`
+	AdminArea2   string `json:"admin_area_2,omitempty"` // City / locality
+	AdminArea1   string `json:"admin_area_1,omitempty"` // State / province / region
+	PostalCode   string `json:"postal_code,omitempty"`
+	CountryCode  string `json:"country_code,omitempty"`
+}
+
+// PayPalOrder represents a PayPal Orders v2 resource for order validation.
+type PayPalOrder struct {
+	ID            string `json:"id"`
+	Status        string `json:"status"`
+	Intent        string `json:"intent,omitempty"`
+	PurchaseUnits []struct {
+		ReferenceID string `json:"reference_id,omitempty"`
+		Amount      struct {
+			CurrencyCode string `json:"currency_code"`
+			Value        string `json:"value"`
+		} `json:"amount,omitempty"`
+		Shipping struct {
+			Name struct {
+				FullName string `json:"full_name,omitempty"`
+			} `json:"name,omitempty"`
+			Address PayPalAddress `json:"address,omitempty"`
+		} `json:"shipping,omitempty"`
+	} `json:"purchase_units,omitempty"`
+}
+
+// SellerProtectionVerification captures the result of cross-checking a delivery
+// destination against the PayPal transaction address under PayPal Seller Protection § 11.3.
+type SellerProtectionVerification struct {
+	Eligible        bool     `json:"eligible"`
+	PolicySection   string   `json:"policy_section"` // "§ 11.3"
+	Status          string   `json:"status"`         // "VERIFIED_MATCH", "MISMATCH", "UNVERIFIED"
+	Reason          string   `json:"reason"`
+	PayPalAddress   string   `json:"paypal_address"`
+	DeliveryAddress string   `json:"delivery_address"`
+	MismatchFields  []string `json:"mismatch_fields,omitempty"`
+}
+
+// FormatAddress converts a PayPalAddress into a normalized readable address string.
+func FormatAddress(addr PayPalAddress) string {
+	parts := make([]string, 0, 5)
+	if addr.AddressLine1 != "" {
+		parts = append(parts, addr.AddressLine1)
+	}
+	if addr.AddressLine2 != "" {
+		parts = append(parts, addr.AddressLine2)
+	}
+	cityStateZip := ""
+	if addr.AdminArea2 != "" {
+		cityStateZip = addr.AdminArea2
+	}
+	if addr.AdminArea1 != "" {
+		if cityStateZip != "" {
+			cityStateZip += ", " + addr.AdminArea1
+		} else {
+			cityStateZip = addr.AdminArea1
+		}
+	}
+	if addr.PostalCode != "" {
+		if cityStateZip != "" {
+			cityStateZip += " " + addr.PostalCode
+		} else {
+			cityStateZip = addr.PostalCode
+		}
+	}
+	if cityStateZip != "" {
+		parts = append(parts, cityStateZip)
+	}
+	if addr.CountryCode != "" {
+		parts = append(parts, addr.CountryCode)
+	}
+	return strings.Join(parts, ", ")
+}
+
+// ParseAddressString parses a standard comma-separated address string into a PayPalAddress.
+func ParseAddressString(raw string) PayPalAddress {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return PayPalAddress{}
+	}
+	chunks := strings.Split(raw, ",")
+	for i := range chunks {
+		chunks[i] = strings.TrimSpace(chunks[i])
+	}
+	var addr PayPalAddress
+	switch len(chunks) {
+	case 1:
+		addr.AddressLine1 = chunks[0]
+	case 2:
+		addr.AddressLine1 = chunks[0]
+		addr.AdminArea2 = chunks[1]
+	case 3:
+		addr.AddressLine1 = chunks[0]
+		addr.AdminArea2 = chunks[1]
+		parseStateZip(chunks[2], &addr)
+	default:
+		addr.AddressLine1 = chunks[0]
+		addr.AdminArea2 = chunks[1]
+		parseStateZip(chunks[2], &addr)
+		last := chunks[len(chunks)-1]
+		if len(last) == 2 && strings.ToUpper(last) == last {
+			addr.CountryCode = last
+		}
+	}
+	return addr
+}
+
+func parseStateZip(s string, addr *PayPalAddress) {
+	fields := strings.Fields(s)
+	if len(fields) >= 2 {
+		addr.AdminArea1 = fields[0]
+		addr.PostalCode = strings.Join(fields[1:], " ")
+	} else if len(fields) == 1 {
+		if len(fields[0]) == 2 && strings.ToUpper(fields[0]) == fields[0] {
+			addr.AdminArea1 = fields[0]
+		} else {
+			addr.PostalCode = fields[0]
+		}
+	}
+}
+
+func cleanWord(w string) string {
+	w = strings.ToLower(strings.TrimSpace(w))
+	w = strings.Trim(w, ".,#")
+	switch w {
+	case "st":
+		return "street"
+	case "ave", "av":
+		return "avenue"
+	case "rd":
+		return "road"
+	case "dr":
+		return "drive"
+	case "blvd":
+		return "boulevard"
+	case "ln":
+		return "lane"
+	case "ct":
+		return "court"
+	case "cir":
+		return "circle"
+	case "pkwy":
+		return "parkway"
+	case "apt":
+		return "apartment"
+	case "ste":
+		return "suite"
+	case "fl":
+		return "floor"
+	}
+	return w
+}
+
+func normalizeComponent(s string) string {
+	words := strings.Fields(s)
+	var cleaned []string
+	for _, w := range words {
+		cw := cleanWord(w)
+		if cw != "" {
+			cleaned = append(cleaned, cw)
+		}
+	}
+	return strings.Join(cleaned, " ")
+}
+
+func cleanZip(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) >= 5 && strings.Contains(s, "-") {
+		return strings.Split(s, "-")[0]
+	}
+	return s
+}
+
+// VerifySellerProtectionAddress checks whether the delivery address on proof of delivery
+// matches the transaction shipping address in PayPal under Seller Protection § 11.3.
+func VerifySellerProtectionAddress(paypalAddr, deliveryAddr PayPalAddress) SellerProtectionVerification {
+	ppFormatted := FormatAddress(paypalAddr)
+	delFormatted := FormatAddress(deliveryAddr)
+
+	if ppFormatted == "" || delFormatted == "" {
+		return SellerProtectionVerification{
+			Eligible:        false,
+			PolicySection:   "§ 11.3",
+			Status:          "UNVERIFIED",
+			Reason:          "Carrier proof of delivery or PayPal transaction address record is missing or pending capture.",
+			PayPalAddress:   ppFormatted,
+			DeliveryAddress: delFormatted,
+		}
+	}
+
+	var mismatches []string
+
+	// Check street address line 1
+	if normalizeComponent(paypalAddr.AddressLine1) != normalizeComponent(deliveryAddr.AddressLine1) {
+		mismatches = append(mismatches, "Street Address")
+	}
+
+	// Check City (AdminArea2) if both present
+	if paypalAddr.AdminArea2 != "" && deliveryAddr.AdminArea2 != "" {
+		if normalizeComponent(paypalAddr.AdminArea2) != normalizeComponent(deliveryAddr.AdminArea2) {
+			mismatches = append(mismatches, "City")
+		}
+	}
+
+	// Check State (AdminArea1) if both present
+	if paypalAddr.AdminArea1 != "" && deliveryAddr.AdminArea1 != "" {
+		if normalizeComponent(paypalAddr.AdminArea1) != normalizeComponent(deliveryAddr.AdminArea1) {
+			mismatches = append(mismatches, "State/Region")
+		}
+	}
+
+	// Check Postal Code if both present
+	if paypalAddr.PostalCode != "" && deliveryAddr.PostalCode != "" {
+		if cleanZip(paypalAddr.PostalCode) != cleanZip(deliveryAddr.PostalCode) {
+			mismatches = append(mismatches, "Postal Code")
+		}
+	}
+
+	if len(mismatches) == 0 {
+		return SellerProtectionVerification{
+			Eligible:        true,
+			PolicySection:   "§ 11.3",
+			Status:          "VERIFIED_MATCH",
+			Reason:          "Proof of delivery destination matches the PayPal transaction shipping address exactly. Seller Protection § 11.3 is fully intact.",
+			PayPalAddress:   ppFormatted,
+			DeliveryAddress: delFormatted,
+		}
+	}
+
+	return SellerProtectionVerification{
+		Eligible:        false,
+		PolicySection:   "§ 11.3",
+		Status:          "MISMATCH",
+		Reason:          fmt.Sprintf("Proof of delivery destination differs from PayPal transaction details (%s). Under PayPal Seller Protection § 11.3, rerouted or altered deliveries void protection.", strings.Join(mismatches, ", ")),
+		PayPalAddress:   ppFormatted,
+		DeliveryAddress: delFormatted,
+		MismatchFields:  mismatches,
+	}
+}
+
+// GetOrder retrieves a PayPal Checkout order by ID from PayPal REST API, or synthesizes
+// the order from the demo database when in demo mode or offline.
+func (c *Client) GetOrder(ctx context.Context, orderID string) (*PayPalOrder, error) {
+	if orderID == "" {
+		return nil, httpx.Errorf(http.StatusBadRequest, "Order ID is required.")
+	}
+	sc, _ := scope.From(ctx)
+	if sc.Mode == config.ModeDemo || !c.IsConfigured() {
+		// Look up order in demo_orders table
+		db, err := store.Merchant(ctx)
+		if err == nil {
+			var orderNum, buyerName, shipAddr, curr string
+			var totalCents int64
+			err := db.QueryRow(ctx, "SELECT order_number, buyer_name, shipping_address, total_cents, currency FROM demo_orders WHERE id = ? OR paypal_order_id = ? OR order_number = ?", orderID, orderID, orderID).
+				Scan(&orderNum, &buyerName, &shipAddr, &totalCents, &curr)
+			if err == nil {
+				parsedAddr := ParseAddressString(shipAddr)
+				order := &PayPalOrder{
+					ID:     orderID,
+					Status: "COMPLETED",
+					Intent: "CAPTURE",
+				}
+				order.PurchaseUnits = append(order.PurchaseUnits, struct {
+					ReferenceID string `json:"reference_id,omitempty"`
+					Amount      struct {
+						CurrencyCode string `json:"currency_code"`
+						Value        string `json:"value"`
+					} `json:"amount,omitempty"`
+					Shipping struct {
+						Name struct {
+							FullName string `json:"full_name,omitempty"`
+						} `json:"name,omitempty"`
+						Address PayPalAddress `json:"address,omitempty"`
+					} `json:"shipping,omitempty"`
+				}{
+					ReferenceID: orderNum,
+					Amount: struct {
+						CurrencyCode string `json:"currency_code"`
+						Value        string `json:"value"`
+					}{
+						CurrencyCode: curr,
+						Value:        fmt.Sprintf("%.2f", float64(totalCents)/100.0),
+					},
+					Shipping: struct {
+						Name struct {
+							FullName string `json:"full_name,omitempty"`
+						} `json:"name,omitempty"`
+						Address PayPalAddress `json:"address,omitempty"`
+					}{
+						Name: struct {
+							FullName string `json:"full_name,omitempty"`
+						}{FullName: buyerName},
+						Address: parsedAddr,
+					},
+				})
+				return order, nil
+			}
+		}
+		// Fallback for demo orders not found
+		return &PayPalOrder{
+			ID:     orderID,
+			Status: "COMPLETED",
+			Intent: "CAPTURE",
+		}, nil
+	}
+
+	token, err := c.GetAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/v2/checkout/orders/"+url.PathEscape(orderID), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := doJSON(req, 15000)
+	if err != nil {
+		return nil, err
+	}
+	if res.status < 200 || res.status >= 300 {
+		return nil, httpx.Errorf(http.StatusBadGateway, "PayPal order lookup returned status %d", res.status)
+	}
+	var order PayPalOrder
+	if err := json.Unmarshal(res.body, &order); err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+// TestConnection performs a live OAuth2 handshake with PayPal to verify credentials and returns connectivity telemetry.
+func (c *Client) TestConnection(ctx context.Context) (map[string]any, error) {
+	if !c.IsConfigured() {
+		return map[string]any{
+			"configured": false,
+			"connected":  false,
+			"error":       "PayPal credentials (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET) not configured.",
+		}, nil
+	}
+
+	start := time.Now()
+	basic := base64.StdEncoding.EncodeToString([]byte(c.clientID + ":" + c.clientSecret))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/v1/oauth2/token",
+		strings.NewReader("grant_type=client_credentials"))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Basic "+basic)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	res, err := doJSON(req, 15000)
+	if err != nil {
+		return map[string]any{
+			"configured": true,
+			"connected":  false,
+			"error":       err.Error(),
+		}, nil
+	}
+	if res.status != http.StatusOK {
+		return map[string]any{
+			"configured":  true,
+			"connected":   false,
+			"status_code": res.status,
+			"error":       fmt.Sprintf("PayPal OAuth rejected (%d): %s", res.status, res.text),
+		}, nil
+	}
+
+	var data struct {
+		Scope     string `json:"scope"`
+		AppID     string `json:"app_id"`
+		ExpiresIn int64  `json:"expires_in"`
+	}
+	_ = json.Unmarshal(res.body, &data)
+
+	clientIDMasked := ""
+	if len(c.clientID) > 12 {
+		clientIDMasked = c.clientID[:8] + "..." + c.clientID[len(c.clientID)-4:]
+	} else {
+		clientIDMasked = c.clientID
+	}
+
+	var rawScopes []string
+	if data.Scope != "" {
+		rawScopes = strings.Split(data.Scope, " ")
+	}
+
+	return map[string]any{
+		"configured":       true,
+		"connected":        true,
+		"environment":      c.environment,
+		"base_url":         c.baseURL,
+		"client_id_masked": clientIDMasked,
+		"app_id":           data.AppID,
+		"scopes":           rawScopes,
+		"scope_count":      len(rawScopes),
+		"latency_ms":       time.Since(start).Milliseconds(),
+		"verified_at":      time.Now().UTC().Format(time.RFC3339),
+	}, nil
 }

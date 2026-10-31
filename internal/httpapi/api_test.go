@@ -163,6 +163,7 @@ func TestHTTPApiEndToEnd(t *testing.T) {
 
 	anonymous := []struct{ method, path string }{
 		{"GET", "/api/runtime"},
+		{"GET", "/api/paypal/status"},
 		{"GET", "/api/events/stream"},
 		{"GET", "/api/disputes"}, {"POST", "/api/disputes"},
 		{"GET", "/api/disputes/unknown"}, {"GET", "/api/disputes/unknown/approve"},
@@ -243,6 +244,18 @@ func TestHTTPApiEndToEnd(t *testing.T) {
 	current := do("GET", "/api/auth?user_id="+userBID, tokenA, "", nil).json(t)
 	_, hasUsers := current["users"]
 	check(obj(t, current["user"])["id"] == userAID && !hasUsers, "session endpoint returns only authenticated identity")
+
+	// --- Profile avatar update and initial fallback reset ---
+	sampleAvatar := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+	updateRes := do("PUT", "/api/auth", tokenA, origin, map[string]any{"avatar_url": sampleAvatar})
+	check(updateRes.status == 200, "avatar updated via PUT /api/auth")
+	updatedUser := obj(t, updateRes.json(t)["user"])
+	check(str(t, updatedUser["avatar_url"]) == sampleAvatar, "avatar saved correctly")
+
+	clearRes := do("PUT", "/api/auth", tokenA, origin, map[string]any{"avatar_url": ""})
+	check(clearRes.status == 200, "avatar cleared via PUT /api/auth")
+	clearedUser := obj(t, clearRes.json(t)["user"])
+	check(clearedUser["avatar_url"] == nil, "avatar reverted to null for initial fallback")
 
 	wrong := do("POST", "/api/auth/login", "", origin, map[string]any{"email": "a@example.test", "password": "incorrect password"})
 	unknown := do("POST", "/api/auth/login", "", origin, map[string]any{"email": "unknown@example.test", "password": "incorrect password"})

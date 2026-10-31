@@ -26,6 +26,7 @@ interface UserContextType {
   logout: () => Promise<void>;
   login: (email: string, password: string) => Promise<AuthResult>;
   createAccount: (data: Registration) => Promise<AuthResult>;
+  updateProfile: (data: { avatar_url?: string | null; name?: string; store_name?: string }) => Promise<AuthResult>;
 }
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -93,11 +94,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } catch { setSessionError('Sign-out failed. Please try again.'); }
   };
 
+  const updateProfile = async (data: { avatar_url?: string | null; name?: string; store_name?: string }): Promise<AuthResult> => {
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (!response.ok) return { success: false, error: result.error || 'Failed to update profile.' };
+      ++revision.current;
+      setActiveUser(result.user);
+      setSessionError(null);
+      notifyTabs();
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Connection failed. Please try again.' };
+    }
+  };
+
   return <UserContext.Provider value={{
     users: activeUser ? [activeUser] : [], activeUser, loading, sessionError, isCreateModalOpen,
     refreshUsers, openCreateModal: () => setIsCreateModalOpen(true), closeCreateModal: () => setIsCreateModalOpen(false),
     logout, login: (email, password) => authenticate('/api/auth/login', { email, password }),
     createAccount: data => authenticate('/api/auth', data),
+    updateProfile,
   }}>{children}</UserContext.Provider>;
 }
 

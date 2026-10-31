@@ -72,7 +72,8 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const avatarUrl = activeUser?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80';
+  const avatarUrl = activeUser?.avatar_url || null;
+  const userInitial = (activeUser?.name || 'U').trim().charAt(0).toUpperCase();
   const formattedDate = formatOrdinalDate(new Date());
 
   return (
@@ -316,13 +317,17 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
             }}
             className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white card-3d-reflection hover:-translate-y-0.5 cursor-pointer transition-all select-none"
           >
-            {/* Circular Picture Avatar */}
-            <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-slate-200 shadow-sm shrink-0">
-              <img
-                src={avatarUrl}
-                alt={activeUser?.name || 'Merchant Admin'}
-                className="w-full h-full object-cover"
-              />
+            {/* Circular Picture Avatar or Initial */}
+            <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-slate-200 shadow-sm shrink-0 flex items-center justify-center bg-gradient-to-br from-[#003087] via-[#005ea6] to-[#0070BA] text-white font-black text-xs select-none">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={activeUser?.name || 'Merchant Admin'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{userInitial}</span>
+              )}
               <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white" />
             </div>
 
@@ -345,11 +350,17 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
               className="absolute right-0 top-full mt-2.5 w-72 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/15 border border-slate-200 p-3 text-slate-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-left"
             >
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2 flex items-center gap-3">
-                <img
-                  src={avatarUrl}
-                  alt={activeUser?.name || 'Merchant Admin'}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-[#003087]/30 shadow-sm shrink-0"
-                />
+                <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#003087]/30 shadow-sm shrink-0 flex items-center justify-center bg-gradient-to-br from-[#003087] via-[#005ea6] to-[#0070BA] text-white font-black text-base select-none">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={activeUser?.name || 'Merchant Admin'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{userInitial}</span>
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
                     <span>{activeUser?.name || 'Merchant Admin'}</span>

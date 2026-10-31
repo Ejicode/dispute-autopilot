@@ -100,6 +100,16 @@ export interface ApprovalReview {
   operation?: { id: string; state: 'SUBMITTING' | 'SUCCEEDED' | 'UNCERTAIN' };
 }
 
+export interface SellerProtectionVerification {
+  eligible: boolean;
+  policy_section: string; // e.g. "§ 11.3"
+  status: 'VERIFIED_MATCH' | 'MISMATCH' | 'UNVERIFIED';
+  reason: string;
+  paypal_address?: string;
+  delivery_address?: string;
+  mismatch_fields?: string[];
+}
+
 export interface Approval {
   id: string;
   draft_id: string;

@@ -660,3 +660,148 @@ func TestSendTrackerDemo(t *testing.T) {
 		t.Errorf("expected mapped status=SHIPPED, got %v", call.Result)
 	}
 }
+
+func TestVerifySellerProtectionAddressExact(t *testing.T) {
+	paypalAddr := PayPalAddress{
+		AddressLine1: "742 Evergreen Terrace",
+		AdminArea2:   "Springfield",
+		AdminArea1:   "OR",
+		PostalCode:   "97477",
+		CountryCode:  "US",
+	}
+	delivAddr := PayPalAddress{
+		AddressLine1: "742 Evergreen Terrace",
+		AdminArea2:   "Springfield",
+		AdminArea1:   "OR",
+		PostalCode:   "97477",
+		CountryCode:  "US",
+	}
+
+	result := VerifySellerProtectionAddress(paypalAddr, delivAddr)
+	if !result.Eligible || result.Status != "VERIFIED_MATCH" {
+		t.Errorf("expected VERIFIED_MATCH eligible=true, got %+v", result)
+	}
+	if len(result.MismatchFields) != 0 {
+		t.Errorf("expected 0 mismatches, got %v", result.MismatchFields)
+	}
+	if result.PolicySection != "§ 11.3" {
+		t.Errorf("expected § 11.3, got %s", result.PolicySection)
+	}
+}
+
+func TestVerifySellerProtectionAddressNormalized(t *testing.T) {
+	// Tests street abbreviation expansion (St -> Street, Ave -> Avenue), case-insensitivity, and zip suffix
+	paypalAddr := ParseAddressString("123 Market St, San Jose, CA 95113")
+	delivAddr := ParseAddressString("123 market street, san jose, ca 95113-1000")
+
+	result := VerifySellerProtectionAddress(paypalAddr, delivAddr)
+	if !result.Eligible || result.Status != "VERIFIED_MATCH" {
+		t.Errorf("expected VERIFIED_MATCH eligible=true with normalized address, got %+v", result)
+	}
+}
+
+func TestVerifySellerProtectionAddressMismatch(t *testing.T) {
+	// When package was redirected to a different address
+	paypalAddr := ParseAddressString("742 Evergreen Terrace, Springfield, OR 97477")
+	delivAddr := ParseAddressString("100 Elm Street, Portland, OR 97201")
+
+	result := VerifySellerProtectionAddress(paypalAddr, delivAddr)
+	if result.Eligible || result.Status != "MISMATCH" {
+		t.Errorf("expected MISMATCH eligible=false, got %+v", result)
+	}
+	if len(result.MismatchFields) == 0 {
+		t.Errorf("expected mismatch fields listed, got empty")
+	}
+}
+
+func TestVerifySellerProtectionAddressUnverified(t *testing.T) {
+	paypalAddr := ParseAddressString("")
+	delivAddr := ParseAddressString("")
+
+	result := VerifySellerProtectionAddress(paypalAddr, delivAddr)
+	if result.Eligible || result.Status != "UNVERIFIED" {
+		t.Errorf("expected UNVERIFIED eligible=false, got %+v", result)
+	}
+}
+
+func TestGetOrderDemo(t *testing.T) {
+	resetPayPalStore(t)
+	ctx := paypalContext(t, testMerchant, config.ModeDemo)
+	db, err := store.Merchant(ctx)
+	if err != nil {
+		t.Fatalf("store.Merchant: %v", err)
+	}
+
+	// Insert demo order
+	if _, err := db.Exec(ctx, `INSERT INTO demo_orders (
+		id, order_number, buyer_name, buyer_email, shipping_address, items, total_cents, currency,
+		paypal_order_id, carrier, tracking_number, delivery_status, created_at, provenance
+	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		"ord_test_sp", "ORD-TEST-SP", "Alex Chen", "alex@example.com",
+		"456 Tech Blvd, Austin, TX 78701", "[]", 5000, "USD",
+		"PP-ORD-TEST-SP", "FedEx", "TRK-FEDEX-99", "DELIVERED", "2026-10-31T10:00:00Z", "DEMO"); err != nil {
+		t.Fatalf("insert demo order: %v", err)
+	}
+
+	client := NewClient()
+	order, err := client.GetOrder(ctx, "PP-ORD-TEST-SP")
+	if err != nil {
+		t.Fatalf("GetOrder failed: %v", err)
+	}
+	if order.ID != "PP-ORD-TEST-SP" {
+		t.Errorf("expected ID PP-ORD-TEST-SP, got %s", order.ID)
+	}
+	if len(order.PurchaseUnits) == 0 {
+		t.Fatalf("expected purchase units populated")
+	}
+	addr := order.PurchaseUnits[0].Shipping.Address
+	if addr.AddressLine1 != "456 Tech Blvd" || addr.AdminArea2 != "Austin" || addr.AdminArea1 != "TX" {
+		t.Errorf("unexpected parsed address: %+v", addr)
+	}
+}
+
+func TestTestConnection(t *testing.T) {
+	// 1. Not configured
+	unconf := &Client{clientID: "", clientSecret: ""}
+	res, err := unconf.TestConnection(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+	if res["configured"] != false || res["connected"] != false {
+		t.Errorf("expected configured=false, got %+v", res)
+	}
+
+	// 2. Successful connection to mock OAuth server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/v1/oauth2/token" {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"test-token","scope":"https://uri.paypal.com/services/disputes/read-seller https://uri.paypal.com/services/shipping/trackers/readwrite","app_id":"APP-TEST","expires_in":3600}`))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(server.Close)
+
+	client := &Client{
+		baseURL:      server.URL,
+		environment:  "sandbox",
+		clientID:     "BAAXaTaMcWmo8bJH9k-test",
+		clientSecret: "test-secret-12345",
+	}
+
+	res, err = client.TestConnection(context.Background())
+	if err != nil {
+		t.Fatalf("TestConnection failed: %v", err)
+	}
+	if res["connected"] != true || res["configured"] != true {
+		t.Errorf("expected connected=true, got %+v", res)
+	}
+	if res["app_id"] != "APP-TEST" {
+		t.Errorf("expected app_id APP-TEST, got %v", res["app_id"])
+	}
+	if res["scope_count"] != 2 {
+		t.Errorf("expected 2 scopes, got %v", res["scope_count"])
+	}
+}
+
+

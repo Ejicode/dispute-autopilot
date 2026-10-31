@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -16,7 +16,12 @@ import {
   FileCheck,
   LogOut,
   Users,
-  BarChart2
+  BarChart2,
+  Camera,
+  Upload,
+  Trash2,
+  RefreshCw,
+  Wifi
 } from 'lucide-react';
 import {
   AreaChart,
@@ -37,15 +42,94 @@ import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
 
 export default function MerchantProfilePage() {
-  const { activeUser, loading: userLoading, openCreateModal, logout } = useUser();
+  const { activeUser, loading: userLoading, openCreateModal, logout, updateProfile } = useUser();
   const { lastEvent } = useRealtime();
   const router = useRouter();
 
   const [analytics, setAnalytics] = useState<any | null>(null);
   const [activeDisputes, setActiveDisputes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [paypalStatus, setPaypalStatus] = useState<any>(null);
+  const [testingPayPal, setTestingPayPal] = useState(false);
 
   const avatarUrl = activeUser?.avatar_url || null;
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarMessage({ type: 'error', text: 'Please select a valid image file (PNG, JPG, WebP).' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarMessage({ type: 'error', text: 'Image size must be under 5MB.' });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setAvatarMessage(null);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const rawDataUrl = event.target?.result as string;
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 400;
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const optimized = canvas.toDataURL('image/jpeg', 0.88);
+          const res = await updateProfile({ avatar_url: optimized });
+          if (res.success) {
+            setAvatarMessage({ type: 'success', text: 'Profile picture updated successfully!' });
+          } else {
+            setAvatarMessage({ type: 'error', text: res.error || 'Failed to update profile picture.' });
+          }
+        }
+        setUploadingAvatar(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      };
+      img.onerror = () => {
+        setUploadingAvatar(false);
+        setAvatarMessage({ type: 'error', text: 'Failed to process image.' });
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = async () => {
+    setUploadingAvatar(true);
+    setAvatarMessage(null);
+    const res = await updateProfile({ avatar_url: null });
+    setUploadingAvatar(false);
+    if (res.success) {
+      setAvatarMessage({ type: 'success', text: 'Profile picture removed. Using name initial.' });
+    } else {
+      setAvatarMessage({ type: 'error', text: res.error || 'Failed to remove picture.' });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const loadAllData = async () => {
     try {
@@ -70,8 +154,24 @@ export default function MerchantProfilePage() {
     }
   };
 
+  const checkPayPalConnection = async () => {
+    try {
+      setTestingPayPal(true);
+      const res = await fetch('/api/paypal/status');
+      if (res.ok) {
+        const data = await res.json();
+        setPaypalStatus(data);
+      }
+    } catch (e) {
+      console.error('Failed to test PayPal connection:', e);
+    } finally {
+      setTestingPayPal(false);
+    }
+  };
+
   useEffect(() => {
     loadAllData();
+    checkPayPalConnection();
   }, [lastEvent, activeUser?.id]);
 
   // Show loading while user context is resolving
@@ -121,24 +221,77 @@ export default function MerchantProfilePage() {
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           {/* Left: Avatar + Identity — all from DB */}
-          <div className="flex items-start sm:items-center gap-5">
-            <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-[#003087]/20 shadow-md bg-slate-100 flex items-center justify-center">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={activeUser.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-3xl font-extrabold text-[#003087]">
-                    {activeUser.name.charAt(0).toUpperCase()}
-                  </span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div className="flex flex-col items-center sm:items-start gap-2 shrink-0">
+              <div className="relative">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarFileChange}
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="group relative w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-[#003087]/20 shadow-md bg-gradient-to-br from-[#003087] via-[#005ea6] to-[#0070BA] flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                  title="Click to upload or change profile picture"
+                >
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={activeUser.name}
+                      className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                    />
+                  ) : (
+                    <span className="text-3xl font-extrabold text-white group-hover:opacity-75 transition-opacity select-none">
+                      {activeUser.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity">
+                    <Camera className="w-5 h-5 drop-shadow-sm" />
+                    <span className="text-[9px] font-bold mt-0.5">Upload</span>
+                  </div>
+                </button>
+                <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 ring-2 ring-white flex items-center justify-center text-white text-[10px] font-bold">
+                  ✓
+                </span>
+              </div>
+
+              {/* Upload & Remove Action Buttons */}
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:text-slate-900 shadow-2xs transition-all cursor-pointer"
+                >
+                  <Upload className="w-3 h-3 text-[#0070BA]" />
+                  <span>{uploadingAvatar ? 'Saving...' : avatarUrl ? 'Change' : 'Upload Photo'}</span>
+                </button>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    disabled={uploadingAvatar}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-[11px] font-semibold text-slate-600 hover:text-rose-700 transition-all cursor-pointer"
+                    title="Remove custom photo and use first letter of name"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Remove</span>
+                  </button>
                 )}
               </div>
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 ring-2 ring-white flex items-center justify-center text-white text-[10px] font-bold">
-                ✓
-              </span>
+
+              {avatarMessage && (
+                <div className={`text-[10px] font-bold mt-0.5 flex items-center gap-1 ${
+                  avatarMessage.type === 'success' ? 'text-emerald-700' : 'text-rose-600'
+                }`}>
+                  {avatarMessage.type === 'success' ? <CheckCircle2 className="w-3 h-3 shrink-0" /> : <AlertTriangle className="w-3 h-3 shrink-0" />}
+                  <span>{avatarMessage.text}</span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -209,20 +362,39 @@ export default function MerchantProfilePage() {
           </div>
         </div>
 
-        {/* PayPal Security & Sandbox Integration Bar */}
-        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-            PayPal Sandbox:
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 font-mono text-[11px] text-[#003087]">
-            App: <strong>NVP SOAP Webhooks</strong> (ID: BAAz8aintxI...)
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
-            Orders v2 Tracking: <strong className="text-emerald-600">ACTIVE</strong>
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
-            Evidence Vault SHA-256: <strong className="text-emerald-600">CHAINED</strong>
-          </span>
+        {/* PayPal Live Sandbox Integration Status Card */}
+        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#003087]/5 border border-[#003087]/20 text-[#003087] font-bold">
+              <span className={`w-2 h-2 rounded-full ${paypalStatus?.connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+              <span>PayPal Sandbox</span>
+            </div>
+            <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 font-mono text-[11px] text-[#003087]">
+              App: <strong>DisputeAutopilot-Sandbox</strong>
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
+              Client: <code className="font-bold">{paypalStatus?.client_id_masked || 'BAAXaTaM...crlg'}</code>
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 font-mono text-[11px] text-emerald-800 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              <span>{paypalStatus?.connected ? 'LIVE AUTHORIZED' : 'CONFIGURED'}</span>
+              {paypalStatus?.latency_ms != null ? ` (${paypalStatus.latency_ms}ms)` : ''}
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-600 hidden lg:inline-flex">
+              {paypalStatus?.scope_count ? `${paypalStatus.scope_count} Scopes Active` : 'Disputes v1 & Trackers Active'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={checkPayPalConnection}
+            disabled={testingPayPal}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 hover:text-slate-900 shadow-2xs transition-all cursor-pointer shrink-0 self-start md:self-auto"
+            title="Perform live OAuth handshake with PayPal Sandbox"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-[#0070BA] ${testingPayPal ? 'animate-spin' : ''}`} />
+            <span>{testingPayPal ? 'Testing…' : 'Test Live Handshake'}</span>
+          </button>
         </div>
       </div>
 

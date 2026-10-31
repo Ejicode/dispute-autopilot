@@ -11,7 +11,7 @@ export default function CreateAccountModal() {
     email: '',
     password: '',
     store_name: '',
-    avatar_url: CURATED_AVATARS[0],
+    avatar_url: '',
   });
   const [useCustomUrl, setUseCustomUrl] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,12 +43,15 @@ export default function CreateAccountModal() {
       setFormData({
         name: '',
         email: '',
-    password: '',
+        password: '',
         store_name: '',
-        avatar_url: CURATED_AVATARS[0],
+        avatar_url: '',
       });
+      closeCreateModal();
     }
   };
+
+  const nameInitial = (formData.name || 'U').trim().charAt(0).toUpperCase();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -163,7 +166,24 @@ export default function CreateAccountModal() {
               </div>
 
               {!useCustomUrl ? (
-                <div className="grid grid-cols-6 gap-2 py-1">
+                <div className="grid grid-cols-7 gap-2 py-1 items-center">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, avatar_url: '' })}
+                    className={`relative rounded-full aspect-square overflow-hidden group transition-all duration-200 flex items-center justify-center bg-gradient-to-br from-[#003087] via-[#005ea6] to-[#0070BA] text-white font-black text-xs ${
+                      !formData.avatar_url
+                        ? 'ring-4 ring-[#003087] ring-offset-2 scale-105'
+                        : 'opacity-70 hover:opacity-100 hover:scale-105'
+                    }`}
+                    title="Name initial (Default)"
+                  >
+                    <span>{nameInitial}</span>
+                    {!formData.avatar_url && (
+                      <div className="absolute inset-0 bg-[#003087]/40 flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                      </div>
+                    )}
+                  </button>
                   {CURATED_AVATARS.map((url, i) => {
                     const isSelected = formData.avatar_url === url;
                     return (
@@ -205,11 +225,17 @@ export default function CreateAccountModal() {
             {/* Live Profile Card Preview */}
             <div className="mt-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center gap-3.5">
               <div className="relative shrink-0">
-                <img
-                  src={formData.avatar_url || CURATED_AVATARS[0]}
-                  alt="Preview"
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
-                />
+                {formData.avatar_url ? (
+                  <img
+                    src={formData.avatar_url}
+                    alt="Preview"
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#003087] via-[#005ea6] to-[#0070BA] text-white flex items-center justify-center font-black text-lg ring-2 ring-white shadow-sm select-none">
+                    {nameInitial}
+                  </div>
+                )}
                 <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-white" />
               </div>
               <div className="min-w-0 flex-1">

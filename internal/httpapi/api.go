@@ -32,10 +32,13 @@ func New(webDir string) http.Handler {
 	mux.HandleFunc("GET /api/health", api.health)
 	mux.HandleFunc("GET /api/auth", api.authSession)
 	mux.HandleFunc("POST /api/auth", api.authRegister)
+	mux.HandleFunc("PUT /api/auth", api.authUpdateProfile)
+	mux.HandleFunc("PATCH /api/auth", api.authUpdateProfile)
 	mux.HandleFunc("DELETE /api/auth", api.authLogout)
 	mux.HandleFunc("POST /api/auth/login", api.authLogin)
 
 	mux.HandleFunc("GET /api/runtime", api.withMerchant(api.runtimeMode))
+	mux.HandleFunc("GET /api/paypal/status", api.withMerchant(api.paypalStatus))
 	mux.HandleFunc("GET /api/events/stream", api.withMerchant(api.eventsStream))
 
 	mux.HandleFunc("GET /api/disputes", api.withMerchant(api.disputesList))

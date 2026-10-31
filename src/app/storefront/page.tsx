@@ -291,22 +291,32 @@ export default function StorefrontPage() {
     }
   };
 
-  // Real-time Inbound Dispute simulation linked to specific order
-  const handleSimulateDispute = async (order: DemoOrder) => {
+  // Real-time Inbound Dispute simulation linked to specific order across PayPal policy reasons
+  const handleSimulateDispute = async (
+    order: DemoOrder,
+    reason: 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED' | 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' | 'UNAUTHORISED' = 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED'
+  ) => {
     setDisputingOrderId(order.id);
+    let buyerMessage = `Customer stated: Order ${order.order_number} has not arrived at destination. Requesting refund.`;
+    if (reason === 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED') {
+      buyerMessage = `Customer stated: Order ${order.order_number} arrived significantly damaged and differs from catalog specifications. Requesting return/refund.`;
+    } else if (reason === 'UNAUTHORISED') {
+      buyerMessage = `Cardholder stated: Unauthorized transaction on PayPal account for order ${order.order_number}. Did not authorize this purchase.`;
+    }
+
     try {
       const res = await fetch('/api/disputes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           order_id: order.id,
-          reason: 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED',
+          reason,
           amount_cents: order.total_cents,
           currency: order.currency,
           hours_until_deadline: 48,
           buyer_name: order.buyer_name,
           shipping_address: order.shipping_address,
-          buyer_message: `Customer stated: Order ${order.order_number} has not arrived at destination. Requesting refund.`,
+          buyer_message: buyerMessage,
         }),
       });
       if (res.ok) {
@@ -1025,18 +1035,40 @@ export default function StorefrontPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleSimulateDispute(ord)}
-                      disabled={disputingOrderId === ord.id}
-                      className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 disabled:opacity-50"
-                    >
-                      {disputingOrderId === ord.id ? (
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-                      )}
-                      <span>Open Simulated Dispute</span>
-                    </button>
+                    <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 mr-1 hidden sm:inline">
+                        Simulate Dispute:
+                      </span>
+                      <button
+                        onClick={() => handleSimulateDispute(ord, 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED')}
+                        disabled={disputingOrderId === ord.id}
+                        className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Simulate Item Not Received dispute (PayPal Policy § 11.3)"
+                      >
+                        {disputingOrderId === ord.id ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <ShieldAlert className="w-3 h-3 text-rose-600" />
+                        )}
+                        <span>INR (§ 11.3)</span>
+                      </button>
+                      <button
+                        onClick={() => handleSimulateDispute(ord, 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED')}
+                        disabled={disputingOrderId === ord.id}
+                        className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Simulate Significantly Not As Described dispute (PayPal Policy § 11.4)"
+                      >
+                        <span>SNAD (§ 11.4)</span>
+                      </button>
+                      <button
+                        onClick={() => handleSimulateDispute(ord, 'UNAUTHORISED')}
+                        disabled={disputingOrderId === ord.id}
+                        className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Simulate Unauthorized Transaction dispute (PayPal Policy § 11.2)"
+                      >
+                        <span>Unauthorized (§ 11.2)</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Carrier Transit Stepper */}
