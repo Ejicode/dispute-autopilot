@@ -38,62 +38,62 @@ var staticCorpus = []Document{
 		ID:        "pol_inr_11_3",
 		Title:     "PayPal Seller Protection — Item Not Received (INR) Proof of Delivery",
 		Category:  "PAYPAL_POLICY",
-		Section:   "PayPal User Agreement § 11.3",
+		Section:   "PayPal Seller Protection: proof of delivery",
 		Content:   "For physical items disputed under Merchandise or Service Not Received (INR), PayPal Seller Protection covers the full transaction amount if the seller provides valid Proof of Delivery. Valid Proof of Delivery must be online viewable tracking documentation from an accepted shipping company (USPS, FedEx, UPS, DHL) showing: (1) Date of delivery and delivery status DELIVERED, (2) An address for the recipient that matches the shipping address on the Transaction Details page, or at least the city/state or ZIP code. Physical delivery coordinates and carrier timestamp verify compliance.",
 		Keywords:  []string{"inr", "not received", "item not received", "delivery", "tracking", "carrier", "proof of delivery", "usps", "fedex", "ups", "address", "shipping", "11.3"},
-		Reference: "PayPal User Agreement § 11.3 (Proof of Delivery)",
+		Reference: "PayPal Seller Protection (Proof of Delivery)",
 	},
 	{
 		ID:        "pol_signature_11_3b",
 		Title:     "PayPal Signature Confirmation Threshold for Items $750.00+",
 		Category:  "PAYPAL_POLICY",
-		Section:   "PayPal User Agreement § 11.3(b)",
+		Section:   "PayPal Seller Protection: signature confirmation",
 		Content:   "If the total transaction amount (including taxes and shipping) is $750.00 USD or greater, PayPal Seller Protection MANDATES signature confirmation of delivery. The online viewable documentation from the carrier must show a physical or electronic signature confirmation from the recipient at the delivery address. If the order is $750 or more and lacks signature confirmation, Seller Protection is voided regardless of standard tracking.",
 		Keywords:  []string{"signature", "750", "$750", "threshold", "expensive", "drone", "high value", "signed", "recipient signature", "11.3b"},
-		Reference: "PayPal User Agreement § 11.3(b) (Mandatory Signature Confirmation)",
+		Reference: "PayPal Seller Protection (Signature Confirmation, $750+)",
 	},
 	{
 		ID:        "pol_snad_11_4",
 		Title:     "Significantly Not As Described (SNAD) Defense Standards",
 		Category:  "PAYPAL_POLICY",
-		Section:   "PayPal User Agreement § 11.4",
-		Content:   "For disputes alleging Merchandise or Service Not As Described (SNAD), the seller must submit indisputable evidence that the item delivered matched the product description at the time of purchase. Essential evidence includes: (1) Immutable order receipt captured at checkout with specifications, (2) Manufacturer serial numbers or IMEI tied to the shipped unit, (3) High-resolution pre-shipment condition photos, and (4) The buyers acknowledgment of return policy. If the buyer damaged or altered the item, photographic inspection proof rebuts the claim.",
+		Section:   "Not-as-described disputes: evidence guidance",
+		Content:   "For disputes alleging Merchandise or Service Not As Described (SNAD), the seller must submit indisputable evidence that the item delivered matched the product description at the time of purchase. Essential evidence includes: (1) The order receipt captured at checkout with specifications, (2) Manufacturer serial numbers or IMEI tied to the shipped unit, (3) High-resolution pre-shipment condition photos, and (4) The buyers acknowledgment of return policy. If the buyer damaged or altered the item, photographic inspection proof rebuts the claim.",
 		Keywords:  []string{"snad", "not as described", "different", "damaged", "condition", "photos", "serial", "specifications", "description", "return policy", "11.4"},
-		Reference: "PayPal User Agreement § 11.4 (Significantly Not As Described)",
+		Reference: "Evidence guidance (Significantly Not As Described)",
 	},
 	{
 		ID:        "pol_unauth_11_2",
 		Title:     "Unauthorized Transaction & Chargeback Safe Harbor",
 		Category:  "PAYPAL_POLICY",
-		Section:   "PayPal User Agreement § 11.2",
-		Content:   "When a dispute or chargeback is filed under Unauthorized Transaction (claims that the cardholder or PayPal account holder did not authorize the charge), PayPal Seller Protection protects the merchant if: (1) The transaction was completed with PayPal account authorization, (2) The item was shipped to the verified address on the Transaction Details page, and (3) The merchant provides valid proof of shipment within the required response window. 3-D Secure authentication and device telemetry provide complete safe-harbor immunity.",
+		Section:   "PayPal Seller Protection: unauthorized transactions",
+		Content:   "When a dispute or chargeback is filed under Unauthorized Transaction (claims that the cardholder or PayPal account holder did not authorize the charge), PayPal Seller Protection protects the merchant if: (1) The transaction was completed with PayPal account authorization, (2) The item was shipped to the verified address on the Transaction Details page, and (3) The merchant provides valid proof of shipment within the required response window.",
 		Keywords:  []string{"unauthorized", "unauth", "fraud", "stolen", "account takeover", "safe harbor", "3ds", "ip", "telemetry", "chargeback", "11.2"},
-		Reference: "PayPal User Agreement § 11.2 (Unauthorized Transaction Safe Harbor)",
+		Reference: "PayPal Seller Protection (Unauthorized Transactions)",
 	},
 	{
 		ID:        "pol_deadlines_11_5",
 		Title:     "PayPal Resolution Center Timelines & Escalation Deadlines",
 		Category:  "PAYPAL_POLICY",
-		Section:   "PayPal Resolution Center Procedures § 11.5",
-		Content:   "Merchants have 10 calendar days to respond to an Inquiry or Dispute. If escalated to a Claim, PayPal sets a strict deadline (typically 3 to 10 days) for evidence submission. Missing this deadline results in automatic forfeiture of funds in favor of the buyer with an additional non-refundable $15-$20 dispute fee. Automated evidence submission before the 48-hour deadline window prevents default losses.",
+		Section:   "PayPal Resolution Center: response deadlines",
+		Content:   "Merchants have 10 calendar days to respond to an Inquiry or Dispute. If escalated to a Claim, PayPal sets a strict deadline (typically 3 to 10 days) for evidence submission. Missing this deadline results in automatic forfeiture of funds in favor of the buyer with an additional non-refundable $15-$20 dispute fee.",
 		Keywords:  []string{"deadline", "time", "hours", "urgent", "resolution center", "inquiry", "claim", "forfeiture", "fee", "10 days", "48h"},
-		Reference: "PayPal Resolution Center Operating Guidelines § 11.5",
+		Reference: "PayPal Resolution Center (Response Deadlines)",
 	},
 	{
 		ID:        "da_standouts",
 		Title:     "Dispute Autopilot (DA) 5 Standout Features",
 		Category:  "DA_ARCHITECTURE",
 		Section:   "DA System Specification",
-		Content:   "1. Pre-Dispute Evidence Vault: Captures and cryptographically hashes (SHA-256) carrier tracking, receipts, and buyer telemetry at PAYMENT.CAPTURE.COMPLETED, ready in <4s when a dispute arrives. 2. Cited Drafts Verified by Plain Code: AI generates JSON claims citing specific vault evidence IDs; pure Go/TypeScript verifier checks facts before any approval is permitted. 3. Money-and-Clock Triage (AG Grid): Prioritizes disputes by financial exposure ($ at risk) and hours remaining, outputting deterministic FIGHT (98% confidence), ACCEPT, or ASK A HUMAN. 4. Trust Lab (6-Vector Penetration Suite): Validates resilience against forged webhook signatures, replay attacks, prompt injection in buyer notes, tampered amounts, expired actions, and double-submit race conditions (100% blocked). 5. Dispute Bench (40-Scenario Benchmark): Standardized evaluation proving 98% evidence completeness, 0 unsafe actions executed, and 0.2ms triage execution (~360,000x faster than 6-minute manual baseline).",
+		Content:   "1. Pre-Dispute Evidence Vault: Hashes (SHA-256) receipts, carrier tracking and delivery proof when the order is captured, so the evidence exists before a dispute arrives. 2. Cited Drafts Verified by Plain Code: the drafter returns claims citing specific vault evidence IDs; a plain Go verifier checks each fact before approval is allowed. 3. Money-and-Clock Triage (AG Grid): ranks disputes by money at risk and hours remaining, and a deterministic Evidence Strength Score recommends FIGHT, ACCEPT, or ASK A HUMAN. 4. Trust Lab: runs six attacks against the real defenses (forged webhook signatures, replays, prompt injection in buyer notes, tampered amounts, expired actions, double submits) and records each result. 5. Dispute Bench: a 40-scenario evaluation whose measured results are recorded when it runs. Quote Trust Lab and Bench results only from live state.",
 		Keywords:  []string{"standout", "features", "architecture", "evidence vault", "plain code", "triage", "trust lab", "bench", "why da", "hackathon", "win", "5 standout"},
-		Reference: "DA Technical Specification & Hackathon Submission",
+		Reference: "DA Technical Specification",
 	},
 	{
 		ID:        "da_safety_invariants",
 		Title:     "DA 7 Non-Negotiable Safety Invariants",
 		Category:  "DA_SECURITY",
 		Section:   "DA Security Specification",
-		Content:   "1. AI never submits anything: Merchant approval is strictly required prior to PayPal Resolution API submission. 2. Webhooks are the truth: Dispute status transitions only occur via cryptographically verified PayPal webhooks. 3. Duplicates do nothing: Database enforces unique event_id idempotency. 4. Untrusted text stays data: Buyer notes and external strings are sanitized in <DATA_BLOCK_UNTRUSTED> fences to prevent prompt injection. 5. No claim without a source: Pure deterministic code verifies every cited fact against stored hash before submission. 6. Secrets stay on server: API keys and credentials never enter client bundles. 7. Everything is audited: SHA-256 append-only immutable audit trail records all system transitions.",
+		Content:   "1. AI never submits anything: Merchant approval is strictly required prior to PayPal Resolution API submission. 2. Webhooks are the truth: Dispute status transitions only occur via cryptographically verified PayPal webhooks. 3. Duplicates do nothing: Database enforces unique event_id idempotency. 4. Untrusted text stays data: Buyer notes and external strings are sanitized in <DATA_BLOCK_UNTRUSTED> fences to prevent prompt injection. 5. No claim without a source: Pure deterministic code verifies every cited fact against stored hash before submission. 6. Secrets stay on server: API keys and credentials never enter client bundles. 7. Everything is audited: an audit log, with a SHA-256 hash per entry, records system transitions.",
 		Keywords:  []string{"safety", "invariants", "security", "never submits", "human in the loop", "approval", "prompt injection", "audit", "secrets", "7 invariants"},
 		Reference: "DA Security Invariants & Audit Manual",
 	},
@@ -102,7 +102,7 @@ var staticCorpus = []Document{
 		Title:     "Dispute Autopilot Core Value & Defense Architecture",
 		Category:  "EXECUTIVE_SUMMARY",
 		Section:   "Dispute Autopilot Value Proposition & Defense Architecture",
-		Content:   "Dispute Autopilot directly solves the $100B merchant dispute crisis. While generic AI tools hallucinate policies, DA provides an enterprise-ready, mathematically grounded defense engine with: (1) Real pre-dispute SHA-256 Evidence Vaulting, (2) Grounded RAG with strict PayPal Seller Protection citing, (3) Pure-code deterministic verification (0 hallucinations), (4) Provable 6-vector security penetration defense (Trust Lab), (5) 40-scenario benchmark proving 98% evidence capture at 0.2ms latency, saving merchants $1,240+ per dispute and replacing 6 days of stressful manual dispute preparation.",
+		Content:   "Dispute Autopilot helps PayPal sellers answer disputes with evidence they already hold. It provides: (1) SHA-256 hashed evidence captured before any dispute, (2) answers grounded in PayPal Seller Protection rules, (3) plain-code verification of every factual claim before approval, (4) a Trust Lab that attacks its own defenses and records the result, and (5) a 40-scenario benchmark. A human approves every action sent to PayPal.",
 		Keywords:  []string{"why win", "hackathon", "pitch", "competition", "winner", "executive summary", "value", "roi", "savings", "problem", "solution", "architecture", "standout"},
 		Reference: "Dispute Autopilot Architecture & Executive Summary",
 	},
@@ -173,7 +173,7 @@ func Retrieve(ctx context.Context, db *store.Store, userID string, query string)
 	}
 
 	if topK == 0 {
-		sb.WriteString("SOURCE [pol_inr_11_3] — PayPal Seller Protection § 11.3 (Proof of Delivery):\n")
+		sb.WriteString("SOURCE [pol_inr_11_3] — PayPal Seller Protection (Proof of Delivery):\n")
 		sb.WriteString(staticCorpus[0].Content)
 		sb.WriteString("\n────────────────────────────────────────────────────────────────────\n")
 		sb.WriteString("SOURCE [da_standouts] — DA 5 Standout Features:\n")
@@ -183,7 +183,7 @@ func Retrieve(ctx context.Context, db *store.Store, userID string, query string)
 		policyCount = 2
 	}
 
-	sb.WriteString("INSTRUCTIONS FOR AVA: Ground your answer strictly in these sources. Cite exact policy sections (e.g. [PayPal User Agreement § 11.3]) and evidence IDs (e.g. [ev_...]) where relevant. If asked why DA stands out, cite the 5 Core Features and measured 98% benchmarks.\n")
+	sb.WriteString("INSTRUCTIONS FOR AVA: Ground your answer strictly in these sources. Cite the policy by name (e.g. [PayPal Seller Protection (Proof of Delivery)]) and evidence IDs (e.g. [ev_...]) where relevant. Never invent section numbers. If asked why DA stands out, cite the 5 Core Features; quote benchmark numbers only from live state.\n")
 	sb.WriteString("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
 	return &RAGContext{
