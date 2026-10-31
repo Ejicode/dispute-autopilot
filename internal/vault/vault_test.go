@@ -130,4 +130,3 @@ func TestGenerateVaultPDFDossier(t *testing.T) {
 		t.Errorf("generated dossier should contain content, got %d bytes", len(pdfBytes))
 	}
 }
-

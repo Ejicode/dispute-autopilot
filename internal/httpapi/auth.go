@@ -236,7 +236,7 @@ func (a *API) runtimeMode(w http.ResponseWriter, r *http.Request, _ *types.UserA
 		"mode":                 string(sc.Mode),
 		"simulation_enabled":   sc.Mode == config.ModeDemo,
 		"provider_environment": provider,
-		"paypal_configured":   paypal.Default.IsConfigured(),
+		"paypal_configured":    paypal.Default.IsConfigured(),
 	})
 	return nil
 }
@@ -322,4 +322,3 @@ func (a *API) updateProfile(w http.ResponseWriter, r *http.Request) error {
 	httpx.JSON(w, http.StatusOK, map[string]any{"success": true, "user": updatedUser})
 	return nil
 }
-

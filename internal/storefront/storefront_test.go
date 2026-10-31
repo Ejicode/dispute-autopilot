@@ -164,4 +164,3 @@ func TestCheckoutMultiCurrency(t *testing.T) {
 		t.Fatalf("expected order currency EUR, got %v", order["currency"])
 	}
 }
-

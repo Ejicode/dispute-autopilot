@@ -255,4 +255,3 @@ func renderDossierFooter(pdf *fpdf.Fpdf, width float64) {
 	pdf.SetTextColor(128, 128, 128)
 	pdf.Text(40, 757, "Deterministic Evidence Vault Dossier | Evidence Audit Log")
 }
-

@@ -531,7 +531,7 @@ func (c *Client) AcknowledgeReturnItem(ctx context.Context, disputeID string, ac
 type TrackerInfo struct {
 	TransactionID  string `json:"transaction_id"`
 	TrackingNumber string `json:"tracking_number"`
-	Status         string `json:"status"` // SHIPPED, IN_TRANSIT, DELIVERED, RETURNED, CANCELLED
+	Status         string `json:"status"`  // SHIPPED, IN_TRANSIT, DELIVERED, RETURNED, CANCELLED
 	Carrier        string `json:"carrier"` // USPS, FEDEX, UPS, DHL, etc.
 	NotifyBuyer    bool   `json:"notify_buyer"`
 }
@@ -1148,7 +1148,7 @@ func (c *Client) TestConnection(ctx context.Context) (map[string]any, error) {
 		return map[string]any{
 			"configured": false,
 			"connected":  false,
-			"error":       "PayPal credentials (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET) not configured.",
+			"error":      "PayPal credentials (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET) not configured.",
 		}, nil
 	}
 
@@ -1167,7 +1167,7 @@ func (c *Client) TestConnection(ctx context.Context) (map[string]any, error) {
 		return map[string]any{
 			"configured": true,
 			"connected":  false,
-			"error":       err.Error(),
+			"error":      err.Error(),
 		}, nil
 	}
 	if res.status != http.StatusOK {

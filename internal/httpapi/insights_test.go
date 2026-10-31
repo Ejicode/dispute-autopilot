@@ -100,4 +100,3 @@ func TestVaultDossierEndpoints(t *testing.T) {
 		t.Errorf("expected total_records = 1, got %v", data["total_records"])
 	}
 }
-

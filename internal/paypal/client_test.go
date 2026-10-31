@@ -803,5 +803,3 @@ func TestTestConnection(t *testing.T) {
 		t.Errorf("expected 2 scopes, got %v", res["scope_count"])
 	}
 }
-
-
