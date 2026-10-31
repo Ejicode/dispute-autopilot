@@ -76,3 +76,48 @@ func TestPublishWithoutScopeIsNoop(t *testing.T) {
 	case <-time.After(20 * time.Millisecond):
 	}
 }
+
+// TestDemoBuyerEventsReachMerchantOnly checks that the demo buyer's purchases
+// notify the merchant whose workspace it shops in, while the merchant's own
+// events never reach the buyer.
+func TestDemoBuyerEventsReachMerchantOnly(t *testing.T) {
+	buyerCtx, err := scope.With(context.Background(), scope.DemoBuyerID, config.ModeDemo, nil)
+	if err != nil {
+		t.Fatalf("scope.With buyer: %v", err)
+	}
+	merchantCtx, err := scope.With(context.Background(), scope.DemoMerchantID, config.ModeDemo, nil)
+	if err != nil {
+		t.Fatalf("scope.With merchant: %v", err)
+	}
+	buyerCh, cancelBuyer := Default().Subscribe(Channel(config.ModeDemo, scope.DemoBuyerID))
+	t.Cleanup(cancelBuyer)
+	merchantCh, cancelMerchant := Default().Subscribe(Channel(config.ModeDemo, scope.DemoMerchantID))
+	t.Cleanup(cancelMerchant)
+
+	received := func(ch <-chan Event, eventType string) bool {
+		deadline := time.After(200 * time.Millisecond)
+		for {
+			select {
+			case ev := <-ch:
+				if ev.Type == eventType {
+					return true
+				}
+			case <-deadline:
+				return false
+			}
+		}
+	}
+
+	Default().Publish(buyerCtx, "ORDER_CAPTURED", map[string]any{"order_number": "DA-1"})
+	if !received(merchantCh, "ORDER_CAPTURED") {
+		t.Error("merchant did not receive the demo buyer's purchase")
+	}
+	if !received(buyerCh, "ORDER_CAPTURED") {
+		t.Error("demo buyer did not receive its own purchase")
+	}
+
+	Default().Publish(merchantCtx, "ACTION_APPROVED", map[string]any{})
+	if received(buyerCh, "ACTION_APPROVED") {
+		t.Error("merchant event leaked to the demo buyer")
+	}
+}

@@ -22,6 +22,21 @@ type Scope struct {
 var merchantIDPattern = regexp.MustCompile(`^usr_[a-f0-9]{32}$`)
 var demoMerchantIDPattern = regexp.MustCompile(`^usr_demo_[a-z0-9_]{3,32}$`)
 
+// Demo personas: in demo mode the seeded buyer shops in the demo merchant's
+// workspace, so its purchases and disputes reach that merchant.
+const (
+	DemoBuyerID    = "usr_demo_buyer_shopper"
+	DemoMerchantID = "usr_demo_da_admin"
+)
+
+// WorkspaceID is the merchant workspace whose data an account works in.
+func WorkspaceID(mode config.Mode, accountID string) string {
+	if mode == config.ModeDemo && accountID == DemoBuyerID {
+		return DemoMerchantID
+	}
+	return accountID
+}
+
 type ctxKey struct{}
 
 // ErrNoScope indicates business data was accessed without an authenticated scope.
