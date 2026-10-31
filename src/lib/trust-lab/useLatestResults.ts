@@ -20,14 +20,16 @@ interface AttackRunRow {
 /**
  * The most recent persisted result of each Trust Lab attack, newest run first.
  * Returns null while loading, and an empty list when the suite has never run,
- * so callers can say "not run yet" instead of claiming a result.
+ * so callers can say "not run yet" instead of claiming a result. Pass
+ * enabled=false where the viewer may not read lab results (the demo buyer).
  */
-export function useLatestTrustLabResults(): LatestAttackResult[] | null {
+export function useLatestTrustLabResults(enabled = true): LatestAttackResult[] | null {
   const { lastEvent } = useRealtime();
   const [results, setResults] = useState<LatestAttackResult[] | null>(null);
   const refreshKey = lastEvent?.type === 'ATTACK_BLOCKED' ? lastEvent.timestamp : null;
 
   useEffect(() => {
+    if (!enabled) return;
     let active = true;
     fetch('/api/trust-lab/run')
       .then((res) => (res.ok ? res.json() : { runs: [] }))
@@ -51,7 +53,7 @@ export function useLatestTrustLabResults(): LatestAttackResult[] | null {
     return () => {
       active = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, enabled]);
 
   return results;
 }

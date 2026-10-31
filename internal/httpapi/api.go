@@ -38,33 +38,33 @@ func New(webDir string) http.Handler {
 	mux.HandleFunc("GET /api/runtime", api.withMerchant(api.runtimeMode))
 	mux.HandleFunc("GET /api/events/stream", api.withMerchant(api.eventsStream))
 
-	mux.HandleFunc("GET /api/disputes", api.withMerchant(api.disputesList))
+	mux.HandleFunc("GET /api/disputes", api.withMerchant(merchantOnly(api.disputesList)))
 	mux.HandleFunc("POST /api/disputes", api.withMerchant(api.disputesCreate))
-	mux.HandleFunc("GET /api/disputes/{id}", api.withMerchant(api.disputeDetail))
-	mux.HandleFunc("GET /api/disputes/{id}/approve", api.withMerchant(api.approveReview))
+	mux.HandleFunc("GET /api/disputes/{id}", api.withMerchant(merchantOnly(api.disputeDetail)))
+	mux.HandleFunc("GET /api/disputes/{id}/approve", api.withMerchant(merchantOnly(api.approveReview)))
 	mux.HandleFunc("POST /api/disputes/{id}/approve", api.withMerchant(merchantOnly(api.approveExecute)))
-	mux.HandleFunc("GET /api/disputes/{id}/reconcile", api.withMerchant(api.reconcileHistory))
+	mux.HandleFunc("GET /api/disputes/{id}/reconcile", api.withMerchant(merchantOnly(api.reconcileHistory)))
 	mux.HandleFunc("POST /api/disputes/{id}/reconcile", api.withMerchant(merchantOnly(api.reconcileDispute)))
 	mux.HandleFunc("POST /api/disputes/{id}/verify-draft", api.withMerchant(merchantOnly(api.verifyDraft)))
 	mux.HandleFunc("POST /api/disputes/{id}/regenerate-draft", api.withMerchant(merchantOnly(api.regenerateDraft)))
-	mux.HandleFunc("GET /api/disputes/{id}/packet", api.withMerchant(api.disputePacket))
+	mux.HandleFunc("GET /api/disputes/{id}/packet", api.withMerchant(merchantOnly(api.disputePacket)))
 
 	mux.HandleFunc("GET /api/storefront/checkout", api.withMerchant(api.checkoutList))
 	mux.HandleFunc("POST /api/storefront/checkout", api.withMerchant(api.checkoutCreate))
 	mux.HandleFunc("POST /api/carrier/update", api.withMerchant(api.carrierUpdate))
 
-	mux.HandleFunc("GET /api/search", api.withMerchant(api.search))
-	mux.HandleFunc("GET /api/analytics", api.withMerchant(api.analytics))
-	mux.HandleFunc("GET /api/vault", api.withMerchant(api.vaultList))
+	mux.HandleFunc("GET /api/search", api.withMerchant(merchantOnly(api.search)))
+	mux.HandleFunc("GET /api/analytics", api.withMerchant(merchantOnly(api.analytics)))
+	mux.HandleFunc("GET /api/vault", api.withMerchant(merchantOnly(api.vaultList)))
 
-	mux.HandleFunc("GET /api/trust-lab/run", api.withMerchant(api.trustLabList))
+	mux.HandleFunc("GET /api/trust-lab/run", api.withMerchant(merchantOnly(api.trustLabList)))
 	mux.HandleFunc("POST /api/trust-lab/run", api.withMerchant(merchantOnly(api.trustLabRun)))
-	mux.HandleFunc("GET /api/bench/run", api.withMerchant(api.benchList))
+	mux.HandleFunc("GET /api/bench/run", api.withMerchant(merchantOnly(api.benchList)))
 	mux.HandleFunc("POST /api/bench/run", api.withMerchant(merchantOnly(api.benchRun)))
 	mux.HandleFunc("POST /api/demo/seed", api.withMerchant(merchantOnly(api.demoSeed)))
 
-	mux.HandleFunc("GET /api/ai-assistant", api.withMerchant(api.assistantHistory))
-	mux.HandleFunc("POST /api/ai-assistant", api.withMerchant(api.assistantSend))
+	mux.HandleFunc("GET /api/ai-assistant", api.withMerchant(merchantOnly(api.assistantHistory)))
+	mux.HandleFunc("POST /api/ai-assistant", api.withMerchant(merchantOnly(api.assistantSend)))
 
 	mux.HandleFunc("POST /api/webhooks/paypal", api.paypalWebhook)
 
@@ -77,7 +77,8 @@ type merchantHandler func(w http.ResponseWriter, r *http.Request, user *types.Us
 
 // merchantOnly refuses the demo buyer persona. In demo mode the buyer shares
 // the demo merchant's workspace to shop and open disputes, but must not act as
-// that merchant: approving, submitting, regenerating or resetting data.
+// that merchant (approving, submitting, regenerating or resetting data) or
+// read its disputes, vault, analytics, lab results or assistant.
 func merchantOnly(handler merchantHandler) merchantHandler {
 	return func(w http.ResponseWriter, r *http.Request, user *types.UserAccount) error {
 		if user.ID == store.DemoBuyerID {

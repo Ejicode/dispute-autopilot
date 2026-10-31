@@ -25,11 +25,16 @@ import {
 } from 'lucide-react';
 import { DemoOrder } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
+import { useUser } from '@/components/UserContext';
+import { isDemoBuyer } from '@/lib/persona';
 import { PRODUCTS, Product } from '@/lib/storefront/catalog';
 
 const MILESTONES = ["LABEL_CREATED", "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
 
 export default function StorefrontPage() {
+  const { activeUser } = useUser();
+  // Signed-out visitors and the demo buyer get the shopper view; merchants also see sales data.
+  const isBuyer = !activeUser || isDemoBuyer(activeUser);
   const { lastEvent } = useRealtime();
   const [orders, setOrders] = useState<DemoOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -48,6 +53,10 @@ export default function StorefrontPage() {
       else if (window.location.hash === '#captured-orders') setActiveTab('orders');
     }
   }, []);
+
+  useEffect(() => {
+    if (isBuyer && activeTab === 'customers') setActiveTab('catalog');
+  }, [isBuyer, activeTab]);
 
   const handleTabChange = (tab: 'catalog' | 'orders' | 'customers') => {
     setActiveTab(tab);
@@ -357,7 +366,7 @@ export default function StorefrontPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 card-3d-reflection">
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Sales &amp; Storefront Catalog</h1>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">{isBuyer ? 'Store' : 'Sales & Storefront Catalog'}</h1>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-[#003087] border border-blue-100">
                 52 Verified Products
               </span>
@@ -385,20 +394,22 @@ export default function StorefrontPage() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#FFC439] bg-white/10 px-2 py-0.5 rounded-full border border-white/15">
-                  PayPal Sandbox Buyer Wallet
+                  Demo wallet
                 </span>
                 <span className="text-xs text-blue-200">
-                  Shopper: <strong>Jordan Miller</strong> (Verified Demo Buyer)
+                  {isBuyer
+                    ? <>Shopper: <strong>{activeUser?.name || 'Guest'}</strong></>
+                    : 'Place simulated sales as a demo buyer'}
                 </span>
               </div>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   ${(paypalBalance / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
-                <span className="text-xs font-bold text-blue-200">USD PayPal Fake Money</span>
+                <span className="text-xs font-bold text-blue-200">USD fake money</span>
               </div>
               <p className="text-[11px] text-blue-100/80 mt-0.5">
-                Use your fake PayPal money to purchase any product. The order and cryptographic proof are immediately sent to the Merchant Console.
+                Buy any product with fake money. Each order's receipt is SHA-256 hashed into the merchant's Evidence Vault.
               </p>
             </div>
           </div>
@@ -413,17 +424,20 @@ export default function StorefrontPage() {
               <Zap className="w-3.5 h-3.5 text-[#FFC439]" />
               <span>+ $1,000 Fake $</span>
             </button>
-            <Link
-              href="/"
-              className="px-4 py-2 rounded-xl bg-[#FFC439] hover:bg-[#F59E0B] text-slate-900 text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-[#003087]" />
-              <span>View Merchant Console →</span>
-            </Link>
+            {!isBuyer && (
+              <Link
+                href="/"
+                className="px-4 py-2 rounded-xl bg-[#FFC439] hover:bg-[#F59E0B] text-slate-900 text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#003087]" />
+                <span>View Merchant Console →</span>
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* ── 4 Executive Sales KPI Cards ── */}
+        {/* ── 4 Executive Sales KPI Cards (merchant only) ── */}
+        {!isBuyer && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
@@ -472,6 +486,7 @@ export default function StorefrontPage() {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* ── Main Tab Navigation Bar ── */}
@@ -497,9 +512,10 @@ export default function StorefrontPage() {
           }`}
         >
           <Truck className="w-4 h-4" />
-          <span>Captured Orders ({orders.length})</span>
+          <span>{isBuyer ? 'Orders' : 'Captured Orders'} ({orders.length})</span>
         </button>
 
+        {!isBuyer && (
         <button
           onClick={() => handleTabChange('customers')}
           className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
@@ -511,6 +527,7 @@ export default function StorefrontPage() {
           <User className="w-4 h-4" />
           <span>Customer Directory ({customers.length})</span>
         </button>
+        )}
       </div>
 
       {/* ── Catalog View ── */}
@@ -867,7 +884,7 @@ export default function StorefrontPage() {
       )}
 
       {/* ── Customer Directory View ── */}
-      {activeTab === 'customers' && (
+      {activeTab === 'customers' && !isBuyer && (
         <div className="space-y-4 pt-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">

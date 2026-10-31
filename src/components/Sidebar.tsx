@@ -20,6 +20,7 @@ import {
 import Logo from './Logo';
 import { useUser } from './UserContext';
 import { useLatestTrustLabResults } from '@/lib/trust-lab/useLatestResults';
+import { isDemoBuyer } from '@/lib/persona';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -28,18 +29,32 @@ interface SidebarProps {
   onNavigate?: () => void;
 }
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  exact?: boolean;
+  matchPrefix?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
 export default function Sidebar({
   collapsed = false,
   onToggleCollapse,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
-  const trustLab = useLatestTrustLabResults();
+  const { activeUser, logout } = useUser();
+  const isBuyer = isDemoBuyer(activeUser);
+  const trustLab = useLatestTrustLabResults(!isBuyer);
   const blockedCount = trustLab?.filter((r) => r.blocked).length ?? 0;
   const allBlocked = !!trustLab && trustLab.length > 0 && blockedCount === trustLab.length;
-  const { logout } = useUser();
 
-  const menuSections = [
+  const merchantSections: NavSection[] = [
     {
       title: 'PLATFORM',
       items: [
@@ -63,6 +78,15 @@ export default function Sidebar({
       ],
     },
   ];
+
+  // The demo buyer only shops; merchant pages are not part of its navigation.
+  const buyerSections: NavSection[] = [
+    {
+      title: 'SHOP',
+      items: [{ href: '/storefront', label: 'Store', icon: Tag }],
+    },
+  ];
+  const menuSections = isBuyer ? buyerSections : merchantSections;
 
   return (
     <aside
@@ -162,9 +186,9 @@ export default function Sidebar({
         </nav>
       </div>
 
-      {/* ── Bottom Card: Invariant Defense Guard Telemetry ── */}
+      {/* ── Bottom Card: Invariant Defense Guard Telemetry (merchant only) ── */}
       <div className="pt-2">
-        {!collapsed ? (
+        {!collapsed && !isBuyer ? (
           <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#001433] text-white p-4 rounded-3xl shadow-md space-y-3 relative overflow-hidden border border-blue-400/25">
             <div className="flex items-center justify-between">
               <div className="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center border border-blue-400/30">

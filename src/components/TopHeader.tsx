@@ -17,6 +17,7 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import { useUser } from './UserContext';
+import { isDemoBuyer } from '@/lib/persona';
 import SearchBar from './SearchBar';
 
 interface TopHeaderProps {
@@ -53,6 +54,7 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const { activeUser, logout } = useUser();
+  const isBuyer = isDemoBuyer(activeUser);
   const pathname = usePathname() || '';
   const isStorefront = pathname.startsWith('/storefront');
 
@@ -104,16 +106,20 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
         </div>
       </div>
 
-      {/* ── Center / In-Place Search Bar (Desktop/Tablet) ── */}
-      <div className="hidden md:block flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2 sm:mx-4">
-        <SearchBar variant="light" placeholder="Search transactions, items, disputes…" />
-      </div>
+      {/* ── Center / In-Place Search Bar (Desktop/Tablet); merchant data, so not for the buyer ── */}
+      {!isBuyer ? (
+        <div className="hidden md:block flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2 sm:mx-4">
+          <SearchBar variant="light" placeholder="Search transactions, items, disputes…" />
+        </div>
+      ) : (
+        <div className="flex-1" />
+      )}
 
       {/* ── Right Side: Mail Envelope & User Profile Pill ── */}
       <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
 
-        {/* Quick Persona Switcher */}
-        {isStorefront ? (
+        {/* Quick Persona Switcher (merchant only: the buyer has no merchant console) */}
+        {isBuyer ? null : isStorefront ? (
           <Link
             href="/"
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-sm"
@@ -291,7 +297,7 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
                 {activeUser?.name || 'Merchant Admin'}
               </span>
               <span className="text-[10px] text-slate-400 block leading-none truncate max-w-[120px]">
-                {activeUser?.role === 'admin' ? 'Admin Officer' : (activeUser?.role || 'Admin Officer')}
+                {isBuyer ? 'Demo buyer' : 'Merchant admin'}
               </span>
             </div>
 
