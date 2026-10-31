@@ -798,14 +798,14 @@ export default function AiAssistant() {
               </button>
               <button
                 type="button"
-                onClick={() => sendMessage("Retrieve PayPal Seller Protection rules for Case PP-D-99214")}
+                onClick={() => sendMessage("Which PayPal Seller Protection rules apply to my most urgent dispute?")}
                 className="px-2.5 py-1 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold text-[#003087] whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1"
               >
                 <span>🔍 Seller Protection</span>
               </button>
               <button
                 type="button"
-                onClick={() => sendMessage("Show evidence vault verification for $1,240 drone")}
+                onClick={() => sendMessage("Show the evidence vault verification for my most urgent dispute")}
                 className="px-2.5 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-[10px] font-bold text-indigo-900 whitespace-nowrap btn-press transition-all cursor-pointer flex items-center gap-1"
               >
                 <span>🛡️ Vault Proof</span>
