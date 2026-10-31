@@ -230,11 +230,6 @@ export default function Sidebar({
               </Link>
             </div>
 
-            <div className="pt-1 text-center border-t border-white/10">
-              <span className="text-[9px] font-bold text-blue-200/75 tracking-wider uppercase block">
-                PayPal REST APIs • Ava AI Defense
-              </span>
-            </div>
           </div>
         ) : (
           <button

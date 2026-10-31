@@ -55,7 +55,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (path.startsWith('/storefront')) return 'Sales & Storefront Orders';
     if (path.startsWith('/trust-lab')) return 'Trust Lab — Security Penetration Suite';
     if (path.startsWith('/bench')) return 'Dispute Bench — 40-Scenario Evaluation';
-    if (path.startsWith('/profile')) return 'Merchant Profile & API Settings';
+    if (path.startsWith('/vault')) return 'Evidence Vault';
+    if (path.startsWith('/profile')) return 'Merchant Profile';
     return 'Dispute Autopilot';
   };
 
@@ -192,7 +193,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           title={isDemoBuyer(activeUser) ? 'Store' : getPageTitle(normalizedPath)} 
           onToggleSidebar={() => setMobileDrawerOpen(prev => !prev)} 
         />
-        <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-2 pb-6 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-2 pb-24 custom-scrollbar">
           <div className="max-w-[1600px] mx-auto">
             {sessionError && <p role="alert" className="mb-4 text-sm text-rose-700">{sessionError}</p>}
             {children}

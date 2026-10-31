@@ -12,7 +12,6 @@ import {
   RefreshCw, 
   PlusCircle, 
   Filter, 
-  ChevronDown, 
   ShieldCheck, 
   CheckCircle2, 
   Clock, 
@@ -48,8 +47,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
   const [seeding, setSeeding] = useState(false);
-  const [timeframe, setTimeframe] = useState<'This year' | 'This month' | 'All time'>('This year');
-  const [timeframeDropdownOpen, setTimeframeDropdownOpen] = useState(false);
 
   // Interactive filters
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -181,12 +178,8 @@ export default function DashboardPage() {
         sales: Math.round(p.protectedVolume || (kpis.totalProtectedCents / 100)),
       }));
     }
-    return [
-      { month: 'Oct 20', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
-      { month: 'Oct 22', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
-      { month: 'Oct 24', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
-      { month: 'Oct 26', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
-    ];
+    // No placeholder dates: an empty chart is honest until analytics load.
+    return [];
   }, [analytics?.wavePoints, kpis.totalAtRiskCents, kpis.totalProtectedCents]);
 
   // Product / Dispute Reason Breakdown (Solid Pie Chart from live analytics.donutCategories)
@@ -448,35 +441,10 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-4 flex-wrap">
-                {/* Timeframe Dropdown Pill (e.g. "This year ∨") */}
-                <div className="relative">
-                  <button
-                    onClick={() => setTimeframeDropdownOpen(!timeframeDropdownOpen)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 text-xs font-bold text-slate-700 transition-colors cursor-pointer"
-                  >
-                    <span>{timeframe}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-                  </button>
-
-                  {timeframeDropdownOpen && (
-                    <div className="absolute right-0 mt-1 w-36 bg-white rounded-2xl shadow-xl border border-slate-200 py-1 z-30 animate-in fade-in">
-                      {(['This year', 'This month', 'All time'] as const).map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => {
-                            setTimeframe(opt);
-                            setTimeframeDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 transition-colors ${
-                            timeframe === opt ? 'text-[#003087] font-bold bg-blue-50' : 'text-slate-700'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {/* The analytics API returns the last 8 days, cumulative */}
+                <span className="px-3 py-1.5 rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                  Last 8 days · cumulative
+                </span>
 
                 {/* Legend Indicators */}
                 <div className="flex items-center gap-4 text-xs font-bold text-slate-600">
@@ -509,7 +477,7 @@ export default function DashboardPage() {
                     tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 600 }} 
                   />
                   <YAxis 
-                    tickFormatter={(v) => (v === 0 ? '$0' : v >= 1000 ? `$${Math.round(v / 1000)}K` : `$${v}`)}
+                    tickFormatter={(v) => (v >= 1000 ? `$${Number((v / 1000).toFixed(1))}K` : `$${v}`)}
                     tickLine={false} 
                     axisLine={false} 
                     tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 500 }}
@@ -611,7 +579,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs font-black text-slate-900">{item.value.toLocaleString()} cases</span>
+                      <span className="text-xs font-black text-slate-900">{item.value.toLocaleString()} {item.value === 1 ? 'case' : 'cases'}</span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-[#003087] text-white' : 'bg-blue-100 text-[#003087]'}`}>
                         {isSelected ? 'Filtered ✓' : item.change}
                       </span>

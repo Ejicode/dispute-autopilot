@@ -74,7 +74,9 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const avatarUrl = activeUser?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80';
+  // Without an uploaded avatar, show the initial (as the profile page does), not a stranger's photo.
+  const avatarUrl = activeUser?.avatar_url || null;
+  const initial = (activeUser?.name || 'M').trim().charAt(0).toUpperCase();
   const formattedDate = formatOrdinalDate(new Date());
 
   return (
@@ -96,9 +98,6 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
               {title}
             </h1>
-            <span className="hidden lg:inline-flex items-center gap-1 ml-2.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200/80 text-[10px] font-extrabold text-[#003087]">
-              PayPal • Ava AI Defense
-            </span>
           </div>
           <p className="text-xs font-semibold text-slate-400 mt-1">
             {formattedDate}
@@ -109,7 +108,7 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
       {/* ── Center / In-Place Search Bar (Desktop/Tablet); merchant data, so not for the buyer ── */}
       {!isBuyer ? (
         <div className="hidden md:block flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2 sm:mx-4">
-          <SearchBar variant="light" placeholder="Search transactions, items, disputes…" />
+          <SearchBar variant="light" placeholder="Search disputes, orders…" />
         </div>
       ) : (
         <div className="flex-1" />
@@ -284,11 +283,17 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
           >
             {/* Circular Picture Avatar */}
             <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-slate-200 shadow-sm shrink-0">
-              <img
-                src={avatarUrl}
-                alt={activeUser?.name || 'Merchant Admin'}
-                className="w-full h-full object-cover"
-              />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={activeUser?.name || 'Merchant Admin'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="w-full h-full flex items-center justify-center bg-blue-50 text-[#003087] text-sm font-black">
+                  {initial}
+                </span>
+              )}
               <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white" />
             </div>
 
@@ -311,11 +316,17 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
               className="absolute right-0 top-full mt-2.5 w-72 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/15 border border-slate-200 p-3 text-slate-800 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-left"
             >
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2 flex items-center gap-3">
-                <img
-                  src={avatarUrl}
-                  alt={activeUser?.name || 'Merchant Admin'}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-[#003087]/30 shadow-sm shrink-0"
-                />
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={activeUser?.name || 'Merchant Admin'}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-[#003087]/30 shadow-sm shrink-0"
+                  />
+                ) : (
+                  <span className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-50 text-[#003087] text-base font-black ring-2 ring-[#003087]/30 shadow-sm shrink-0">
+                    {initial}
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
                     <span>{activeUser?.name || 'Merchant Admin'}</span>
