@@ -23,10 +23,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('admin@disputeautopilot.com');
   const [password, setPassword] = useState('Password12345678!');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [showDemoLogins, setShowDemoLogins] = useState(false);
 
   useEffect(() => {
     if (!loading && activeUser) {
@@ -75,7 +74,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-xs text-blue-200/80 font-medium">
-          PayPal Operations Platform
+          Dispute operations for PayPal merchants
         </div>
       </div>
 
@@ -123,7 +122,7 @@ export default function LoginPage() {
               }`}
             >
               <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-              <span>Buyer ($5k Fake $)</span>
+              <span>Buyer</span>
             </button>
           </div>
 
@@ -185,22 +184,15 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded text-[#003087] focus:ring-[#003087] border-slate-300 accent-[#003087]"
-                />
-                <span>Remember me</span>
-              </label>
+            {/* Sessions always last 7 days and there is no password reset, so the only
+                helper here is the demo-login picker. */}
+            <div className="flex items-center justify-end text-xs">
               <button
                 type="button"
-                onClick={() => setShowForgotModal(true)}
+                onClick={() => setShowDemoLogins(true)}
                 className="text-xs text-slate-500 hover:text-[#0070BA] cursor-pointer"
               >
-                Forgot Password?
+                Demo logins
               </button>
             </div>
 
@@ -225,42 +217,44 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {showForgotModal && (
+      {showDemoLogins && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">Demo Credentials</h3>
               <button 
                 type="button" 
-                onClick={() => setShowForgotModal(false)}
+                onClick={() => setShowDemoLogins(false)}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="space-y-2 text-xs">
-              <div 
+              <button
+                type="button"
                 onClick={() => {
                   setEmail('admin@disputeautopilot.com');
                   setPassword('Password12345678!');
-                  setShowForgotModal(false);
+                  setShowDemoLogins(false);
                 }}
-                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#003087] cursor-pointer"
+                className="w-full text-left p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#003087] cursor-pointer"
               >
                 <span className="font-bold text-slate-800 block">Merchant</span>
                 <span className="text-[11px] text-slate-500 font-mono block">admin@disputeautopilot.com</span>
-              </div>
-              <div 
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   setEmail('buyer@disputeautopilot.com');
                   setPassword('Password12345678!');
-                  setShowForgotModal(false);
+                  setShowDemoLogins(false);
                 }}
-                className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0070BA] cursor-pointer"
+                className="w-full text-left p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0070BA] cursor-pointer"
               >
                 <span className="font-bold text-slate-800 block">Buyer</span>
                 <span className="text-[11px] text-slate-500 font-mono block">buyer@disputeautopilot.com</span>
-              </div>
+              </button>
             </div>
           </div>
         </div>

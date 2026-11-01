@@ -100,9 +100,13 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
           <div className="min-w-0">
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Payment</span>
             <span className="font-bold text-emerald-600 text-sm block">
-              {formatCurrency(data.total_cents || 0, data.currency || 'USD')}
+              {(() => {
+                // Receipts record the total as total_cents (checkout) or amount_cents (seed data).
+                const cents = data.total_cents ?? data.amount_cents;
+                return typeof cents === 'number' ? formatCurrency(cents, data.currency || 'USD') : 'Amount not recorded';
+              })()}
             </span>
-            <span className="text-[11px] text-slate-500 truncate block">{data.payment_method || 'PayPal Express Checkout'}</span>
+            <span className="text-[11px] text-slate-500 truncate block">{data.payment_method || 'Payment method not recorded'}</span>
           </div>
         </div>
       </div>
@@ -212,7 +216,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
               <span className="text-[11px] text-slate-500 font-mono truncate block">{buyerEmail}</span>
             ) : (
               <span className="text-[11px] text-slate-500 font-medium block">
-                {isSignatureThreshold ? 'PayPal § 11.3(b) Compliant' : 'Checkout Grounding'}
+                {isSignatureThreshold ? 'Signature required ($750+)' : 'Checkout Grounding'}
               </span>
             )}
           </div>
@@ -226,7 +230,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
               {isSignatureThreshold ? 'Adult Signature Required' : '30-Day Inspection Window'}
             </span>
             <span className="text-[11px] text-emerald-700 font-medium block">
-              {isSignatureThreshold ? 'Carrier Tracking Intakes' : 'Verified at Checkout ✓'}
+              {isSignatureThreshold ? 'Carrier Tracking Intakes' : 'Captured at checkout'}
             </span>
           </div>
         </div>
@@ -304,7 +308,7 @@ export default function EvidenceCard({ item, isHighlighted }: EvidenceCardProps)
         <div className="flex items-center gap-1.5 shrink-0">
           <div 
             className="flex items-center gap-1 font-mono text-[10px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80 font-bold shrink-0"
-            title={`Immutable SHA-256 Hash: ${item.sha256_hash}`}
+            title={`SHA-256 hash: ${item.sha256_hash}`}
           >
             <Hash className="w-2.5 h-2.5 text-emerald-600" />
             <span>{item.sha256_hash.substring(0, 10)}…</span>

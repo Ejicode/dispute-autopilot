@@ -86,7 +86,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="text-xs text-blue-200/80 font-medium">
-          PayPal Operations Platform
+          Dispute operations for PayPal merchants
         </div>
       </div>
 
@@ -211,7 +211,7 @@ export default function RegisterPage() {
               disabled={submitting}
               className="w-full rounded-xl bg-[#003087] hover:bg-[#001C48] py-3 font-bold text-white text-xs sm:text-sm transition-all shadow-md shadow-[#003087]/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              <span>{submitting ? 'Creating Account…' : 'Create Account'}</span>
+              <span>{submitting ? 'Creating Account…' : 'Create account'}</span>
               {!submitting && <ArrowRight className="w-4 h-4" />}
             </button>
 

@@ -57,6 +57,11 @@ export default function EvidenceVaultPage() {
   }, []);
 
   // Filter items based on type and search query
+  const latestCapture = useMemo(() => {
+    const times = items.map((item) => new Date(item.captured_at).getTime()).filter((t) => !Number.isNaN(t));
+    return times.length ? new Date(Math.max(...times)) : null;
+  }, [items]);
+
   const filteredItems = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return items.filter((item) => {
@@ -112,10 +117,10 @@ export default function EvidenceVaultPage() {
             <span>Evidence Vault</span>
           </h1>
           <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
-            SHA-256 Chained
+            SHA-256 per record
           </span>
           <span className="bg-blue-50 text-[#003087] border border-blue-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-            Immutable
+            Tamper-evident
           </span>
         </div>
 
@@ -201,7 +206,7 @@ export default function EvidenceVaultPage() {
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#003087] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
-              Tamper-Proof
+              Tamper-evident
             </span>
           </div>
         </div>
@@ -209,19 +214,19 @@ export default function EvidenceVaultPage() {
         {/* Card 3: Capture Latency */}
         <div className="card-3d-reflection rounded-3xl p-5 flex flex-col justify-between min-h-[140px] group hover:scale-[1.02] transition-transform">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Capture Time</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Latest Capture</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
               <FileCheck className="w-4 h-4" />
             </div>
           </div>
           <div className="my-1.5">
-            <span className="text-3xl font-black text-emerald-600 tracking-tight leading-none">
-              &lt; 4s
+            <span className="text-xl font-black text-emerald-600 tracking-tight leading-none">
+              {latestCapture ? latestCapture.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
             </span>
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Pre-Dispute
+              Captured at payment
             </span>
           </div>
         </div>
@@ -235,8 +240,8 @@ export default function EvidenceVaultPage() {
             </div>
           </div>
           <div className="my-1.5">
-            <span className="text-2xl font-black text-slate-900 tracking-tight leading-none">
-              § 11.3 &amp; (b)
+            <span className="text-lg font-black text-slate-900 tracking-tight leading-none">
+              Delivery &amp; signature
             </span>
           </div>
           <div>

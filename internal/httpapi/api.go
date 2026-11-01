@@ -41,39 +41,66 @@ func New(webDir string) http.Handler {
 	mux.HandleFunc("GET /api/paypal/status", api.withMerchant(api.paypalStatus))
 	mux.HandleFunc("GET /api/events/stream", api.withMerchant(api.eventsStream))
 
-	mux.HandleFunc("GET /api/disputes", api.withMerchant(api.disputesList))
+	mux.HandleFunc("GET /api/disputes", api.withMerchant(merchantOnly(api.disputesList)))
 	mux.HandleFunc("POST /api/disputes", api.withMerchant(api.disputesCreate))
-	mux.HandleFunc("GET /api/disputes/{id}", api.withMerchant(api.disputeDetail))
-	mux.HandleFunc("GET /api/disputes/{id}/approve", api.withMerchant(api.approveReview))
+	mux.HandleFunc("GET /api/disputes/{id}", api.withMerchant(merchantOnly(api.disputeDetail)))
+	mux.HandleFunc("GET /api/disputes/{id}/approve", api.withMerchant(merchantOnly(api.approveReview)))
 	mux.HandleFunc("POST /api/disputes/{id}/approve", api.withMerchant(merchantOnly(api.approveExecute)))
-	mux.HandleFunc("GET /api/disputes/{id}/reconcile", api.withMerchant(api.reconcileHistory))
+	mux.HandleFunc("GET /api/disputes/{id}/reconcile", api.withMerchant(merchantOnly(api.reconcileHistory)))
 	mux.HandleFunc("POST /api/disputes/{id}/reconcile", api.withMerchant(merchantOnly(api.reconcileDispute)))
 	mux.HandleFunc("POST /api/disputes/{id}/verify-draft", api.withMerchant(merchantOnly(api.verifyDraft)))
 	mux.HandleFunc("POST /api/disputes/{id}/regenerate-draft", api.withMerchant(merchantOnly(api.regenerateDraft)))
-	mux.HandleFunc("GET /api/disputes/{id}/packet", api.withMerchant(api.disputePacket))
+	mux.HandleFunc("GET /api/disputes/{id}/packet", api.withMerchant(merchantOnly(api.disputePacket)))
 
 	mux.HandleFunc("GET /api/storefront/checkout", api.withMerchant(api.checkoutList))
 	mux.HandleFunc("POST /api/storefront/checkout", api.withMerchant(api.checkoutCreate))
 	mux.HandleFunc("POST /api/carrier/update", api.withMerchant(api.carrierUpdate))
 
-	mux.HandleFunc("GET /api/search", api.withMerchant(api.search))
-	mux.HandleFunc("GET /api/analytics", api.withMerchant(api.analytics))
-	mux.HandleFunc("GET /api/vault", api.withMerchant(api.vaultList))
-	mux.HandleFunc("GET /api/vault/dossier", api.withMerchant(api.vaultDossier))
+	mux.HandleFunc("GET /api/search", api.withMerchant(merchantOnly(api.search)))
+	mux.HandleFunc("GET /api/analytics", api.withMerchant(merchantOnly(api.analytics)))
+	mux.HandleFunc("GET /api/vault", api.withMerchant(merchantOnly(api.vaultList)))
+	mux.HandleFunc("GET /api/vault/dossier", api.withMerchant(merchantOnly(api.vaultDossier)))
 
-	mux.HandleFunc("GET /api/trust-lab/run", api.withMerchant(api.trustLabList))
+	mux.HandleFunc("GET /api/trust-lab/run", api.withMerchant(merchantOnly(api.trustLabList)))
 	mux.HandleFunc("POST /api/trust-lab/run", api.withMerchant(merchantOnly(api.trustLabRun)))
-	mux.HandleFunc("GET /api/bench/run", api.withMerchant(api.benchList))
+	mux.HandleFunc("GET /api/bench/run", api.withMerchant(merchantOnly(api.benchList)))
 	mux.HandleFunc("POST /api/bench/run", api.withMerchant(merchantOnly(api.benchRun)))
 	mux.HandleFunc("POST /api/demo/seed", api.withMerchant(merchantOnly(api.demoSeed)))
 
-	mux.HandleFunc("GET /api/ai-assistant", api.withMerchant(api.assistantHistory))
-	mux.HandleFunc("POST /api/ai-assistant", api.withMerchant(api.assistantSend))
+	mux.HandleFunc("GET /api/ai-assistant", api.withMerchant(merchantOnly(api.assistantHistory)))
+	mux.HandleFunc("POST /api/ai-assistant", api.withMerchant(merchantOnly(api.assistantSend)))
 
 	mux.HandleFunc("POST /api/webhooks/paypal", api.paypalWebhook)
 
 	mux.HandleFunc("/", api.static)
-	return mux
+	return securityHeaders(mux)
+}
+
+// contentSecurityPolicy allows only what the exported UI loads: its own
+// scripts (Next.js inlines its bootstrap, hence 'unsafe-inline'), Google
+// Fonts, and HTTPS images (catalog photos and avatar URLs). frame-ancestors
+// stops other sites from framing the console to trick a click on Approve.
+const contentSecurityPolicy = "default-src 'self'; " +
+	"script-src 'self' 'unsafe-inline'; " +
+	"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+	"font-src 'self' https://fonts.gstatic.com data:; " +
+	"img-src 'self' data: https:; " +
+	"connect-src 'self'; " +
+	"frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+// securityHeaders sets browser protections on every response.
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("Content-Security-Policy", contentSecurityPolicy)
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		if config.Production() {
+			h.Set("Strict-Transport-Security", "max-age=31536000")
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // merchantHandler is a handler that only runs inside an authenticated workspace.
@@ -81,7 +108,8 @@ type merchantHandler func(w http.ResponseWriter, r *http.Request, user *types.Us
 
 // merchantOnly refuses the demo buyer persona. In demo mode the buyer shares
 // the demo merchant's workspace to shop and open disputes, but must not act as
-// that merchant: approving, submitting, regenerating or resetting data.
+// that merchant (approving, submitting, regenerating or resetting data) or
+// read its disputes, vault, analytics, lab results or assistant.
 func merchantOnly(handler merchantHandler) merchantHandler {
 	return func(w http.ResponseWriter, r *http.Request, user *types.UserAccount) error {
 		if user.ID == store.DemoBuyerID {

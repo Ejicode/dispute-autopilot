@@ -608,4 +608,10 @@ func TestHTTPApiEndToEnd(t *testing.T) {
 		"/api/disputes/any/reconcile", "/api/disputes/any/verify-draft", "/api/disputes/any/regenerate-draft"} {
 		check(do("POST", path, buyerToken, origin, map[string]any{}).status == 403, "demo buyer cannot POST "+path)
 	}
+	for _, path := range []string{"/api/disputes", "/api/disputes/any", "/api/disputes/any/approve", "/api/disputes/any/reconcile",
+		"/api/disputes/any/packet", "/api/search?q=a", "/api/analytics", "/api/vault", "/api/trust-lab/run", "/api/bench/run", "/api/ai-assistant"} {
+		check(do("GET", path, buyerToken, "", nil).status == 403, "demo buyer cannot GET "+path)
+	}
+	check(do("GET", "/api/storefront/checkout", buyerToken, "", nil).status == 200, "demo buyer can list store orders")
+	check(do("GET", "/api/runtime", buyerToken, "", nil).status == 200, "demo buyer can read the mode")
 }

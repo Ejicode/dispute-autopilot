@@ -684,8 +684,8 @@ func TestVerifySellerProtectionAddressExact(t *testing.T) {
 	if len(result.MismatchFields) != 0 {
 		t.Errorf("expected 0 mismatches, got %v", result.MismatchFields)
 	}
-	if result.PolicySection != "§ 11.3" {
-		t.Errorf("expected § 11.3, got %s", result.PolicySection)
+	if result.PolicySection != "Proof of delivery" {
+		t.Errorf("expected the proof-of-delivery rule, got %s", result.PolicySection)
 	}
 }
 
@@ -803,5 +803,3 @@ func TestTestConnection(t *testing.T) {
 		t.Errorf("expected 2 scopes, got %v", res["scope_count"])
 	}
 }
-
-

@@ -8,6 +8,7 @@ import TopHeader from '@/components/TopHeader';
 import CreateAccountModal from '@/components/CreateAccountModal';
 import { useUser } from '@/components/UserContext';
 import Logo from '@/components/Logo';
+import { isDemoBuyer } from '@/lib/persona';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -39,6 +40,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [userLoading, activeUser, isAuthPage, isPublicBuyerPage, router]);
 
+  // The demo buyer only shops: keep it on the storefront, away from merchant pages.
+  const buyerOnMerchantPage = isDemoBuyer(activeUser) && !isAuthPage && !isPublicBuyerPage;
+  useEffect(() => {
+    if (!userLoading && buyerOnMerchantPage) {
+      router.replace('/storefront');
+    }
+  }, [userLoading, buyerOnMerchantPage, router]);
+
   // Dynamic page title helper
   const getPageTitle = (path: string): string => {
     if (path === '/' || path === '') return 'Dispute Queue';
@@ -46,7 +55,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (path.startsWith('/storefront')) return 'Sales & Storefront Orders';
     if (path.startsWith('/trust-lab')) return 'Trust Lab — Security Penetration Suite';
     if (path.startsWith('/bench')) return 'Dispute Bench — 40-Scenario Evaluation';
-    if (path.startsWith('/profile')) return 'Merchant Profile & API Settings';
+    if (path.startsWith('/vault')) return 'Evidence Vault';
+    if (path.startsWith('/profile')) return 'Merchant Profile';
     return 'Dispute Autopilot';
   };
 
@@ -62,7 +72,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // Branded enterprise software loading screen
-  if (userLoading) {
+  if (userLoading || buyerOnMerchantPage) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#001433] via-[#001C48] to-[#003087] text-white p-6 relative overflow-hidden select-none">
         <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#0070BA]/20 blur-3xl pointer-events-none" />
@@ -98,7 +108,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             <Logo variant="dark" size="sm" href="/storefront" />
             <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Buyer Sandbox (Fake Money)
+              Demo store
             </span>
           </div>
           <div className="flex items-center gap-2.5">
@@ -180,10 +190,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main App Container */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-transparent relative z-10 transition-all duration-300">
         <TopHeader 
-          title={getPageTitle(normalizedPath)} 
+          title={isDemoBuyer(activeUser) ? 'Store' : getPageTitle(normalizedPath)} 
           onToggleSidebar={() => setMobileDrawerOpen(prev => !prev)} 
         />
-        <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-2 pb-6 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-2 pb-24 custom-scrollbar">
           <div className="max-w-[1600px] mx-auto">
             {sessionError && <p role="alert" className="mb-4 text-sm text-rose-700">{sessionError}</p>}
             {children}

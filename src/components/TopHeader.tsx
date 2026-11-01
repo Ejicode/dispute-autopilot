@@ -3,20 +3,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  Search, 
-  Mail, 
-  ChevronDown, 
-  ShieldCheck, 
-  FileCheck,
+import {
+  Search,
+  Mail,
+  ChevronDown,
+  ShieldCheck,
   ArrowUpRight,
   Menu,
   UserCheck,
   LogOut,
   X,
-  ShoppingBag
+  ShoppingBag,
 } from 'lucide-react';
 import { useUser } from './UserContext';
+import { isDemoBuyer } from '@/lib/persona';
+import { useRealtime } from './RealtimeContext';
 import SearchBar from './SearchBar';
 
 interface TopHeaderProps {
@@ -51,8 +52,12 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(true);
+  // Inbox of this session's live events; unread only when something new arrived.
+  const { recent } = useRealtime();
+  const [lastSeenId, setLastSeenId] = useState<string | null>(null);
+  const hasUnread = recent.length > 0 && recent[0].id !== lastSeenId;
   const { activeUser, logout } = useUser();
+  const isBuyer = isDemoBuyer(activeUser);
   const pathname = usePathname() || '';
   const isStorefront = pathname.startsWith('/storefront');
 
@@ -96,9 +101,6 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
               {title}
             </h1>
-            <span className="hidden lg:inline-flex items-center gap-1 ml-2.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200/80 text-[10px] font-extrabold text-[#003087]">
-              PayPal • Ava AI Defense
-            </span>
           </div>
           <p className="text-xs font-semibold text-slate-400 mt-1">
             {formattedDate}
@@ -106,10 +108,14 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
         </div>
       </div>
 
-      {/* ── Center / In-Place Search Bar (Desktop/Tablet) ── */}
-      <div className="hidden md:block flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2 sm:mx-4">
-        <SearchBar variant="light" placeholder="Search transactions, items, disputes…" />
-      </div>
+      {/* ── Center / In-Place Search Bar (Desktop/Tablet); merchant data, so not for the buyer ── */}
+      {!isBuyer ? (
+        <div className="hidden md:block flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2 sm:mx-4">
+          <SearchBar variant="light" placeholder="Search disputes, orders…" />
+        </div>
+      ) : (
+        <div className="flex-1" />
+      )}
 
       {/* ── Right Side: Mail Envelope & User Profile Pill ── */}
       <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
@@ -149,8 +155,8 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
           </div>
         )}
 
-        {/* Quick Persona Switcher */}
-        {isStorefront ? (
+        {/* Quick Persona Switcher (merchant only: the buyer has no merchant console) */}
+        {isBuyer ? null : isStorefront ? (
           <Link
             href="/"
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-sm"
@@ -163,10 +169,10 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
           <Link
             href="/storefront?mode=buyer"
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all card-3d-reflection"
-            title="Open Buyer Storefront with $5,000 PayPal Fake Money"
+            title="Open the buyer storefront"
           >
             <ShoppingBag className="w-3.5 h-3.5 text-[#0070BA]" />
-            <span>Buyer ($5k Fake $)</span>
+            <span>Buyer Store</span>
           </Link>
         )}
 
@@ -216,79 +222,30 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
               </div>
 
               <div className="space-y-2 max-h-72 overflow-y-auto pr-0.5">
-                {/* Message 1: Urgent Dispute */}
-                <Link
-                  href="/case/dsp_hero_1240"
-                  onClick={() => setNotificationsOpen(false)}
-                  className="p-3 rounded-2xl bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/80 text-xs space-y-1 block transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center justify-between font-bold text-[#003087]">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#0070BA] animate-pulse" />
-                      <span>Urgent Dispute #PP-D-98214</span>
-                    </span>
-                    <span className="text-[10px] font-extrabold bg-blue-200/60 text-[#003087] px-2 py-0.5 rounded-full">
-                      $1,240.00
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    Buyer Jordan Miller opened an Item Not Received claim. Evidence packet ready for 1-click submission.
+                {recent.length === 0 ? (
+                  <p className="p-3 text-xs text-slate-500 leading-relaxed">
+                    No events yet this session. Purchases, disputes, carrier updates and Trust Lab runs appear here as they happen.
                   </p>
-                  <span className="text-[10px] font-bold text-[#0070BA] group-hover:underline block pt-0.5">
-                    Review &amp; Approve Rebuttal →
-                  </span>
-                </Link>
-
-                {/* Message 2: Evidence Vault */}
-                <Link
-                  href="/vault"
-                  onClick={() => setNotificationsOpen(false)}
-                  className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-xs space-y-1 block transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center justify-between font-bold text-slate-800">
-                    <span className="flex items-center gap-1.5">
-                      <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Evidence Vault Hashed</span>
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-mono">SHA-256</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    Carrier tracking &amp; checkout receipts cryptographically chained for seller protection.
-                  </p>
-                  <span className="text-[10px] font-bold text-[#003087] group-hover:underline block pt-0.5">
-                    Open Evidence Vault →
-                  </span>
-                </Link>
-
-                {/* Message 3: Defense Coverage */}
-                <Link
-                  href="/trust-lab"
-                  onClick={() => setNotificationsOpen(false)}
-                  className="p-3 rounded-2xl bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200 text-xs space-y-1 block transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center justify-between font-bold text-emerald-900">
-                    <span className="flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Security Gates Active</span>
-                    </span>
-                    <span className="text-[10px] font-bold bg-emerald-200/60 text-emerald-800 px-1.5 py-0.5 rounded-full">
-                      6/6 Blocked
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    Zero penetration bypasses detected across webhook signature and replay vectors.
-                  </p>
-                  <span className="text-[10px] font-bold text-emerald-700 group-hover:underline block pt-0.5">
-                    Run Threat Lab Tests →
-                  </span>
-                </Link>
+                ) : (
+                  recent.map((n) => (
+                    <div key={n.id} className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs space-y-1">
+                      <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <span>{n.type.replace(/_/g, ' ')}</span>
+                        <span className="font-mono normal-case tracking-normal">
+                          {new Date(n.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-slate-700 font-medium leading-snug">{n.message}</p>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => {
-                    setHasUnread(false);
+                    setLastSeenId(recent[0]?.id ?? null);
                   }}
                   className="text-xs font-bold text-[#0070BA] hover:underline cursor-pointer"
                 >
@@ -336,7 +293,7 @@ export default function TopHeader({ title = 'Dispute Queue', onToggleSidebar }: 
                 {activeUser?.name || 'Merchant Admin'}
               </span>
               <span className="text-[10px] text-slate-400 block leading-none truncate max-w-[120px]">
-                {activeUser?.role === 'admin' ? 'Admin Officer' : (activeUser?.role || 'Admin Officer')}
+                {isBuyer ? 'Demo buyer' : 'Merchant admin'}
               </span>
             </div>
 

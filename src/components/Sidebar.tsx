@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import Logo from './Logo';
 import { useUser } from './UserContext';
+import { useLatestTrustLabResults } from '@/lib/trust-lab/useLatestResults';
+import { isDemoBuyer } from '@/lib/persona';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -27,21 +29,39 @@ interface SidebarProps {
   onNavigate?: () => void;
 }
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  exact?: boolean;
+  matchPrefix?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
 export default function Sidebar({
   collapsed = false,
   onToggleCollapse,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
-  const { logout } = useUser();
+  const { activeUser, logout } = useUser();
+  const isBuyer = isDemoBuyer(activeUser);
+  const trustLab = useLatestTrustLabResults(!isBuyer);
+  const blockedCount = trustLab?.filter((r) => r.blocked).length ?? 0;
+  const allBlocked = !!trustLab && trustLab.length > 0 && blockedCount === trustLab.length;
 
-  const menuSections = [
+  const merchantSections: NavSection[] = [
     {
       title: 'PLATFORM',
       items: [
         { href: '/', label: 'Dispute Queue', icon: Home, exact: true },
-        { href: '/case/dsp_hero_1240', label: 'Case Review', icon: Shield, matchPrefix: '/case' },
-        { href: '/storefront', label: 'Buyer Store ($5k Fake $)', icon: Tag },
+        // '/case/_' opens the most urgent dispute in whichever workspace is signed in.
+        { href: '/case/_/', label: 'Case Review', icon: Shield, matchPrefix: '/case' },
+        { href: '/storefront', label: 'Buyer Store', icon: Tag },
         { href: '/vault', label: 'Evidence Vault', icon: FileCheck },
       ],
     },
@@ -59,6 +79,15 @@ export default function Sidebar({
       ],
     },
   ];
+
+  // The demo buyer only shops; merchant pages are not part of its navigation.
+  const buyerSections: NavSection[] = [
+    {
+      title: 'SHOP',
+      items: [{ href: '/storefront', label: 'Store', icon: Tag }],
+    },
+  ];
+  const menuSections = isBuyer ? buyerSections : merchantSections;
 
   return (
     <aside
@@ -154,23 +183,37 @@ export default function Sidebar({
         </nav>
       </div>
 
-      {/* ── Bottom Card: Invariant Defense Guard Telemetry ── */}
+      {/* ── Bottom Card: Invariant Defense Guard Telemetry (merchant only) ── */}
       <div className="pt-2">
-        {!collapsed ? (
+        {!collapsed && !isBuyer ? (
           <div className="bg-gradient-to-br from-[#001C48] via-[#003087] to-[#001433] text-white p-4 rounded-3xl shadow-md space-y-3 relative overflow-hidden border border-blue-400/25">
             <div className="flex items-center justify-between">
               <div className="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center border border-blue-400/30">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
               </div>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">
-                ACTIVE
-              </span>
+              {trustLab && (
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                  trustLab.length === 0
+                    ? 'bg-white/10 text-blue-100 border-white/20'
+                    : allBlocked
+                      ? 'bg-emerald-400/15 text-emerald-300 border-emerald-400/20'
+                      : 'bg-rose-400/15 text-rose-200 border-rose-400/30'
+                }`}>
+                  {trustLab.length === 0 ? 'NOT RUN' : `${blockedCount}/${trustLab.length} BLOCKED`}
+                </span>
+              )}
             </div>
 
             <div>
               <h4 className="text-xs font-bold text-white leading-tight">Invariant Defense Guard</h4>
               <p className="text-[10px] text-blue-100/70 mt-1 leading-snug">
-                6/6 penetration attacks blocked • SHA-256 vault active
+                {!trustLab
+                  ? 'Checking the last Trust Lab run…'
+                  : trustLab.length === 0
+                    ? 'The attack suite has not been run yet.'
+                    : allBlocked
+                      ? `Last run: all ${trustLab.length} attacks blocked.`
+                      : `Last run: ${trustLab.length - blockedCount} attack(s) not blocked. Review the Trust Lab.`}
               </p>
             </div>
 
@@ -184,11 +227,6 @@ export default function Sidebar({
               </Link>
             </div>
 
-            <div className="pt-1 text-center border-t border-white/10">
-              <span className="text-[9px] font-bold text-blue-200/75 tracking-wider uppercase block">
-                PayPal REST APIs • Ava AI Defense
-              </span>
-            </div>
           </div>
         ) : (
           <button

@@ -95,7 +95,7 @@ export default function TrustLabPage() {
       timestamp: new Date().toISOString(),
       evaluation: 'Dispute Autopilot - Trust Lab Automated Penetration Test',
       totalVectors: initialVectors.length,
-      defenseRate: '100% BLOCKED',
+      defenseRate: `${(results || []).filter((r) => r.blocked).length}/${(results || []).length} BLOCKED`,
       results: results || [],
     };
     const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
@@ -203,7 +203,7 @@ export default function TrustLabPage() {
             className="px-5 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold shadow-md shadow-blue-950/20 flex items-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap btn-press"
           >
             {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Activity className="w-3.5 h-3.5 text-[#FFC439]" />}
-            <span>Execute Attack Suite (Live)</span>
+            <span>Run Attack Suite</span>
           </button>
         </div>
       </div>

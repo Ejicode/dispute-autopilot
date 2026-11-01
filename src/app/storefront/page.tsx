@@ -25,12 +25,17 @@ import {
 } from 'lucide-react';
 import { DemoOrder } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
+import { useUser } from '@/components/UserContext';
+import { isDemoBuyer } from '@/lib/persona';
 import { PRODUCTS, Product } from '@/lib/storefront/catalog';
 import { formatCurrency, SUPPORTED_CURRENCIES } from '@/lib/currency';
 
 const MILESTONES = ["LABEL_CREATED", "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
 
 export default function StorefrontPage() {
+  const { activeUser } = useUser();
+  // Signed-out visitors and the demo buyer get the shopper view; merchants also see sales data.
+  const isBuyer = !activeUser || isDemoBuyer(activeUser);
   const { lastEvent } = useRealtime();
   const [orders, setOrders] = useState<DemoOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -49,6 +54,10 @@ export default function StorefrontPage() {
       else if (window.location.hash === '#captured-orders') setActiveTab('orders');
     }
   }, []);
+
+  useEffect(() => {
+    if (isBuyer && activeTab === 'customers') setActiveTab('catalog');
+  }, [isBuyer, activeTab]);
 
   const handleTabChange = (tab: 'catalog' | 'orders' | 'customers') => {
     setActiveTab(tab);
@@ -80,7 +89,7 @@ export default function StorefrontPage() {
     address: '742 Evergreen Terrace, Springfield, OR 97477',
   });
 
-  // Simulated PayPal Fake Money Wallet Balance (starts at 500,000 minor units / cents)
+  // Demo wallet balance kept in this browser only (starts at $5,000.00 = 500000 cents)
   const [paypalBalance, setPaypalBalance] = useState<number>(500000);
   const [walletCurrency, setWalletCurrency] = useState<string>('USD');
 
@@ -233,6 +242,11 @@ export default function StorefrontPage() {
       return;
     }
 
+    if (paypalBalance < product.price_cents) {
+      setCheckoutError(`Not enough demo balance: this item costs ${formatCurrency(product.price_cents, walletCurrency)}. Add funds to continue.`);
+      return;
+    }
+
     setBuyingProductId(product.id);
     try {
       const res = await fetch('/api/storefront/checkout', {
@@ -257,8 +271,7 @@ export default function StorefrontPage() {
 
       if (res.ok) {
         const data = await res.json();
-        const nextBal = Math.max(0, paypalBalance - product.price_cents);
-        updateBalance(nextBal);
+        updateBalance(paypalBalance - product.price_cents);
         setCheckoutSuccessToast({ name: product.name, orderNumber: data.order?.order_number || 'New Order' });
         setTimeout(() => setCheckoutSuccessToast(null), 6000);
         await fetchOrders();
@@ -337,15 +350,15 @@ export default function StorefrontPage() {
       {/* ── Top-Right Toast Notifications (Never overlaps with bottom-right voice AI) ── */}
       <div className="fixed top-6 right-6 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none">
         {checkoutSuccessToast && (
-          <div className="bg-[#003087] text-white p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection">
+          <div className="bg-[#003087] text-white p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection-dark">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-white text-[#003087] flex items-center justify-center font-bold shrink-0">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <span className="font-extrabold text-sm block">Payment Captured &amp; Vaulted!</span>
+                <span className="font-extrabold text-sm block">Order placed</span>
                 <span className="text-xs text-white/90 block">
-                  {checkoutSuccessToast.orderNumber}: {checkoutSuccessToast.name} has been snapshot into Evidence Vault with SHA-256 integrity.
+                  {checkoutSuccessToast.orderNumber}: {checkoutSuccessToast.name}. The receipt is hashed into the Evidence Vault.
                 </span>
               </div>
             </div>
@@ -356,13 +369,13 @@ export default function StorefrontPage() {
         )}
 
         {disputeToast && (
-          <div className="bg-rose-900 text-white p-4 rounded-2xl shadow-2xl border border-rose-700/50 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto card-3d-reflection">
+          <div className="bg-rose-900 text-white p-4 rounded-2xl shadow-2xl border border-rose-700/50 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-auto">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-white text-rose-800 flex items-center justify-center font-bold shrink-0">
                 <ShieldAlert className="w-5 h-5" />
               </div>
               <div>
-                <span className="font-extrabold text-sm block">Simulated Dispute Ingested!</span>
+                <span className="font-extrabold text-sm block">Dispute opened</span>
                 <span className="text-xs text-white/90 block">
                   Dispute {disputeToast.disputeId} created for order {disputeToast.orderNumber}. Evidence linked to SHA-256 vault.
                 </span>
@@ -380,26 +393,20 @@ export default function StorefrontPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 card-3d-reflection">
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Sales &amp; Storefront Catalog</h1>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">{isBuyer ? 'Store' : 'Sales & Storefront Catalog'}</h1>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-[#003087] border border-blue-100">
-                52 Verified Products
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                SHA-256 Evidence Vaulting Active
+                {PRODUCTS.length} Demo Products
               </span>
             </div>
-            <p className="text-xs text-slate-500">
-              Verified catalog with automated checkout evidence hashing and carrier dispatch.
-            </p>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-600 bg-blue-50/70 border border-blue-100 rounded-2xl px-4 py-2.5 shrink-0">
             <ShieldCheck className="w-4 h-4 text-[#003087] shrink-0" />
-            <span>Every purchase creates an immutable <strong>SHA-256 Vault record</strong></span>
+            <span>Every purchase is hashed into the <strong>Evidence Vault (SHA-256)</strong></span>
           </div>
         </div>
 
-        {/* ── PayPal Sandbox Fake Money Buyer Wallet Banner ── */}
+        {/* ── Demo buyer wallet banner ── */}
         <div className="bg-gradient-to-r from-[#001C48] via-[#003087] to-[#0070BA] p-5 rounded-3xl text-white shadow-xl border border-white/20 card-3d-reflection-dark flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
@@ -408,10 +415,12 @@ export default function StorefrontPage() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#FFC439] bg-white/10 px-2 py-0.5 rounded-full border border-white/15">
-                  PayPal Sandbox Buyer Wallet
+                  Demo wallet
                 </span>
                 <span className="text-xs text-blue-200">
-                  Shopper: <strong>Jordan Miller</strong> (Verified Demo Buyer)
+                  {isBuyer
+                    ? <>Shopper: <strong>{activeUser?.name || 'Guest'}</strong></>
+                    : 'Place simulated sales as a demo buyer'}
                 </span>
               </div>
               <div className="flex items-center gap-2.5 mt-1">
@@ -422,7 +431,7 @@ export default function StorefrontPage() {
                   value={walletCurrency}
                   onChange={(e) => updateCurrency(e.target.value)}
                   className="bg-white/15 hover:bg-white/25 text-white font-bold text-xs rounded-xl px-2.5 py-1 border border-white/20 outline-none cursor-pointer transition-colors"
-                  title="Switch PayPal Wallet Currency"
+                  title="Currency for the demo balance and prices"
                 >
                   {SUPPORTED_CURRENCIES.map((c) => (
                     <option key={c.code} value={c.code} className="text-slate-900 bg-white">
@@ -430,9 +439,10 @@ export default function StorefrontPage() {
                     </option>
                   ))}
                 </select>
+                <span className="text-xs font-bold text-blue-200">demo balance</span>
               </div>
               <p className="text-[11px] text-blue-100/80 mt-0.5">
-                Use your fake PayPal money to purchase any product in any PayPal-supported currency. The order and cryptographic proof are immediately sent to the Merchant Console.
+                Spend the demo balance on any product. No real payment is taken.
               </p>
             </div>
           </div>
@@ -442,22 +452,25 @@ export default function StorefrontPage() {
               type="button"
               onClick={() => updateBalance(paypalBalance + 100000)}
               className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-bold transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
-              title="Add 1,000 Fake Money to PayPal Wallet"
+              title="Add 1,000 to the demo balance"
             >
               <Zap className="w-3.5 h-3.5 text-[#FFC439]" />
-              <span>+ 1,000 Fake Money</span>
+              <span>+ {formatCurrency(100000, walletCurrency)}</span>
             </button>
-            <Link
-              href="/"
-              className="px-4 py-2 rounded-xl bg-[#FFC439] hover:bg-[#F59E0B] text-slate-900 text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-[#003087]" />
-              <span>View Merchant Console →</span>
-            </Link>
+            {!isBuyer && (
+              <Link
+                href="/"
+                className="px-4 py-2 rounded-xl bg-[#FFC439] hover:bg-[#F59E0B] text-slate-900 text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#003087]" />
+                <span>View Merchant Console →</span>
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* ── 4 Executive Sales KPI Cards ── */}
+        {/* ── 4 Executive Sales KPI Cards (merchant only) ── */}
+        {!isBuyer && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
@@ -465,7 +478,7 @@ export default function StorefrontPage() {
               <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{formatCurrency(stats.totalCents, walletCurrency)}</span>
               <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Live captured sales
+                From store orders
               </span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#003087]">
@@ -477,7 +490,7 @@ export default function StorefrontPage() {
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Captured Orders</span>
               <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{stats.totalOrders} Orders</span>
-              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">Hashed at payment capture</span>
+              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">Receipt hashed at checkout</span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
               <Package className="w-5 h-5" />
@@ -487,8 +500,8 @@ export default function StorefrontPage() {
           <div className="card-3d-reflection p-4 rounded-2xl flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Evidence Protection</span>
-              <span className="text-xl font-extrabold text-emerald-700 block mt-0.5">100% Vaulted</span>
-              <span className="text-[10px] text-emerald-600 font-medium block mt-0.5">Zero unhashed sales</span>
+              <span className="text-xl font-extrabold text-emerald-700 block mt-0.5">SHA-256</span>
+              <span className="text-[10px] text-emerald-600 font-medium block mt-0.5">Each receipt stored with its hash</span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
               <ShieldCheck className="w-5 h-5" />
@@ -499,13 +512,14 @@ export default function StorefrontPage() {
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Fulfillment Status</span>
               <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{stats.delivered} Delivered</span>
-              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{stats.inTransit} In Transit with GPS</span>
+              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{stats.inTransit} in transit</span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
               <Truck className="w-5 h-5" />
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* ── Main Tab Navigation Bar ── */}
@@ -531,9 +545,10 @@ export default function StorefrontPage() {
           }`}
         >
           <Truck className="w-4 h-4" />
-          <span>Captured Orders ({orders.length})</span>
+          <span>{isBuyer ? 'Orders' : 'Captured Orders'} ({orders.length})</span>
         </button>
 
+        {!isBuyer && (
         <button
           onClick={() => handleTabChange('customers')}
           className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
@@ -545,6 +560,7 @@ export default function StorefrontPage() {
           <User className="w-4 h-4" />
           <span>Customer Directory ({customers.length})</span>
         </button>
+        )}
       </div>
 
       {/* ── Catalog View ── */}
@@ -616,7 +632,7 @@ export default function StorefrontPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs text-slate-500 font-semibold">
-            Showing <strong>{displayedProducts.length}</strong> of <strong>{PRODUCTS.length}</strong> real products
+            Showing <strong>{displayedProducts.length}</strong> of <strong>{PRODUCTS.length}</strong> products
           </span>
           <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Demo storefront — no payment collected
@@ -706,16 +722,16 @@ export default function StorefrontPage() {
                   <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleBuyProduct(prod)}
-                        disabled={buyingProductId !== null}
+                        disabled={buyingProductId !== null || paypalBalance < prod.price_cents}
                         className="flex-1 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center justify-center gap-1.5 disabled:opacity-50 btn-press"
-                        title="Instant Purchase with PayPal Fake Money & Cryptographic Vault Capture"
+                        title={paypalBalance < prod.price_cents ? 'Not enough demo balance. Add funds to buy this item.' : 'Buy now with the demo balance'}
                       >
                         {buyingProductId === prod.id ? (
                           <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                         ) : (
                           <ShoppingBag className="w-3.5 h-3.5 text-[#FFC439]" />
                         )}
-                        <span>Pay with PayPal ({walletCurrency})</span>
+                        <span>{paypalBalance < prod.price_cents ? 'Not enough balance' : 'Buy now'}</span>
                       </button>
                     <button
                       onClick={() => { setCheckoutError(null); setSelectedProduct(prod); }}
@@ -803,7 +819,7 @@ export default function StorefrontPage() {
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-start gap-2.5">
                 <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold block">Autonomous Evidence Vaulting Protocol</span>
+                  <span className="font-bold block">Automatic evidence capture</span>
                   <p className="text-[11px] text-emerald-800 mt-0.5">
                     Upon checkout, this item's price, buyer address, order confirmation, and carrier tracking number are automatically hashed with SHA-256 and stored in the Evidence Vault.
                   </p>
@@ -884,7 +900,7 @@ export default function StorefrontPage() {
 
                 <button
                   onClick={() => handleBuyProduct(selectedProduct)}
-                  disabled={buyingProductId !== null}
+                  disabled={buyingProductId !== null || paypalBalance < selectedProduct.price_cents}
                   className="px-6 py-2.5 rounded-full bg-[#003087] hover:bg-[#001C48] text-white text-xs font-bold transition-all shadow-md shadow-blue-950/25 flex items-center gap-2 disabled:opacity-50"
                 >
                   {buyingProductId === selectedProduct.id ? (
@@ -892,7 +908,7 @@ export default function StorefrontPage() {
                   ) : (
                     <ShoppingBag className="w-4 h-4 text-[#FFC439]" />
                   )}
-                  <span>Complete Purchase with PayPal</span>
+                  <span>{paypalBalance < selectedProduct.price_cents ? 'Not enough balance' : 'Complete purchase'}</span>
                 </button>
               </div>
             </div>
@@ -901,7 +917,7 @@ export default function StorefrontPage() {
       )}
 
       {/* ── Customer Directory View ── */}
-      {activeTab === 'customers' && (
+      {activeTab === 'customers' && !isBuyer && (
         <div className="space-y-4 pt-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -1043,30 +1059,30 @@ export default function StorefrontPage() {
                         onClick={() => handleSimulateDispute(ord, 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED')}
                         disabled={disputingOrderId === ord.id}
                         className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Simulate Item Not Received dispute (PayPal Policy § 11.3)"
+                        title="Open a simulated Item Not Received dispute"
                       >
                         {disputingOrderId === ord.id ? (
                           <RefreshCw className="w-3 h-3 animate-spin" />
                         ) : (
                           <ShieldAlert className="w-3 h-3 text-rose-600" />
                         )}
-                        <span>INR (§ 11.3)</span>
+                        <span>Not received</span>
                       </button>
                       <button
                         onClick={() => handleSimulateDispute(ord, 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED')}
                         disabled={disputingOrderId === ord.id}
                         className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Simulate Significantly Not As Described dispute (PayPal Policy § 11.4)"
+                        title="Open a simulated Significantly Not As Described dispute"
                       >
-                        <span>SNAD (§ 11.4)</span>
+                        <span>Not as described</span>
                       </button>
                       <button
                         onClick={() => handleSimulateDispute(ord, 'UNAUTHORISED')}
                         disabled={disputingOrderId === ord.id}
                         className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Simulate Unauthorized Transaction dispute (PayPal Policy § 11.2)"
+                        title="Open a simulated Unauthorized Transaction dispute"
                       >
-                        <span>Unauthorized (§ 11.2)</span>
+                        <span>Unauthorized</span>
                       </button>
                     </div>
                   </div>

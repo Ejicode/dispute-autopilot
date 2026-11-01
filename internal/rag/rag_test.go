@@ -18,8 +18,11 @@ func TestStaticCorpusRetrieve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Retrieve failed: %v", err)
 	}
-	if !strings.Contains(res.ContextText, "11.3") {
-		t.Errorf("Expected reference to § 11.3 in INR retrieval, got:\n%s", res.ContextText)
+	if !strings.Contains(res.ContextText, "PayPal Seller Protection (Proof of Delivery)") {
+		t.Errorf("Expected the proof-of-delivery policy in INR retrieval, got:\n%s", res.ContextText)
+	}
+	if strings.Contains(res.ContextText, "§") {
+		t.Errorf("Retrieval must not cite invented section numbers, got:\n%s", res.ContextText)
 	}
 
 	// Test $750 signature threshold retrieval

@@ -531,7 +531,7 @@ func (c *Client) AcknowledgeReturnItem(ctx context.Context, disputeID string, ac
 type TrackerInfo struct {
 	TransactionID  string `json:"transaction_id"`
 	TrackingNumber string `json:"tracking_number"`
-	Status         string `json:"status"` // SHIPPED, IN_TRANSIT, DELIVERED, RETURNED, CANCELLED
+	Status         string `json:"status"`  // SHIPPED, IN_TRANSIT, DELIVERED, RETURNED, CANCELLED
 	Carrier        string `json:"carrier"` // USPS, FEDEX, UPS, DHL, etc.
 	NotifyBuyer    bool   `json:"notify_buyer"`
 }
@@ -839,10 +839,10 @@ type PayPalOrder struct {
 }
 
 // SellerProtectionVerification captures the result of cross-checking a delivery
-// destination against the PayPal transaction address under PayPal Seller Protection § 11.3.
+// destination against the PayPal transaction address under the PayPal Seller Protection proof-of-delivery rule.
 type SellerProtectionVerification struct {
 	Eligible        bool     `json:"eligible"`
-	PolicySection   string   `json:"policy_section"` // "§ 11.3"
+	PolicySection   string   `json:"policy_section"` // e.g. "Proof of delivery"
 	Status          string   `json:"status"`         // "VERIFIED_MATCH", "MISMATCH", "UNVERIFIED"
 	Reason          string   `json:"reason"`
 	PayPalAddress   string   `json:"paypal_address"`
@@ -986,7 +986,7 @@ func cleanZip(s string) string {
 }
 
 // VerifySellerProtectionAddress checks whether the delivery address on proof of delivery
-// matches the transaction shipping address in PayPal under Seller Protection § 11.3.
+// matches the transaction shipping address in PayPal under the Seller Protection proof-of-delivery rule.
 func VerifySellerProtectionAddress(paypalAddr, deliveryAddr PayPalAddress) SellerProtectionVerification {
 	ppFormatted := FormatAddress(paypalAddr)
 	delFormatted := FormatAddress(deliveryAddr)
@@ -994,7 +994,7 @@ func VerifySellerProtectionAddress(paypalAddr, deliveryAddr PayPalAddress) Selle
 	if ppFormatted == "" || delFormatted == "" {
 		return SellerProtectionVerification{
 			Eligible:        false,
-			PolicySection:   "§ 11.3",
+			PolicySection:   "Proof of delivery",
 			Status:          "UNVERIFIED",
 			Reason:          "Carrier proof of delivery or PayPal transaction address record is missing or pending capture.",
 			PayPalAddress:   ppFormatted,
@@ -1033,9 +1033,9 @@ func VerifySellerProtectionAddress(paypalAddr, deliveryAddr PayPalAddress) Selle
 	if len(mismatches) == 0 {
 		return SellerProtectionVerification{
 			Eligible:        true,
-			PolicySection:   "§ 11.3",
+			PolicySection:   "Proof of delivery",
 			Status:          "VERIFIED_MATCH",
-			Reason:          "Proof of delivery destination matches the PayPal transaction shipping address exactly. Seller Protection § 11.3 is fully intact.",
+			Reason:          "Proof of delivery destination matches the PayPal transaction shipping address exactly. The Seller Protection proof-of-delivery requirement is met.",
 			PayPalAddress:   ppFormatted,
 			DeliveryAddress: delFormatted,
 		}
@@ -1043,9 +1043,9 @@ func VerifySellerProtectionAddress(paypalAddr, deliveryAddr PayPalAddress) Selle
 
 	return SellerProtectionVerification{
 		Eligible:        false,
-		PolicySection:   "§ 11.3",
+		PolicySection:   "Proof of delivery",
 		Status:          "MISMATCH",
-		Reason:          fmt.Sprintf("Proof of delivery destination differs from PayPal transaction details (%s). Under PayPal Seller Protection § 11.3, rerouted or altered deliveries void protection.", strings.Join(mismatches, ", ")),
+		Reason:          fmt.Sprintf("Proof of delivery destination differs from PayPal transaction details (%s). Under the PayPal Seller Protection proof-of-delivery rule, rerouted or altered deliveries void protection.", strings.Join(mismatches, ", ")),
 		PayPalAddress:   ppFormatted,
 		DeliveryAddress: delFormatted,
 		MismatchFields:  mismatches,
@@ -1148,7 +1148,7 @@ func (c *Client) TestConnection(ctx context.Context) (map[string]any, error) {
 		return map[string]any{
 			"configured": false,
 			"connected":  false,
-			"error":       "PayPal credentials (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET) not configured.",
+			"error":      "PayPal credentials (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET) not configured.",
 		}, nil
 	}
 
@@ -1167,7 +1167,7 @@ func (c *Client) TestConnection(ctx context.Context) (map[string]any, error) {
 		return map[string]any{
 			"configured": true,
 			"connected":  false,
-			"error":       err.Error(),
+			"error":      err.Error(),
 		}, nil
 	}
 	if res.status != http.StatusOK {

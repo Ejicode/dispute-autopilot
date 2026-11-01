@@ -33,17 +33,24 @@ func channelFor(mode config.Mode, merchantID string) string {
 }
 
 // Publish emits an event to the current merchant's channel. It is a no-op when
-// no scope is present (events are advisory, never load-bearing).
+// no scope is present (events are advisory, never load-bearing). An account
+// working in another merchant's workspace (the demo buyer) also notifies that
+// merchant; the reverse never happens, since each account subscribes only to
+// its own channel.
 func (h *Hub) Publish(ctx context.Context, eventType string, payload any) {
 	sc, err := scope.From(ctx)
 	if err != nil {
 		return
 	}
-	h.publishTo(channelFor(sc.Mode, sc.MerchantID), Event{
+	event := Event{
 		Type:      eventType,
 		Payload:   payload,
 		Timestamp: config.NowISO(),
-	})
+	}
+	h.publishTo(channelFor(sc.Mode, sc.MerchantID), event)
+	if workspace := scope.WorkspaceID(sc.Mode, sc.MerchantID); workspace != sc.MerchantID {
+		h.publishTo(channelFor(sc.Mode, workspace), event)
+	}
 }
 
 // PublishRaw emits to an explicit channel (used by tests).

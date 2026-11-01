@@ -36,23 +36,10 @@ import {
   Shield,
   Info
 } from 'lucide-react';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts';
 import { Dispute, EvidenceItem, AIDraft, AuditLogEntry, ApprovalAction, ApprovalReview, SellerProtectionVerification } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
 import { useUser } from '@/components/UserContext';
+import { useAppMode, MODE_LABEL } from '@/lib/runtime/mode';
 import EvidenceCard from '@/components/EvidenceCard';
 import { formatCurrency } from '@/lib/currency';
 
@@ -75,6 +62,10 @@ export default function CaseDetailPage() {
   }, [params?.id]);
   const { lastEvent } = useRealtime();
   const { activeUser } = useUser();
+  const appMode = useAppMode();
+  // Who receives an approved action. Demo mode never reaches PayPal.
+  const provider = appMode === 'sandbox' ? 'PayPal Sandbox' : appMode === 'live' ? 'PayPal' : 'the PayPal simulator';
+  const modeBadge = appMode ? MODE_LABEL[appMode] : '…';
 
   const [dispute, setDispute] = useState<Dispute | null>(null);
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
@@ -96,7 +87,36 @@ export default function CaseDetailPage() {
   const reviewRequest = useRef(0);
   const [evidenceFilter, setEvidenceFilter] = useState<'ALL' | 'ORDER_CONFIRMATION' | 'TRACKING_HISTORY' | 'PROOF_OF_DELIVERY'>('ALL');
 
+  // "/case/_" (the sidebar's Case Review link) means "the most urgent dispute":
+  // the list endpoint already orders by status, amount and deadline.
+  const isPlaceholderId = !disputeId || disputeId === '_';
+  const [noDisputes, setNoDisputes] = useState(false);
+  useEffect(() => {
+    if (!isPlaceholderId) return;
+    let active = true;
+    fetch('/api/disputes')
+      .then((res) => (res.ok ? res.json() : { disputes: [] }))
+      .then((data: { disputes?: { id: string }[] }) => {
+        if (!active) return;
+        const first = data.disputes?.[0];
+        if (first) {
+          setDisputeId(first.id);
+          window.history.replaceState(null, '', `/case/${encodeURIComponent(first.id)}/`);
+        } else {
+          setNoDisputes(true);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isPlaceholderId]);
+
   const fetchCase = async () => {
+    if (isPlaceholderId) return;
     try {
       const res = await fetch(`/api/disputes/${disputeId}`);
       if (res.ok) {
@@ -145,14 +165,13 @@ export default function CaseDetailPage() {
     }
 
     return {
-      orderNumber: parsedOrder.order_number || parsedOrder.OrderNumber || dispute?.order_id || 'ORD-2026-98214',
-      buyerName: parsedOrder.buyer_name || parsedOrder.BuyerName || 'Jordan Miller',
-      buyerEmail: parsedOrder.email || parsedOrder.buyer_email || 'jordan.miller@example.com',
-      shippingAddress: parsedOrder.shipping_address || parsedOrder.ShippingAddress || '742 Evergreen Terrace, Springfield, OR 97477',
-      paymentMethod: parsedOrder.payment_method || 'PayPal Express Checkout',
-      itemSKU: parsedOrder.sku || parsedOrder.item_sku || 'DRONE-4K-PRO (Pro Aerial 4K Drone Kit)',
-      gpsCoordinates: parsedPod.gps_coordinates || parsedPod.GPSCoordinates || '44.0462° N, 123.0220° W',
-      signedBy: parsedPod.recipient_signature || parsedPod.SignedBy || 'J. MILLER (SIGNATURE_VERIFIED)',
+      // Only facts recorded in the vault; never placeholders that read as evidence.
+      orderNumber: parsedOrder.order_number || parsedOrder.OrderNumber || dispute?.order_id || '',
+      buyerName: parsedOrder.buyer_name || parsedOrder.BuyerName || '',
+      buyerEmail: parsedOrder.email || parsedOrder.buyer_email || '',
+      shippingAddress: parsedOrder.shipping_address || parsedOrder.ShippingAddress || parsedPod.delivery_address || '',
+      itemSKU: parsedOrder.sku || parsedOrder.item_sku || '',
+      gpsCoordinates: parsedPod.gps_coordinates || parsedPod.GPSCoordinates || '',
     };
   }, [evidenceItems, dispute]);
 
@@ -170,12 +189,12 @@ export default function CaseDetailPage() {
     setTimeout(() => setCopiedDraft(false), 2000);
   };
 
-  // Dynamically extract real carrier transit telemetry milestones from SQLite evidence vault
-  const { carrierName, trackingNumber, transitVelocityData } = useMemo(() => {
+  // Carrier tracking events exactly as recorded in the vault (none when absent)
+  const { carrierName, trackingNumber, trackingEvents } = useMemo(() => {
     const trackingItem = evidenceItems.find((e) => e.evidence_type === 'TRACKING_HISTORY');
-    let name = 'USPS Priority Mail Express';
-    let trackNum = 'TRK-98214-USPS';
-    let data: any[] = [];
+    let name = '';
+    let trackNum = '';
+    let data: { time: string; stage: string; location: string }[] = [];
 
     if (trackingItem) {
       try {
@@ -185,12 +204,6 @@ export default function CaseDetailPage() {
 
         if (parsed.events && Array.isArray(parsed.events)) {
           data = parsed.events.map((ev: any) => {
-            let velocity = 0;
-            if (ev.status === 'PICKED_UP') velocity = 38;
-            else if (ev.status === 'IN_TRANSIT') velocity = 65;
-            else if (ev.status === 'OUT_FOR_DELIVERY') velocity = 24;
-            else velocity = 0;
-
             const dObj = new Date(ev.timestamp);
             const timeLabel = !isNaN(dObj.getTime())
               ? dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + dObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -198,9 +211,8 @@ export default function CaseDetailPage() {
 
             return {
               time: timeLabel,
-              stage: ev.status.replace(/_/g, ' '),
-              velocity,
-              location: ev.location || 'Carrier Logistics Center',
+              stage: String(ev.status || '').replace(/_/g, ' '),
+              location: ev.location || '',
             };
           });
         }
@@ -209,17 +221,7 @@ export default function CaseDetailPage() {
       }
     }
 
-    if (data.length === 0) {
-      data = [
-        { time: 'Intake', stage: 'Label Created', velocity: 0, location: 'Carrier Intake Facility' },
-        { time: 'Dispatch', stage: 'Dispatched', velocity: 45, location: 'Regional Logistics Center' },
-        { time: 'In Transit', stage: 'In Transit', velocity: 65, location: 'Carrier Sorting Hub' },
-        { time: 'Final Mile', stage: 'Out for Delivery', velocity: 22, location: 'Delivery Vehicle' },
-        { time: 'Delivered', stage: 'Delivered', velocity: 0, location: 'Verified Destination' },
-      ];
-    }
-
-    return { carrierName: name, trackingNumber: trackNum, transitVelocityData: data };
+    return { carrierName: name, trackingNumber: trackNum, trackingEvents: data };
   }, [evidenceItems]);
 
   useEffect(() => {
@@ -311,7 +313,10 @@ export default function CaseDetailPage() {
   if (!dispute) {
     return (
       <div className="bg-white p-8 rounded-3xl border border-slate-200/90 shadow-sm text-center card-3d-reflection">
-        <h2 className="text-lg font-bold text-slate-800">Dispute Not Found</h2>
+        <h2 className="text-lg font-bold text-slate-800">{noDisputes ? 'No disputes yet' : 'Dispute Not Found'}</h2>
+        {noDisputes && (
+          <p className="mt-1 text-sm text-slate-500">Disputes appear here once a buyer opens one, or when you simulate one from the queue.</p>
+        )}
         <Link href="/" className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#003087] font-bold hover:underline">
           <ArrowLeft className="w-3.5 h-3.5" /> Return to dispute queue
         </Link>
@@ -320,16 +325,33 @@ export default function CaseDetailPage() {
   }
 
   const isResolved = dispute.status === 'RESOLVED';
-  const rawHoursLeft = Math.floor((new Date(dispute.response_deadline).getTime() - Date.now()) / (3600 * 1000));
+  const msLeft = new Date(dispute.response_deadline).getTime() - Date.now();
+  const rawHoursLeft = Math.floor(msLeft / (3600 * 1000));
   const deadlineText = isResolved
     ? 'Resolved'
+    : !(msLeft > 0)
+    ? 'Deadline passed'
     : rawHoursLeft > 24
     ? `${Math.floor(rawHoursLeft / 24)}d ${rawHoursLeft % 24}h remaining`
     : rawHoursLeft > 0
     ? `${rawHoursLeft}h remaining (Urgent)`
-    : '18h remaining (Urgent Window)';
+    : 'Under 1h remaining (Urgent)';
 
-  const essScore = dispute.strength_score ?? 100;
+  const essScore = dispute.strength_score ?? 0;
+
+  // Seller Protection status from the vault, mirroring the Go triage checks
+  // (internal/ai/triage.go): delivery proof, plus a recorded signature at $750+.
+  const evidenceText = (item: EvidenceItem) =>
+    typeof item.content === 'string' ? item.content : JSON.stringify(item.content ?? '');
+  const hasDeliveryProof = evidenceItems.some((item) => item.evidence_type === 'PROOF_OF_DELIVERY');
+  const hasSignature = evidenceItems.some((item) => /Signature|SIGNATURE_VERIFIED/.test(evidenceText(item)));
+  const needsSignature = dispute.amount_cents >= 75000;
+  const protectionCovered = dispute.reason === 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED' || dispute.reason === 'UNAUTHORISED';
+  const missingProtection = [
+    !hasDeliveryProof && 'delivery proof',
+    needsSignature && !hasSignature && 'signature confirmation',
+  ].filter(Boolean) as string[];
+  const protectionMet = protectionCovered && missingProtection.length === 0;
   const filteredEvidence = evidenceFilter === 'ALL'
     ? evidenceItems
     : evidenceItems.filter((item) => item.evidence_type === evidenceFilter);
@@ -362,12 +384,18 @@ export default function CaseDetailPage() {
           <span className="font-semibold text-slate-900 hidden md:inline">Evidence Dossier</span>
         </div>
 
-        {/* Right: Live Sync + Merchant Identity */}
+        {/* Right: Environment + Merchant Identity */}
         <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-[11px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-            <span>PayPal Sandbox Active (SSE)</span>
-          </div>
+          {appMode && (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-bold text-[11px] ${
+              appMode === 'demo'
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${appMode === 'demo' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <span>{MODE_LABEL[appMode]}</span>
+            </div>
+          )}
 
           <div className="hidden sm:flex items-center gap-1 text-slate-500 font-medium">
             <span>Merchant:</span>
@@ -376,7 +404,7 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
-      {/* ── Urgent Response SLA Alert Banner (PayPal Policy § 11.5) ── */}
+      {/* ── Urgent response-deadline banner ── */}
       {!isResolved && dispute.status === 'REQUIRED_ACTION' && (
         <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 border border-amber-300/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 animate-enter-up">
           <div className="flex items-start gap-3.5">
@@ -393,7 +421,7 @@ export default function CaseDetailPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                Under <strong>PayPal Resolution Center Procedures § 11.5</strong>, disputes expiring without merchant evidence submission trigger automated default forfeiture to the buyer plus non-refundable dispute fees. Review the verified evidence dossier below and approve the submission to preserve merchant revenue.
+                If the response deadline passes without a reply, PayPal can close the dispute in the buyer's favor. Review the evidence below and approve a response before the deadline.
               </p>
             </div>
           </div>
@@ -441,22 +469,17 @@ export default function CaseDetailPage() {
                 <span>⚡ {dispute.recommendation} DISPUTE</span>
               </span>
 
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border flex items-center gap-1 ${
-                sellerProtection?.status === 'VERIFIED_MATCH'
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                  : sellerProtection?.status === 'MISMATCH'
-                  ? 'bg-rose-50 text-rose-800 border-rose-200'
-                  : 'bg-[#E6F0FA] text-[#003087] border-[#C9E0FA]'
-              }`}>
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA]" />
-                <span>
-                  {sellerProtection?.status === 'VERIFIED_MATCH'
-                    ? 'PayPal Seller Protection § 11.3 Verified'
-                    : sellerProtection?.status === 'MISMATCH'
-                    ? 'Seller Protection Mismatch (§ 11.3)'
-                    : 'PayPal Seller Protection Active'}
+              {sellerProtection?.status === 'MISMATCH' ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200 flex items-center gap-1" title={sellerProtection.reason}>
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Delivery address mismatch</span>
                 </span>
-              </span>
+              ) : protectionMet ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#E6F0FA] text-[#003087] border border-[#C9E0FA] flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#0070BA]" />
+                  <span>Seller Protection evidence complete</span>
+                </span>
+              ) : null}
             </div>
 
             {/* Big Amount Typography */}
@@ -506,7 +529,7 @@ export default function CaseDetailPage() {
                 </span>
                 <span>{deadlineText}</span>
               </div>
-              <span className="text-[9px] font-bold text-amber-700 block mt-0.5">Automated submission gate</span>
+              <span className="text-[9px] font-bold text-amber-700 block mt-0.5">Human approval required to submit</span>
             </div>
 
             {/* Evidence Packet PDF Download Button */}
@@ -531,8 +554,10 @@ export default function CaseDetailPage() {
             </div>
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Buyer / Customer</span>
-              <span className="text-xs font-bold text-slate-900 block truncate">{orderDossier.buyerName}</span>
-              <span className="text-[11px] text-slate-500 block truncate font-mono">{orderDossier.buyerEmail}</span>
+              <span className="text-xs font-bold text-slate-900 block truncate">{orderDossier.buyerName || 'Not recorded'}</span>
+              {orderDossier.buyerEmail && (
+                <span className="text-[11px] text-slate-500 block truncate font-mono">{orderDossier.buyerEmail}</span>
+              )}
             </div>
           </div>
 
@@ -547,24 +572,26 @@ export default function CaseDetailPage() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-1">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Verified Destination</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Shipping Destination</span>
                 {sellerProtection?.status === 'VERIFIED_MATCH' && (
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold font-mono">
-                    § 11.3 MATCH
+                    ADDRESS MATCH
                   </span>
                 )}
                 {sellerProtection?.status === 'MISMATCH' && (
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold font-mono">
-                    § 11.3 MISMATCH
+                    ADDRESS MISMATCH
                   </span>
                 )}
               </div>
               <span className="text-xs font-bold text-slate-900 block truncate" title={sellerProtection?.delivery_address || orderDossier.shippingAddress}>
-                {sellerProtection?.delivery_address || orderDossier.shippingAddress}
+                {sellerProtection?.delivery_address || orderDossier.shippingAddress || 'Not recorded'}
               </span>
-              <span className="text-[10px] text-emerald-700 font-bold block truncate">
-                GPS: {orderDossier.gpsCoordinates}
-              </span>
+              {orderDossier.gpsCoordinates && (
+                <span className="text-[10px] text-emerald-700 font-bold block truncate">
+                  GPS: {orderDossier.gpsCoordinates}
+                </span>
+              )}
             </div>
           </div>
 
@@ -576,9 +603,11 @@ export default function CaseDetailPage() {
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Storefront Order</span>
               <Link href="/storefront" className="text-xs font-bold text-[#0070BA] hover:underline block truncate">
-                {orderDossier.orderNumber}
+                {orderDossier.orderNumber || 'Not recorded'}
               </Link>
-              <span className="text-[11px] text-slate-500 block truncate">SKU: {orderDossier.itemSKU}</span>
+              {orderDossier.itemSKU && (
+                <span className="text-[11px] text-slate-500 block truncate">SKU: {orderDossier.itemSKU}</span>
+              )}
             </div>
           </div>
 
@@ -589,8 +618,10 @@ export default function CaseDetailPage() {
             </div>
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Fulfillment Carrier</span>
-              <span className="text-xs font-bold text-slate-900 block truncate">{carrierName}</span>
-              <span className="text-[11px] font-mono text-slate-600 block truncate font-bold">{trackingNumber}</span>
+              <span className="text-xs font-bold text-slate-900 block truncate">{carrierName || 'Not recorded'}</span>
+              {trackingNumber && (
+                <span className="text-[11px] font-mono text-slate-600 block truncate font-bold">{trackingNumber}</span>
+              )}
             </div>
           </div>
         </div>
@@ -608,7 +639,7 @@ export default function CaseDetailPage() {
             </h3>
           </div>
           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono">
-            PayPal User Agreement § 11
+            PayPal Seller Protection
           </span>
         </div>
 
@@ -619,10 +650,10 @@ export default function CaseDetailPage() {
             </span>
             <div className="text-xs font-bold text-slate-900 mt-1">
               {dispute.reason === 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED'
-                ? '§ 11.3 Proof of Delivery'
+                ? 'Proof of delivery'
                 : dispute.reason === 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED'
-                ? '§ 11.4 SNAD Rebuttal'
-                : '§ 11.2 Unauthorized Protection'}
+                ? 'Not-as-described evidence'
+                : 'Unauthorized transaction'}
             </div>
           </div>
 
@@ -631,9 +662,11 @@ export default function CaseDetailPage() {
               Signature Threshold
             </span>
             <div className="text-xs font-bold text-slate-900 mt-1">
-              {dispute.amount_cents >= 75000 
-                ? '§ 11.3(b) Signature on File' 
-                : 'Standard Tracking (< $750)'}
+              {!needsSignature
+                ? 'Standard Tracking (< $750)'
+                : hasSignature
+                ? 'Signature on file ($750+)'
+                : 'Signature required ($750+), none on file'}
             </div>
           </div>
 
@@ -641,48 +674,50 @@ export default function CaseDetailPage() {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Protection Status
             </span>
-            <div className={`text-xs font-bold mt-1 flex items-center gap-1 ${
-              sellerProtection?.status === 'MISMATCH' ? 'text-rose-700' : 'text-emerald-700'
-            }`}>
-              {sellerProtection?.status === 'MISMATCH' ? (
-                <>
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Voided (Mismatch)</span>
-                </>
-              ) : (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Full Recovery Eligible</span>
-                </>
-              )}
-            </div>
+            {sellerProtection?.status === 'MISMATCH' ? (
+              <div className="text-xs font-bold text-rose-700 mt-1 flex items-center gap-1" title={sellerProtection.reason}>
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>At risk: delivery address differs</span>
+              </div>
+            ) : protectionMet ? (
+              <div className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" />
+                <span>Vault holds the required evidence</span>
+              </div>
+            ) : (
+              <div className="text-xs font-bold text-amber-700 mt-1">
+                {protectionCovered
+                  ? `Missing ${missingProtection.join(' and ')}`
+                  : 'Not covered by Seller Protection for this reason'}
+              </div>
+            )}
           </div>
 
           <div className="p-3.5 rounded-2xl card-3d-reflection-subtle">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              § 11.3 Address Verification
+              Delivery Address Check
             </span>
             <div className={`text-xs font-bold mt-1 flex items-center gap-1 ${
               sellerProtection?.status === 'VERIFIED_MATCH'
                 ? 'text-emerald-700'
                 : sellerProtection?.status === 'MISMATCH'
                 ? 'text-rose-700'
-                : 'text-amber-700'
+                : 'text-slate-500'
             }`}>
               {sellerProtection?.status === 'VERIFIED_MATCH' ? (
                 <>
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="truncate" title="Delivery address matches PayPal transaction address">Destination Matched</span>
+                  <span className="truncate" title="Delivery address matches the PayPal transaction address">Matches PayPal address</span>
                 </>
               ) : sellerProtection?.status === 'MISMATCH' ? (
                 <>
                   <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                  <span className="truncate" title={sellerProtection?.reason}>Address Mismatch</span>
+                  <span className="truncate" title={sellerProtection?.reason}>Address mismatch</span>
                 </>
               ) : (
                 <>
-                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>Pending Check</span>
+                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>Not checked</span>
                 </>
               )}
             </div>
@@ -702,7 +737,7 @@ export default function CaseDetailPage() {
             </h3>
           </div>
           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono">
-            {dispute.provenance === 'PAYPAL_SANDBOX' ? 'PayPal Sandbox REST' : 'PayPal REST API'}
+            {modeBadge}
           </span>
         </div>
 
@@ -710,10 +745,10 @@ export default function CaseDetailPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-1">
           {[
             { step: '1', title: 'Inquiry Ingested', status: 'done', tag: 'INGESTED' },
-            { step: '2', title: 'Evidence Vault', status: 'done', tag: 'SHA-256' },
+            { step: '2', title: 'Evidence Vault', status: evidenceItems.length ? 'done' : 'pending', tag: evidenceItems.length ? `${evidenceItems.length} HASHED` : 'EMPTY' },
             { step: '3', title: 'Code Verifier', status: draft?.verified ? 'done' : 'blocked', tag: draft?.verified ? 'VERIFIED' : 'BLOCKING' },
             { step: '4', title: 'Approval Gate', status: isResolved ? 'done' : review ? 'active' : 'pending', tag: isResolved ? 'APPROVED' : review ? 'IN REVIEW' : 'PENDING' },
-            { step: '5', title: 'PayPal REST Submit', status: isResolved || operation?.state === 'SUCCEEDED' ? 'done' : 'pending', tag: isResolved ? 'RESOLVED' : operation?.state === 'SUCCEEDED' ? 'ACKNOWLEDGED' : 'PENDING' }
+            { step: '5', title: 'Submit to PayPal', status: isResolved || operation?.state === 'SUCCEEDED' ? 'done' : 'pending', tag: isResolved ? 'RESOLVED' : operation?.state === 'SUCCEEDED' ? 'ACKNOWLEDGED' : 'PENDING' }
           ].map((s, idx) => (
             <div
               key={idx}
@@ -757,7 +792,7 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
-      {/* ── Dynamic Carrier Transit Velocity Graph (Derived from Real SQLite Evidence & 3D Reflection) ── */}
+      {/* ── Carrier Tracking (events recorded in the vault) ── */}
       <div className="card-3d-reflection p-6 rounded-3xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -765,80 +800,40 @@ export default function CaseDetailPage() {
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-slate-900 text-sm">
-                Carrier Delivery Transit Velocity &amp; Proof of Transit
-              </h2>
+              <h2 className="font-bold text-slate-900 text-sm">Carrier Tracking</h2>
               <p className="text-xs text-slate-500 font-medium">
-                {carrierName} (<code className="font-mono text-slate-800 font-bold">{trackingNumber}</code>) — Real-time telemetry speed &amp; milestone progression
+                {carrierName
+                  ? <>{carrierName}{trackingNumber && <> (<code className="font-mono text-slate-800 font-bold">{trackingNumber}</code>)</>} · events recorded in the vault</>
+                  : 'No carrier tracking in the vault for this dispute'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" />
-              GPS Geofence Match (100%)
+          {trackingEvents.length > 0 && (
+            <span className="px-2.5 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold">
+              {trackingEvents.length} tracking event{trackingEvents.length === 1 ? '' : 's'}
             </span>
+          )}
+        </div>
+
+        {trackingEvents.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {trackingEvents.map((step, idx) => (
+              <div
+                key={idx}
+                className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center space-y-1"
+              >
+                <div className="text-[10px] text-slate-400 font-semibold">{step.time}</div>
+                <div className="text-xs font-bold text-slate-800">{step.stage}</div>
+                {step.location && <div className="text-[10px] text-slate-500 truncate">{step.location}</div>}
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* Transit Speed Wave AreaChart */}
-        <div className="h-48 w-full pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={transitVelocityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#003087" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#003087" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-              <XAxis dataKey="stage" stroke="#94A3B8" fontSize={11} tickLine={false} />
-              <YAxis
-                stroke="#94A3B8"
-                fontSize={11}
-                tickLine={false}
-                tickFormatter={(v) => `${v} mph`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#0F172A',
-                  borderColor: '#1E293B',
-                  borderRadius: '1rem',
-                  color: '#FFF',
-                  fontSize: '12px',
-                }}
-                formatter={(val: any, name: any, item: any) => [
-                  `${val} mph — ${item.payload.location}`,
-                  item.payload.time,
-                ]}
-              />
-              <Area
-                type="monotone"
-                dataKey="velocity"
-                stroke="#003087"
-                strokeWidth={2.5}
-                fillOpacity={1}
-                fill="url(#velocityGradient)"
-                name="Transit Velocity"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Transit Milestones Stepper Chips */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2">
-          {transitVelocityData.map((step, idx) => (
-            <div
-              key={idx}
-              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center space-y-1 hover:border-[#003087]/50 transition-colors"
-            >
-              <div className="text-[10px] text-slate-400 font-semibold">{step.time}</div>
-              <div className="text-xs font-bold text-slate-800">{step.stage}</div>
-              <div className="text-[10px] text-emerald-600 font-medium">✓ Verified</div>
-            </div>
-          ))}
-        </div>
+        ) : (
+          <p className="text-xs text-slate-500">
+            Without recorded tracking, this dispute cannot rely on proof of delivery.
+          </p>
+        )}
       </div>
 
       {/* ── Main 2-Column Grid: Evidence Vault + AI Draft ── */}
@@ -860,7 +855,7 @@ export default function CaseDetailPage() {
                 </div>
               </div>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-[#003087] border border-blue-100 self-start sm:self-auto">
-                {evidenceItems.length} Immutable Items
+                {evidenceItems.length} Hashed Items
               </span>
             </div>
 
@@ -980,7 +975,7 @@ export default function CaseDetailPage() {
 
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-400">
-                Engine: <strong className="text-slate-700 font-mono">Ava AI Autonomous Defense Engine + RAG</strong>
+                Drafted by: <strong className="text-slate-700 font-mono">{draft?.model_name || 'unknown'}</strong>
               </span>
               <button
                 onClick={handleRegenerateDraft}
@@ -1087,7 +1082,7 @@ export default function CaseDetailPage() {
                 <h3 className="font-bold text-slate-900 text-sm">Human Approval Gate</h3>
               </div>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono">
-                PayPal REST Sandbox Protocol
+                {modeBadge}
               </span>
             </div>
 
@@ -1156,10 +1151,10 @@ export default function CaseDetailPage() {
                   <strong>Notes:</strong> {review.snapshot.notes}
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  {review.snapshot.evidence_ids.length} supporting vault records chained into this API submission.
+                  {review.snapshot.evidence_ids.length} supporting vault records attached to this submission.
                 </p>
                 <details className="pt-1">
-                  <summary className="cursor-pointer font-bold text-[#003087] text-[11px]">View PayPal REST API payload JSON</summary>
+                  <summary className="cursor-pointer font-bold text-[#003087] text-[11px]">View the request payload (JSON)</summary>
                   <pre className="whitespace-pre-wrap break-all mt-2 p-2 bg-slate-900 text-slate-100 rounded-xl font-mono text-[10px]">
                     {JSON.stringify(review.snapshot.provider_payload, null, 2)}
                   </pre>
@@ -1169,14 +1164,14 @@ export default function CaseDetailPage() {
 
             {operation && (
               <p role="status" className="text-xs p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 font-medium">
-                {operation.state === 'SUCCEEDED' ? '✓ PayPal REST API acknowledged this operation. Final settlement confirmed.' :
+                {operation.state === 'SUCCEEDED' ? `✓ ${provider} acknowledged this action. The dispute closes when its final outcome arrives.` :
                  operation.state === 'UNCERTAIN' ? '⚠ Provider outcome is uncertain. Reconciliation required before further action.' :
                  'Submission is in progress. If it remains pending after a server restart, reconcile with PayPal before further action.'}
               </p>
             )}
 
             {approvalError && <p role="alert" className="text-xs p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-bold">{approvalError}</p>}
-            {approvalResult && <p role="status" className="text-xs p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">✓ Action acknowledged by PayPal REST Sandbox. Await final dispute outcome.</p>}
+            {approvalResult && <p role="status" className="text-xs p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">✓ Action acknowledged by {provider}. Await the final dispute outcome.</p>}
 
             <button
               onClick={handleApproveAction}
@@ -1186,7 +1181,7 @@ export default function CaseDetailPage() {
               {approving ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Submitting to PayPal REST API…</span>
+                  <span>Submitting to {provider}…</span>
                 </>
               ) : (
                 <>

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
-  ShieldCheck,
   Building2,
   Mail,
   DollarSign,
@@ -38,11 +37,13 @@ import {
 } from 'recharts';
 import { useUser } from '@/components/UserContext';
 import { useRealtime } from '@/components/RealtimeContext';
+import { useAppMode, MODE_LABEL } from '@/lib/runtime/mode';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/currency';
 
 export default function MerchantProfilePage() {
   const { activeUser, loading: userLoading, openCreateModal, logout, updateProfile } = useUser();
+  const appMode = useAppMode();
   const { lastEvent } = useRealtime();
   const router = useRouter();
 
@@ -299,13 +300,6 @@ export default function MerchantProfilePage() {
                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {activeUser.name}
                 </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-[#003087] border border-blue-200/60 text-xs font-bold">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Verified PayPal Merchant
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                  ● SELLER PROTECTION ACTIVE
-                </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 font-medium pt-1">
@@ -362,26 +356,44 @@ export default function MerchantProfilePage() {
           </div>
         </div>
 
-        {/* PayPal Live Sandbox Integration Status Card */}
+        {/* Environment & PayPal connection: shows only what the server reports */}
         <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
           <div className="flex flex-wrap items-center gap-2.5">
+            {appMode && (
+              <span className={`px-2.5 py-1 rounded-lg border font-mono text-[11px] ${
+                appMode === 'demo'
+                  ? 'bg-amber-50 border-amber-200 text-amber-800'
+                  : 'bg-blue-50 border-blue-200 text-[#003087]'
+              }`}>
+                <strong>{MODE_LABEL[appMode]}</strong>
+              </span>
+            )}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#003087]/5 border border-[#003087]/20 text-[#003087] font-bold">
-              <span className={`w-2 h-2 rounded-full ${paypalStatus?.connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-              <span>PayPal Sandbox</span>
+              <span className={`w-2 h-2 rounded-full ${paypalStatus?.connected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span>
+                PayPal API:{' '}
+                {paypalStatus == null
+                  ? 'checking…'
+                  : paypalStatus.connected
+                  ? 'connected'
+                  : paypalStatus.configured
+                  ? 'not reachable'
+                  : 'not configured'}
+                {paypalStatus?.connected && paypalStatus?.latency_ms != null ? ` (${paypalStatus.latency_ms}ms)` : ''}
+              </span>
             </div>
-            <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 font-mono text-[11px] text-[#003087]">
-              App: <strong>DisputeAutopilot-Sandbox</strong>
-            </span>
+            {paypalStatus?.client_id_masked && (
+              <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
+                Client: <code className="font-bold">{paypalStatus.client_id_masked}</code>
+              </span>
+            )}
+            {paypalStatus?.scope_count ? (
+              <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-600 hidden lg:inline-flex">
+                {paypalStatus.scope_count} scopes granted
+              </span>
+            ) : null}
             <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
-              Client: <code className="font-bold">{paypalStatus?.client_id_masked || 'BAAXaTaM...crlg'}</code>
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 font-mono text-[11px] text-emerald-800 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              <span>{paypalStatus?.connected ? 'LIVE AUTHORIZED' : 'CONFIGURED'}</span>
-              {paypalStatus?.latency_ms != null ? ` (${paypalStatus.latency_ms}ms)` : ''}
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-600 hidden lg:inline-flex">
-              {paypalStatus?.scope_count ? `${paypalStatus.scope_count} Scopes Active` : 'Disputes v1 & Trackers Active'}
+              Evidence Vault: <strong className="text-emerald-600">SHA-256 per record</strong>
             </span>
           </div>
 
@@ -390,10 +402,10 @@ export default function MerchantProfilePage() {
             onClick={checkPayPalConnection}
             disabled={testingPayPal}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 hover:text-slate-900 shadow-2xs transition-all cursor-pointer shrink-0 self-start md:self-auto"
-            title="Perform live OAuth handshake with PayPal Sandbox"
+            title="Request an OAuth token from PayPal with the server's credentials"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-[#0070BA] ${testingPayPal ? 'animate-spin' : ''}`} />
-            <span>{testingPayPal ? 'Testing…' : 'Test Live Handshake'}</span>
+            <span>{testingPayPal ? 'Testing…' : 'Test connection'}</span>
           </button>
         </div>
       </div>
@@ -407,7 +419,7 @@ export default function MerchantProfilePage() {
             <div className="p-2 rounded-xl bg-blue-50 text-[#003087]"><DollarSign className="w-4 h-4" /></div>
           </div>
           <div className="text-2xl font-extrabold text-slate-900 mb-1">
-            {loading ? <span className="animate-pulse bg-slate-200 h-7 w-28 rounded block" /> : `$${totalProtectedDollars}`}
+            {loading ? <span className="animate-pulse bg-slate-200 h-7 w-28 rounded block" /> : totalProtectedDollars}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
             <TrendingUp className="w-3.5 h-3.5" />
@@ -438,7 +450,7 @@ export default function MerchantProfilePage() {
           <div className="text-2xl font-extrabold text-slate-900 mb-1">
             {loading ? <span className="animate-pulse bg-slate-200 h-7 w-20 rounded block" /> : avgResponse}
           </div>
-          <div className="text-xs text-slate-500 font-medium">Autonomous AI packet generation</div>
+          <div className="text-xs text-slate-500 font-medium">Opened to resolved, across resolved disputes</div>
         </div>
 
         {/* Card 4: Active Cases — real count from DB */}
@@ -464,7 +476,7 @@ export default function MerchantProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
               <div>
                 <h2 className="font-bold text-slate-900 text-sm">Protected GMV vs. Disputed Volume</h2>
-                <p className="text-xs text-slate-500 font-medium">Daily cumulative from your SQLite transaction records</p>
+                <p className="text-xs text-slate-500 font-medium">Daily cumulative totals from your orders and disputes</p>
               </div>
               <div className="flex items-center gap-3 text-xs font-semibold">
                 <span className="flex items-center gap-1.5 text-[#003087]">
@@ -506,7 +518,7 @@ export default function MerchantProfilePage() {
           <div className="lg:col-span-4 card-3d-reflection p-6 rounded-3xl space-y-4">
             <div className="pb-3 border-b border-slate-100">
               <h2 className="font-bold text-slate-900 text-sm">Dispute Category Breakdown</h2>
-              <p className="text-xs text-slate-500 font-medium">Real distribution from your disputes table</p>
+              <p className="text-xs text-slate-500 font-medium">Share of your disputes by reason</p>
             </div>
             <div className="h-72 w-full flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">

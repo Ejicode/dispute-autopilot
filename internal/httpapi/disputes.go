@@ -402,7 +402,7 @@ func (a *API) disputeDetail(w http.ResponseWriter, r *http.Request, _ *types.Use
 		return err
 	}
 
-	// Verify Seller Protection § 11.3 (Proof of Delivery Address vs PayPal Transaction Address)
+	// Check the proof-of-delivery address against the PayPal transaction address (Seller Protection).
 	var deliveryAddr paypal.PayPalAddress
 	var paypalAddr paypal.PayPalAddress
 

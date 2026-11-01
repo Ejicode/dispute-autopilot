@@ -102,7 +102,7 @@ export interface ApprovalReview {
 
 export interface SellerProtectionVerification {
   eligible: boolean;
-  policy_section: string; // e.g. "§ 11.3"
+  policy_section: string; // e.g. "Proof of delivery"
   status: 'VERIFIED_MATCH' | 'MISMATCH' | 'UNVERIFIED';
   reason: string;
   paypal_address?: string;

@@ -160,11 +160,11 @@ func SeedWorkspace(ctx context.Context) error {
 		`Buyer stated: "Package never arrived at my address. Requesting full refund."`); err != nil {
 		return err
 	}
-	if _, err := store.Audit(ctx, "paypal", "DISPUTE_SYNCHRONIZED", map[string]any{
+	if _, err := store.Audit(ctx, "system", "DISPUTE_SYNCHRONIZED", map[string]any{
 		"dispute_id":        dispute1ID,
 		"paypal_dispute_id": dispute1.PayPalDisputeID,
 		"amount_cents":      124000,
-		"source":            "PAYPAL_SANDBOX_WEBHOOK",
+		"source":            "DEMO_SEED",
 	}, ptr(dispute1ID)); err != nil {
 		return err
 	}
@@ -444,7 +444,7 @@ var demoUsers = []struct {
 	{
 		ID:        "usr_demo_buyer_shopper",
 		Email:     "buyer@disputeautopilot.com",
-		Name:      "Jordan Miller (PayPal Buyer)",
+		Name:      "Jordan Miller",
 		StoreName: "Dispute Autopilot Store",
 		Password:  "Password12345678!",
 	},
@@ -481,6 +481,9 @@ func EnsureDemoAccounts(ctx context.Context) error {
 					VALUES (?, ?, ?, ?, 'MERCHANT_ADMIN', ?, ?)`,
 					u.ID, u.Email, u.Name, u.StoreName, hash, config.NowISO())
 			}
+		} else {
+			// Keep display names current on databases seeded by older builds.
+			_, _ = db.Exec(ctx, "UPDATE accounts SET name = ? WHERE id = ? AND name <> ?", u.Name, u.ID, u.Name)
 		}
 
 		userAccount := &types.UserAccount{

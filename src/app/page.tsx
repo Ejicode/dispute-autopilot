@@ -5,13 +5,14 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Dispute } from '@/lib/types';
 import { useRealtime } from '@/components/RealtimeContext';
+import { useAppMode } from '@/lib/runtime/mode';
+import { useLatestTrustLabResults } from '@/lib/trust-lab/useLatestResults';
 import { formatCurrency } from '@/lib/currency';
 import { 
   TrendingUp, 
   RefreshCw, 
   PlusCircle, 
   Filter, 
-  ChevronDown, 
   ShieldCheck, 
   CheckCircle2, 
   Clock, 
@@ -46,15 +47,15 @@ const defenseInvariantsData = [
 
 export default function DashboardPage() {
   const { lastEvent } = useRealtime();
+  const appMode = useAppMode();
+  const trustLab = useLatestTrustLabResults();
+  const trustLabBlocked = trustLab?.filter((r) => r.blocked).length ?? 0;
 
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
   const [seeding, setSeeding] = useState(false);
-  const [timeframe, setTimeframe] = useState<'This year' | 'This month' | 'All time'>('This year');
-  const [timeframeDropdownOpen, setTimeframeDropdownOpen] = useState(false);
-  const timeframeRef = useRef<HTMLDivElement>(null);
 
   // Interactive filters
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -120,19 +121,6 @@ export default function DashboardPage() {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [fetchDashboardData]);
-
-  // Close timeframe dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (timeframeRef.current && !timeframeRef.current.contains(event.target as Node)) {
-        setTimeframeDropdownOpen(false);
-      }
-    };
-    if (timeframeDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [timeframeDropdownOpen]);
 
   const handleSimulateDispute = async () => {
     setSimulating(true);
@@ -226,12 +214,8 @@ export default function DashboardPage() {
         sales: Math.round(p.protectedVolume || (kpis.totalProtectedCents / 100)),
       }));
     }
-    return [
-      { month: 'Oct 20', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
-      { month: 'Oct 22', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
-      { month: 'Oct 24', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
-      { month: 'Oct 26', soonProducts: Math.round(kpis.totalAtRiskCents / 100), sales: Math.round(kpis.totalProtectedCents / 100) },
-    ];
+    // No placeholder dates: an empty chart is honest until analytics load.
+    return [];
   }, [analytics?.wavePoints, kpis.totalAtRiskCents, kpis.totalProtectedCents]);
 
   // Product / Dispute Reason Breakdown (Solid Pie Chart from live analytics.donutCategories)
@@ -252,8 +236,6 @@ export default function DashboardPage() {
       { name: 'Active Disputes', value: kpis.totalDisputes || 1, percentage: 100, amount: Math.round(kpis.totalAtRiskCents / 100), change: 'Live DB', color: '#003087' },
     ];
   }, [analytics?.donutCategories, kpis.totalDisputes, kpis.totalAtRiskCents]);
-
-  // Security Defense Coverage Telemetry (static — defined outside component)
 
   // Custom Tooltip for Volume Flow Chart
   const CustomHabitTooltip = ({ active, payload, label }: any) => {
@@ -371,9 +353,11 @@ export default function DashboardPage() {
                   <span>Protected Volume</span>
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </span>
-                <span className="bg-[#FFC439] text-[#001C48] font-black text-[11px] px-2.5 py-0.5 rounded-full shadow-sm">
-                  Live DB
-                </span>
+                {appMode && (
+                  <span className="bg-[#FFC439] text-[#001C48] font-black text-[11px] px-2.5 py-0.5 rounded-full shadow-sm">
+                    {appMode === 'demo' ? 'Demo data' : appMode === 'sandbox' ? 'Sandbox' : 'Live'}
+                  </span>
+                )}
               </div>
 
               <div className="my-2">
@@ -383,7 +367,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center justify-between text-xs text-blue-100/80 pt-2 border-t border-white/15">
-                <span>{kpis.orderCount} store orders protected</span>
+                <span>Across {kpis.orderCount} store orders</span>
                 <span className="font-bold text-emerald-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                   <span>Orders Ledger →</span>
@@ -401,9 +385,6 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                   <span>Total Orders</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
-                  {kpis.orderCount} Orders
                 </span>
               </div>
 
@@ -432,9 +413,6 @@ export default function DashboardPage() {
                   <span>Unique Customers</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
-                  {kpis.customerCount} Buyers
-                </span>
               </div>
 
               <div className="my-2 relative z-10">
@@ -461,9 +439,6 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                   <span>Evidence Vault</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                </span>
-                <span className="bg-blue-50 text-[#003087] border border-blue-200 font-bold text-[11px] px-2.5 py-0.5 rounded-full group-hover:bg-[#003087] group-hover:text-white transition-colors">
-                  {kpis.evidenceCount} Files
                 </span>
               </div>
 
@@ -493,35 +468,10 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-4 flex-wrap">
-                {/* Timeframe Dropdown Pill (e.g. "This year ∨") */}
-                <div ref={timeframeRef} className="relative">
-                  <button
-                    onClick={() => setTimeframeDropdownOpen(!timeframeDropdownOpen)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 text-xs font-bold text-slate-700 transition-colors cursor-pointer"
-                  >
-                    <span>{timeframe}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-                  </button>
-
-                  {timeframeDropdownOpen && (
-                    <div className="absolute right-0 mt-1 w-36 bg-white rounded-2xl shadow-xl border border-slate-200 py-1 z-30 animate-in fade-in">
-                      {(['This year', 'This month', 'All time'] as const).map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => {
-                            setTimeframe(opt);
-                            setTimeframeDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 transition-colors ${
-                            timeframe === opt ? 'text-[#003087] font-bold bg-blue-50' : 'text-slate-700'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {/* The analytics API returns the last 8 days, cumulative */}
+                <span className="px-3 py-1.5 rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                  Last 8 days · cumulative
+                </span>
 
                 {/* Legend Indicators */}
                 <div className="flex items-center gap-4 text-xs font-bold text-slate-600">
@@ -554,7 +504,7 @@ export default function DashboardPage() {
                     tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 600 }} 
                   />
                   <YAxis 
-                    tickFormatter={(v) => (v === 0 ? '$0' : v >= 1000 ? `$${Math.round(v / 1000)}K` : `$${v}`)}
+                    tickFormatter={(v) => (v >= 1000 ? `$${Number((v / 1000).toFixed(1))}K` : `$${v}`)}
                     tickLine={false} 
                     axisLine={false} 
                     tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 500 }}
@@ -656,7 +606,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs font-black text-slate-900">{item.value.toLocaleString()} cases</span>
+                      <span className="text-xs font-black text-slate-900">{item.value.toLocaleString()} {item.value === 1 ? 'case' : 'cases'}</span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-[#003087] text-white' : 'bg-blue-100 text-[#003087]'}`}>
                         {isSelected ? 'Filtered ✓' : item.change}
                       </span>
@@ -678,53 +628,44 @@ export default function DashboardPage() {
                 <span>Security Defense Coverage</span>
                 <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#003087] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
               </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                6/6 BLOCKED
-              </span>
+              {trustLab && trustLab.length > 0 && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  trustLabBlocked === trustLab.length
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-rose-50 text-rose-700 border-rose-200'
+                }`}>
+                  {trustLabBlocked}/{trustLab.length} BLOCKED
+                </span>
+              )}
             </div>
 
-            {/* Balanced Non-Overlapping Security Pillars */}
-            <div className="grid grid-cols-4 gap-2 py-1">
-              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl card-3d-reflection-subtle text-center card-interactive">
-                <span className="text-sm font-black text-[#003087]">100%</span>
-                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Signature</span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl card-3d-reflection-subtle text-center card-interactive">
-                <span className="text-sm font-black text-[#0070BA]">100%</span>
-                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Replay</span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl card-3d-reflection-subtle text-center card-interactive">
-                <span className="text-sm font-black text-[#00A6E0]">100%</span>
-                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Policy</span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl card-3d-reflection-subtle text-center card-interactive">
-                <span className="text-sm font-black text-emerald-600">100%</span>
-                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Vault</span>
-              </div>
-            </div>
-
-            {/* Invariant Defense Progress Bars */}
-            <div className="space-y-3 pt-1 border-t border-slate-100">
-              {defenseInvariantsData.map((item) => (
-                <div key={item.name} className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold text-slate-700">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                      <span className="truncate">{item.name}</span>
-                    </span>
-                    <span className="font-extrabold text-[11px] shrink-0" style={{ color: item.color }}>
-                      {item.metric}
-                    </span>
+            {/* Latest Trust Lab result per attack */}
+            {!trustLab ? (
+              <div className="h-40 rounded-2xl bg-slate-100 animate-pulse" />
+            ) : trustLab.length === 0 ? (
+              <p className="text-xs text-slate-500 leading-relaxed">
+                The attack suite has not been run in this workspace yet. Open the Trust Lab to run all six attacks against the real defenses.
+              </p>
+            ) : (
+              <div className="space-y-3 pt-1 border-t border-slate-100">
+                {trustLab.map((attack) => (
+                  <div key={attack.name} className="space-y-1">
+                    <div className="flex justify-between text-xs font-bold text-slate-700">
+                      <span className="flex items-center gap-1.5 truncate">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${attack.blocked ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        <span className="truncate">{attack.name}</span>
+                      </span>
+                      <span className={`font-extrabold text-[11px] shrink-0 ${attack.blocked ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        {attack.blocked ? 'Blocked' : 'Not blocked'} · HTTP {attack.httpStatus}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div className={`h-full w-full rounded-full ${attack.blocked ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${item.percentage}%`, backgroundColor: item.color }} 
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Link>
 
         </div>
@@ -747,7 +688,9 @@ export default function DashboardPage() {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Prioritized by financial exposure and response deadline with live PayPal synchronization
+              Prioritized by financial exposure and response deadline
+              {appMode === 'demo' && ' · simulated disputes'}
+              {(appMode === 'sandbox' || appMode === 'live') && ' · updated from verified PayPal webhooks'}
             </p>
           </div>
 

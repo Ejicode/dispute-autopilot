@@ -111,11 +111,10 @@ func Auth() (*Store, error) {
 	return s, nil
 }
 
-// DemoBuyerID is the seeded demo buyer. In demo mode it shops in the
-// DemoMerchantID workspace so its purchases and disputes reach that merchant.
+// DemoBuyerID and DemoMerchantID re-export the demo personas (see scope).
 const (
-	DemoBuyerID    = "usr_demo_buyer_shopper"
-	DemoMerchantID = "usr_demo_da_admin"
+	DemoBuyerID    = scope.DemoBuyerID
+	DemoMerchantID = scope.DemoMerchantID
 )
 
 // Merchant returns the environment-classified database for the scoped merchant.
@@ -128,10 +127,7 @@ func Merchant(ctx context.Context) (*Store, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, err
 	}
-	merchantID := sc.MerchantID
-	if sc.Mode == config.ModeDemo && merchantID == DemoBuyerID {
-		merchantID = DemoMerchantID
-	}
+	merchantID := scope.WorkspaceID(sc.Mode, sc.MerchantID)
 	filename := filepath.Join(directory, merchantID+".db")
 
 	merchantMu.Lock()

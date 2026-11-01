@@ -5,10 +5,20 @@ import type { SystemEvent } from '@/lib/realtime/hub';
 
 import { useUser } from './UserContext';
 
+export interface RealtimeNotification {
+  id: string;
+  message: string;
+  type: string;
+  timestamp: string;
+}
+
 interface RealtimeContextValue {
   isConnected: boolean;
   lastEvent: SystemEvent | null;
-  notifications: Array<{ id: string; message: string; type: string; timestamp: string }>;
+  /** Toast queue: each entry dismisses itself after a few seconds. */
+  notifications: RealtimeNotification[];
+  /** The last 20 events of this session, newest first, for the inbox. */
+  recent: RealtimeNotification[];
   dismissNotification: (id: string) => void;
 }
 
@@ -16,6 +26,7 @@ const RealtimeContext = createContext<RealtimeContextValue>({
   isConnected: false,
   lastEvent: null,
   notifications: [],
+  recent: [],
   dismissNotification: () => {},
 });
 
@@ -23,7 +34,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const { activeUser } = useUser();
   const [isConnected, setIsConnected] = useState(false);
   const [lastEvent, setLastEvent] = useState<SystemEvent | null>(null);
-  const [notifications, setNotifications] = useState<Array<{ id: string; message: string; type: string; timestamp: string }>>([]);
+  const [notifications, setNotifications] = useState<RealtimeNotification[]>([]);
+  const [recent, setRecent] = useState<RealtimeNotification[]>([]);
 
   const dismissNotification = (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -68,13 +80,16 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
           } else if (data.type === 'ACTION_APPROVED') {
             message = `Approved Action Sent to PayPal: ${data.payload.dispute?.paypal_dispute_id}`;
           } else if (data.type === 'ATTACK_BLOCKED') {
-            message = `Trust Lab: Attack vector simulated & verified BLOCKED`;
+            const results: { blocked?: boolean }[] = Array.isArray(data.payload) ? data.payload : [];
+            const blocked = results.filter((r) => r.blocked).length;
+            message = blocked === results.length
+              ? `Trust Lab: all ${results.length} attacks blocked`
+              : `Trust Lab: ${results.length - blocked} of ${results.length} attacks NOT blocked`;
           }
 
-          setNotifications((prev) => [
-            { id: notifId, message, type: data.type, timestamp: data.timestamp },
-            ...prev.slice(0, 4),
-          ]);
+          const entry = { id: notifId, message, type: data.type, timestamp: data.timestamp };
+          setNotifications((prev) => [entry, ...prev.slice(0, 4)]);
+          setRecent((prev) => [entry, ...prev.slice(0, 19)]);
 
           // Auto dismiss after 6 seconds
           setTimeout(() => {
@@ -99,7 +114,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   }, [activeUser?.id]);
 
   return (
-    <RealtimeContext.Provider value={{ isConnected, lastEvent, notifications, dismissNotification }}>
+    <RealtimeContext.Provider value={{ isConnected, lastEvent, notifications, recent, dismissNotification }}>
       {children}
     </RealtimeContext.Provider>
   );

@@ -191,7 +191,7 @@ func GenerateVaultPDFDossier(merchantID string, items []types.EvidenceItem) ([]b
 	pdf.Text(300, 155, "Integrity Standard:")
 	pdf.SetFont("Helvetica", "", 9)
 	pdf.SetTextColor(0, 128, 64)
-	pdf.Text(390, 155, "SHA-256 Chained & Immutable")
+	pdf.Text(390, 155, "SHA-256 per record")
 
 	// Section header
 	pdf.SetFont("Helvetica", "B", 12)
@@ -253,6 +253,5 @@ func renderDossierFooter(pdf *fpdf.Fpdf, width float64) {
 	pdf.Line(40, 742, width-40, 742)
 	pdf.SetFont("Helvetica", "", 7.5)
 	pdf.SetTextColor(128, 128, 128)
-	pdf.Text(40, 757, "Deterministic Evidence Vault Dossier | PayPal Seller Protection § 11.3 Compliant Audit Log")
+	pdf.Text(40, 757, "Deterministic Evidence Vault Dossier | Evidence Audit Log")
 }
-
