@@ -71,8 +71,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return <main className="w-full h-screen bg-white overflow-hidden">{children}</main>;
   }
 
-  // Branded enterprise software loading screen
-  if (userLoading || buyerOnMerchantPage) {
+  // Branded enterprise software loading screen (for merchant console and redirected routes)
+  if ((userLoading && !isPublicBuyerPage) || buyerOnMerchantPage) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#001433] via-[#001C48] to-[#003087] text-white p-6 relative overflow-hidden select-none">
         <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#0070BA]/20 blur-3xl pointer-events-none" />

@@ -71,8 +71,26 @@ func (a *API) serveFile(w http.ResponseWriter, r *http.Request, rel string) bool
 	if !ok {
 		return false
 	}
+	setCacheHeaders(w, rel)
 	http.ServeFile(w, r, full)
 	return true
+}
+
+func setCacheHeaders(w http.ResponseWriter, rel string) {
+	cleanRel := strings.TrimPrefix(rel, "/")
+	if strings.HasPrefix(cleanRel, "_next/static/") {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		return
+	}
+	ext := strings.ToLower(filepath.Ext(cleanRel))
+	switch ext {
+	case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".woff", ".woff2", ".ttf":
+		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800")
+	case ".html", "":
+		w.Header().Set("Cache-Control", "public, max-age=0, must-revalidate")
+	default:
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+	}
 }
 
 // serveFileAs serves a file with an explicit status (used for the 404 shell).
@@ -85,6 +103,7 @@ func (a *API) serveFileAs(w http.ResponseWriter, r *http.Request, rel string, st
 	if err != nil {
 		return false
 	}
+	setCacheHeaders(w, rel)
 	if contentType := mime.TypeByExtension(filepath.Ext(full)); contentType != "" {
 		w.Header().Set("Content-Type", contentType)
 	}

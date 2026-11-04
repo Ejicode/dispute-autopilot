@@ -4,6 +4,9 @@
 
 ![Dispute Autopilot Enterprise Banner](devpost_hero_dark.jpg)
 
+> 🚀 **Live Production Deployment**: [https://dispute-autopilot.onrender.com/login/](https://dispute-autopilot.onrender.com/login/)  
+> 🛒 **Live Interactive Buyer Storefront**: [https://dispute-autopilot.onrender.com/storefront/](https://dispute-autopilot.onrender.com/storefront/)
+
 ---
 
 ## Executive Summary: Winning Back Merchant Money in Real Time
@@ -18,7 +21,7 @@ Because manual evidence collection takes an average of **6 minutes (360 seconds)
 3. **Drafts precision defense dossiers** using Ava AI, where every factual sentence is grounded in cryptographic vault citations (`[EV-101]`, `[EV-102]`).
 4. **Verifies claims with plain Go code** (never delegated to an LLM) before seller submission, ensuring mathematical adherence to PayPal Seller Protection policies (§ 11.3 & § 11.3(b)).
 5. **Enforces a strict Human-in-the-Loop approval gate** before executing any mutating action on the PayPal Disputes API.
-6. **Resolves claims in < 1 millisecond**—operating **~360,000x faster** than manual human assembly.
+6. **Verifies and packages defense claims in < 1 millisecond** locally—operating **~360,000x faster** than manual human assembly.
 
 > **Data Honesty & Sandbox Verification**: All dispute lifecycle transitions, webhooks, and evidence submissions interact with live PayPal Sandbox REST APIs. Simulated carrier logs, orders, and products are explicitly marked **`DEMO DATA`**. Win rates and scores are never fabricated—all benchmarks report actual measured coverage and verification rates.
 
@@ -193,7 +196,7 @@ Dispute Autopilot bridges enterprise payment infrastructure and autonomous AI re
 ```
 
 ### 2. Instant Demo Credentials
-Open [http://localhost:3000/login](http://localhost:3000/login):
+Open **[https://dispute-autopilot.onrender.com/login/](https://dispute-autopilot.onrender.com/login/)** (Live) or **[http://localhost:3000/login](http://localhost:3000/login)** (Local):
 
 - **Merchant Operations Console**:
   - Email: `admin@disputeautopilot.com`

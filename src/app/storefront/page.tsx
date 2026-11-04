@@ -32,6 +32,8 @@ import { formatCurrency, SUPPORTED_CURRENCIES } from '@/lib/currency';
 
 const MILESTONES = ["LABEL_CREATED", "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
 
+const PRODUCT_FALLBACK_IMAGE = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400' fill='none'%3E%3Crect width='600' height='400' fill='%23F1F5F9'/%3E%3Ccircle cx='300' cy='180' r='36' fill='%23CBD5E1'/%3E%3Cpath d='M230 250c0-38 31-70 70-70s70 32 70 70' fill='%2394A3B8'/%3E%3Ctext x='50%25' y='72%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748B' font-family='sans-serif' font-size='15' font-weight='600'%3EProduct Visual%3C/text%3E%3C/svg%3E";
+
 export default function StorefrontPage() {
   const { activeUser } = useUser();
   // Signed-out visitors and the demo buyer get the shopper view; merchants also see sales data.
@@ -662,6 +664,13 @@ export default function StorefrontPage() {
                       alt={prod.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== PRODUCT_FALLBACK_IMAGE) {
+                          target.src = PRODUCT_FALLBACK_IMAGE;
+                        }
+                      }}
                     />
                     
                     {/* Brand Pill */}
@@ -788,6 +797,13 @@ export default function StorefrontPage() {
                   src={selectedProduct.image_url}
                   alt={selectedProduct.name}
                   className="w-full h-full object-cover"
+                  decoding="async"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== PRODUCT_FALLBACK_IMAGE) {
+                      target.src = PRODUCT_FALLBACK_IMAGE;
+                    }
+                  }}
                 />
                 <span className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold">
                   Verified In Stock: {selectedProduct.stock} units

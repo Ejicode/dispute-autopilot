@@ -285,7 +285,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.8,
     reviews_count: 940,
     stock: 33,
-    image_url: "https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=600&q=80",
     description: "Breakthrough mixed reality with high-res full-color passthrough, Snapdragon XR2 Gen 2 processor, 4K+ Infinite Display, and Touch Plus controllers.",
     specs: { "Display": "2064x2208 pixels per eye", "Optics": "Pancake Lenses", "Processor": "Snapdragon XR2 Gen 2", "Audio": "3D Spatial Sound", "Weight": "515g" },
     carrier_default: "UPS"
@@ -345,7 +345,7 @@ export const PRODUCTS: Product[] = [
     rating: 5.0,
     reviews_count: 1650,
     stock: 20,
-    image_url: "https://images.unsplash.com/photo-1612287233207-6c2e2c84e1b8?auto=format&fit=crop&w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80",
     description: "7.4-inch 90Hz HDR OLED display with custom 6nm AMD APU, Wi-Fi 6E, 50Wh battery offering 3–12 hours of gameplay, and premium anti-glare etched glass.",
     specs: { "Screen": "7.4-inch HDR OLED 90Hz", "APU": "6nm AMD Sephiroth", "RAM": "16 GB LPDDR5", "Storage": "1TB NVMe SSD", "Weight": "640g" },
     carrier_default: "FEDEX"
@@ -514,7 +514,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.9,
     reviews_count: 2400,
     stock: 60,
-    image_url: "https://images.unsplash.com/photo-1550524514-9b6d859b4c02?auto=format&fit=crop&w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1550985543-f47f38aeee65?auto=format&fit=crop&w=600&q=80",
     description: "Four White and Color Ambiance A19 bulbs, Hue Bridge, and smart button. 16 million colors, automated sunrise routines, and dynamic music sync.",
     specs: { "Bulbs": "4x E26 1100 Lumen (75W Equivalent)", "Colors": "16 Million Colors + Tunable White", "Bridge": "Hue Bridge Hub Included", "Protocol": "Zigbee & Bluetooth" },
     carrier_default: "USPS"
@@ -681,7 +681,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.9,
     reviews_count: 2300,
     stock: 90,
-    image_url: "https://images.unsplash.com/photo-1510519138161-58474dfab9c8?auto=format&fit=crop&w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1576243345690-4e4b79b63288?auto=format&fit=crop&w=600&q=80",
     description: "The gold standard for ECG heart rate accuracy. Dual simultaneous Bluetooth connections, ANT+, onboard training session memory, and 400-hr battery.",
     specs: { "Measurement": "Medical Grade ECG Electrodes", "Battery": "400 Hours (Coin Cell CR2025)", "Connectivity": "Dual Bluetooth Low Energy & ANT+", "Waterproof": "30m" },
     carrier_default: "USPS"
@@ -743,7 +743,7 @@ export const PRODUCTS: Product[] = [
     rating: 4.9,
     reviews_count: 1290,
     stock: 55,
-    image_url: "https://images.unsplash.com/photo-1609592424364-f6b0f4886650?auto=format&fit=crop&w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=600&q=80",
     description: "Massive 27,650mAh capacity with 250W multi-port fast charging, smart digital display showing live wattages, and airline-approved TSA sizing.",
     specs: { "Capacity": "27,650mAh (99.54Wh TSA Compliant)", "Max Output": "250W (140W Single Port PD 3.1)", "Ports": "2x USB-C, 1x USB-A", "Screen": "Full Color Smart Display" },
     carrier_default: "USPS"
