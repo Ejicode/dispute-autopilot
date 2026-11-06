@@ -9,6 +9,34 @@
 
 ---
 
+## 📺 Video Walkthrough & Live Demo
+
+<div align="center">
+  <a href="https://youtu.be/alFUlBfb9bg" target="_blank" rel="noopener noreferrer">
+    <img src="docs/assets/youtube_video_card.jpg" alt="Watch Dispute Autopilot Video Demo on YouTube" width="820" style="border-radius: 14px; box-shadow: 0 12px 36px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1);" />
+  </a>
+  <p>
+    <a href="https://youtu.be/alFUlBfb9bg" target="_blank" rel="noopener noreferrer">
+      <strong>▶️ Click Here to Watch the Official 3-Minute Demo Video on YouTube (by The Compiler Group)</strong>
+    </a>
+  </p>
+</div>
+
+### 🎬 Video Overview & YouTube Details
+Presented by **The Compiler Group by Ejicode** for the **PayPal AI Hackathon 2026**:
+* **Channel**: The Compiler Group by Ejicode
+* **Video Title**: *Dispute Autopilot — Autonomous AI Defense Agent for PayPal Merchants*
+* **Direct Video URL**: [https://youtu.be/alFUlBfb9bg](https://youtu.be/alFUlBfb9bg)
+* **What You Will See in the Video**:
+  * **0:00 – 0:25**: The $48B merchant chargeback crisis and PayPal's strict 10-day response deadline under § 11.5.
+  * **0:25 – 0:55**: Interactive Buyer Storefront with \$5,000 PayPal fake money wallet, carrier transit stepper, and pre-dispute cryptographic SHA-256 evidence vaulting at payment capture time.
+  * **0:55 – 1:35**: Money-and-Clock Queue & Case Review featuring the Urgent SLA Countdown Banner, PayPal Seller Protection § 11.3 verification, Evidence Strength Score (100/100), and pure Go code claim verification with zero hallucinations.
+  * **1:35 – 2:05**: Human-in-the-Loop Approval Gate (Invariant #1) with inspected action snapshot, followed by live PayPal Sandbox OAuth2 handshake with 28 verified scopes.
+  * **2:05 – 2:35**: Trust Lab security suite blocking 6/6 attack vectors (webhook forgery, prompt injection, replay attacks) and Dispute Bench executing 40 scenarios in 0.2ms.
+  * **2:35 – 3:00**: System architecture, safety guarantees, and how Dispute Autopilot saves merchants thousands of dollars and wins back their time.
+
+---
+
 ## Executive Summary: Winning Back Merchant Money in Real Time
 
 Online merchants face a **$48 Billion annual chargeback crisis**. When a buyer opens an "Item Not Received" or "Significantly Not As Described" claim on PayPal, merchants face a strict **10-day deadline** to compile and format carrier tracking history, customer confirmation receipts, and formal rebuttal statements.
